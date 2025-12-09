@@ -47,7 +47,7 @@ public class User extends BaseEntity {
     private String phone;
 
     /**
-     * 비밀번호
+     * 해시된 비밀번호 (예: BCrypt)
      */
     private String password;
 

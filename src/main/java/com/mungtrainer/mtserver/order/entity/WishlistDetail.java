@@ -15,9 +15,9 @@ import lombok.experimental.SuperBuilder;
 public class WishlistDetail extends BaseEntity {
 
     /**
-     * 장바구니 항목 ID (PK)
+     * 위시리스트 항목 ID (PK)
      */
-    private Long cartItemId;
+    private Long wishlistItemId;
 
     /**
      * 장바구니 ID (FK - wishlist.wishlist_id)

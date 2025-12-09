@@ -37,6 +37,6 @@ public class Counseling extends BaseEntity {
     /**
      * 상담 완료 여부
      */
-    private Boolean counselingYn;
+    private Boolean isCompleted;
 }
 
