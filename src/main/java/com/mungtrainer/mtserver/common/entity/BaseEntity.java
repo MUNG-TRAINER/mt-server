@@ -10,10 +10,11 @@ import java.time.LocalDateTime;
 
 /**
  * 모든 엔티티의 공통 필드를 담는 기본 엔티티 클래스
- * created_by, created_at, updated_by, updated_at 필드 포함
+ * - 생성 정보: createdBy, createdAt
+ * - 수정 정보: updatedBy, updatedAt
+ * - 삭제 정보(Soft Delete): isDeleted, deletedAt
  */
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
@@ -48,4 +49,11 @@ public abstract class BaseEntity {
      * 삭제 일시
      */
     private LocalDateTime deletedAt;
+
+    public void markAsDeleted(Long deletedBy) {
+      this.isDeleted = true;
+      this.deletedAt = LocalDateTime.now();
+      this.updatedBy = deletedBy;
+      this.updatedAt = LocalDateTime.now();
+    }
 }
