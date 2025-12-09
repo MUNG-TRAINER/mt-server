@@ -42,7 +42,7 @@ public abstract class BaseEntity {
     /**
      * 삭제 여부
      */
-    private Boolean isDeleted;
+    private boolean isDeleted = false;
 
     /**
      * 삭제 일시
