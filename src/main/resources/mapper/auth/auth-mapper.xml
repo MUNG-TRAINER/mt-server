@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mungtrainer.mtserver.auth.dao.AuthDAO">
+
+    <select id="findTrainerIdByRegistCode" resultType="long">
+        select trainer_id
+        from trainer_profile
+        where regist_code = #{registCode}
+    </select>
+    <select id="existsRegistCode" resultType="boolean">
+        select count(*) > 0
+        from trainer_profile
+        where regist_code = #{registCode}
+    </select>
+    <select id="existsUsername" resultType="boolean">
+        select count(*) > 0
+        from user
+        where user_name = #{userName}
+    </select>
+    <select id="existsEmail" resultType="boolean">
+        select count(*) > 0
+        from user
+        where email = #{email}
+    </select>
+    <insert id="insertTrainerProfile" keyProperty="trainerId">
+        insert into trainer_profile(
+            trainer_id, career_info, introduce,
+            description, style, tag, regist_code,
+            certification_image_url,
+            created_by, created_at, updated_by, updated_at,
+            deleted_at, is_deleted
+        )
+        values (
+           #{trainerId}, #{careerInfo}, #{introduce},
+           #{description}, #{style}, #{tag}, #{registCode},
+            #{certificationImageUrl},
+           #{createdBy}, NOW(), #{updatedBy},
+           NOW(), NULL, 0
+        )
+    </insert>
+
+    <insert id="insertUser" useGeneratedKeys="true" keyProperty="userId">
+        insert INTO user (
+            user_name,
+            name,
+            birth,
+            email,
+            phone,
+            password,
+            role,
+            is_agree,
+            sido,
+            sigungu,
+            roadname,
+            rest_address,
+            postcode,
+            created_by,
+            created_at,
+            updated_at,
+            updated_by,
+            is_deleted
+        )
+        values (
+            #{userName},
+            #{name},
+            #{birth},
+            #{email},
+            #{phone},
+            #{password},
+            #{role},
+            #{isAgree},
+            #{sido},
+            #{sigungu},
+            #{roadname},
+            #{restAddress},
+            #{postcode},
+            #{createdBy},
+            NOW(),
+            NOW(),
+            #{updatedBy},
+            0
+        )
+    </insert>
+
+    <insert id="insertTrainerUser">
+        INSERT INTO trainer_user (user_id, trainer_id, created_at,updated_at,created_by,updated_by)
+        VALUES (#{userId}, #{trainerId},NOW(),NOW(),#{createdBy},#{updatedBy})
+    </insert>
+</mapper>
