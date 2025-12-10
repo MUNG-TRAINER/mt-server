@@ -49,7 +49,15 @@
 
             <!-- 특정 세션에서 특정 사용자의 출석 정보 조회 -->
             <select id="findBySessionIdAndUserName" resultMap="TrainingAttendanceResultMap">
-                SELECT ta.*
+                SELECT
+                    ta.attendance_id,
+                    ta.application_id,
+                    ta.status,
+                    ta.checkin_time,
+                    ta.checkout_time,
+                    ta.memo,
+                    ta.created_at,
+                    ta.updated_at
                 FROM training_attendance ta
                 INNER JOIN training_course_application tca ON ta.application_id = tca.application_id
                 INNER JOIN dog d ON tca.dog_id = d.dog_id

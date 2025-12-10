@@ -1,8 +1,9 @@
 package com.mungtrainer.mtserver.training.service;
 
+     import com.mungtrainer.mtserver.common.exception.CustomException;
+     import com.mungtrainer.mtserver.common.exception.ErrorCode;
      import com.mungtrainer.mtserver.training.dto.request.AttendanceUpdateRequest;
      import com.mungtrainer.mtserver.training.dto.response.AttendanceListResponse;
-     import com.mungtrainer.mtserver.training.entity.TrainingAttendance;
      import com.mungtrainer.mtserver.training.mapper.TrainingAttendanceMapper;
      import lombok.RequiredArgsConstructor;
      import lombok.extern.slf4j.Slf4j;
@@ -38,13 +39,6 @@ package com.mungtrainer.mtserver.training.service;
          public void updateAttendanceStatus(Long sessionId, String userName, AttendanceUpdateRequest request) {
              log.info("세션 ID: {}, 회원: {}의 출석 상태 변경 요청 - 상태: {}", sessionId, userName, request.getStatus());
 
-             // 출석 정보 존재 여부 확인
-             TrainingAttendance attendance = trainingAttendanceMapper.findBySessionIdAndUserName(sessionId, userName);
-             if (attendance == null) {
-                 log.error("세션 ID: {}, 회원: {}의 출석 정보를 찾을 수 없습니다", sessionId, userName);
-                 throw new IllegalArgumentException("해당 회원의 출석 정보를 찾을 수 없습니다");
-             }
-
              // 출석 상태 업데이트
              int updatedCount = trainingAttendanceMapper.updateStatus(
                  sessionId,
@@ -55,7 +49,7 @@ package com.mungtrainer.mtserver.training.service;
 
              if (updatedCount == 0) {
                  log.error("세션 ID: {}, 회원: {}의 출석 상태 변경 실패", sessionId, userName);
-                 throw new IllegalStateException("출석 상태 변경에 실패했습니다");
+               throw new CustomException(ErrorCode.ATTENDANCE_UPDATE_FAILED);
              }
 
              log.info("세션 ID: {}, 회원: {}의 출석 상태 변경 완료", sessionId, userName);
