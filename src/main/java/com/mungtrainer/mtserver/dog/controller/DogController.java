@@ -26,22 +26,22 @@ public class DogController {
 
     private final DogService dogService;
 
+    // TODO: 인증 구현 후 제거 - 임시로 더미 데이터의 user_id=2(수강자) 사용
+    private static final Long TEMP_USER_ID = 2L;
+
     /**
      * 반려견 등록
-     * @param userId 사용자 ID (인증 후 SecurityContext에서 가져올 예정)
      * @param request 반려견 생성 요청
      * @param profileImage 프로필 이미지 (선택)
      * @return 생성된 반려견 ID
      */
     @PostMapping(value = "/dogs", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Long> createDog(
-            // TODO: @AuthenticationPrincipal 또는 SecurityContext에서 userId 가져오기
-            @RequestParam Long userId,
             @Valid @RequestPart("dog") DogCreateRequest request,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
 
-        log.info("반려견 등록 API 호출 - userId: {}", userId);
-        Long dogId = dogService.createDog(userId, request, profileImage);
+        log.info("반려견 등록 API 호출 - userId: {}", TEMP_USER_ID);
+        Long dogId = dogService.createDog(TEMP_USER_ID, request, profileImage);
         return ResponseEntity.status(HttpStatus.CREATED).body(dogId);
     }
 
@@ -58,17 +58,13 @@ public class DogController {
     }
 
     /**
-     * 본인의 반려견 리스트 조회
-     * @param userId 사용자 ID (인증 후 SecurityContext에서 가져올 예정)
+     * 본인의 반려견 리스트 조회 (임시: userId=2 고정)
      * @return 반려견 리스트
      */
     @GetMapping("/dogs")
-    public ResponseEntity<List<DogResponse>> getMyDogs(
-            // TODO: @AuthenticationPrincipal 또는 SecurityContext에서 userId 가져오기
-            @RequestParam Long userId) {
-
-        log.info("본인 반려견 리스트 조회 API 호출 - userId: {}", userId);
-        List<DogResponse> dogs = dogService.getMyDogs(userId);
+    public ResponseEntity<List<DogResponse>> getMyDogs() {
+        log.info("본인 반려견 리스트 조회 API 호출 - userId: {}", TEMP_USER_ID);
+        List<DogResponse> dogs = dogService.getMyDogs(TEMP_USER_ID);
         return ResponseEntity.ok(dogs);
     }
 
@@ -86,7 +82,6 @@ public class DogController {
 
     /**
      * 반려견 정보 수정
-     * @param userId 사용자 ID (인증 후 SecurityContext에서 가져올 예정)
      * @param dogId 반려견 ID
      * @param request 수정 요청
      * @param profileImage 프로필 이미지 (선택)
@@ -94,31 +89,24 @@ public class DogController {
      */
     @PatchMapping(value = "/dogs/{dogId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> updateDog(
-            // TODO: @AuthenticationPrincipal 또는 SecurityContext에서 userId 가져오기
-            @RequestParam Long userId,
             @PathVariable Long dogId,
             @Valid @RequestPart("dog") DogUpdateRequest request,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
 
-        log.info("반려견 정보 수정 API 호출 - userId: {}, dogId: {}", userId, dogId);
-        dogService.updateDog(userId, dogId, request, profileImage);
+        log.info("반려견 정보 수정 API 호출 - userId: {}, dogId: {}", TEMP_USER_ID, dogId);
+        dogService.updateDog(TEMP_USER_ID, dogId, request, profileImage);
         return ResponseEntity.ok().build();
     }
 
     /**
      * 반려견 정보 삭제
-     * @param userId 사용자 ID (인증 후 SecurityContext에서 가져올 예정)
      * @param dogId 반려견 ID
      * @return 삭제 완료 응답
      */
     @DeleteMapping("/dogs/{dogId}")
-    public ResponseEntity<Void> deleteDog(
-            // TODO: @AuthenticationPrincipal 또는 SecurityContext에서 userId 가져오기
-            @RequestParam Long userId,
-            @PathVariable Long dogId) {
-
-        log.info("반려견 삭제 API 호출 - userId: {}, dogId: {}", userId, dogId);
-        dogService.deleteDog(userId, dogId);
+    public ResponseEntity<Void> deleteDog(@PathVariable Long dogId) {
+        log.info("반려견 삭제 API 호출 - userId: {}, dogId: {}", TEMP_USER_ID, dogId);
+        dogService.deleteDog(TEMP_USER_ID, dogId);
         return ResponseEntity.noContent().build();
     }
 }
