@@ -16,13 +16,13 @@ public class AuthController {
   private final AuthService authService;
 
   @PostMapping("/join/trainer")
-  public ResponseEntity<AuthJoinResponse> join(@Valid @RequestBody AuthTrainerJoinRequest authTrainerJoinRequest) {
+  public ResponseEntity<AuthJoinResponse> trainerJoin(@Valid @RequestBody AuthTrainerJoinRequest authTrainerJoinRequest) {
     AuthJoinResponse response = authService.trainerJoin(authTrainerJoinRequest);
     return ResponseEntity.ok(response);
   }
 
   @PostMapping("/join/user")
-  public ResponseEntity<AuthJoinResponse> join(@Valid @RequestBody AuthUserJoinRequest authUserJoinRequest) {
+  public ResponseEntity<AuthJoinResponse> userJoin(@Valid @RequestBody AuthUserJoinRequest authUserJoinRequest) {
     AuthJoinResponse response = authService.userJoin(authUserJoinRequest);
     return ResponseEntity.ok(response);
   }
