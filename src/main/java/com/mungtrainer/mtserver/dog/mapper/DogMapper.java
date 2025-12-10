@@ -66,17 +66,6 @@ public interface DogMapper {
                   @Param("updatedBy") Long updatedBy);
 
     /**
-     * 프로필 이미지 업데이트
-     * @param dogId 반려견 ID
-     * @param profileImage 프로필 이미지 URL
-     * @param updatedBy 수정자 ID
-     * @return 수정된 행 수
-     */
-    int updateProfileImage(@Param("dogId") Long dogId,
-                          @Param("profileImage") String profileImage,
-                          @Param("updatedBy") Long updatedBy);
-
-    /**
      * 반려견 정보 삭제 (소프트 삭제)
      * @param dogId 반려견 ID
      * @param userId 사용자 ID (권한 확인용)
@@ -96,9 +85,4 @@ public interface DogMapper {
     boolean existsByUserIdAndName(@Param("userId") Long userId,
                                   @Param("name") String name);
 
-    /**
-     * 마지막으로 생성된 반려견 ID 조회
-     * @return 마지막 생성 ID
-     */
-    Long selectLastInsertId();
 }

@@ -1,6 +1,45 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "https://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
 <mapper namespace="com.mungtrainer.mtserver.user.mapper.UserMapper">
+
+    <resultMap id="userResultMap" type="com.mungtrainer.mtserver.user.entity.User">
+        <id property="userId" column="user_id"/>
+        <result property="userName" column="user_name"/>
+        <result property="name" column="name"/>
+        <result property="birth" column="birth"/>
+        <result property="email" column="email"/>
+        <result property="phone" column="phone"/>
+        <result property="profileImage" column="profile_image"/>
+        <result property="isPublic" column="is_public"/>
+        <result property="role" column="role"/>
+        <result property="sido" column="sido"/>
+        <result property="sigungu" column="sigungu"/>
+        <result property="roadname" column="roadname"/>
+        <result property="restAddress" column="rest_address"/>
+        <result property="postcode" column="postcode"/>
+    </resultMap>
+
+    <select id="findById" resultMap="userResultMap">
+        SELECT *
+        FROM user
+        WHERE user_id = #{userId}
+    </select>
+
+    <update id="updateUserProfile">
+        UPDATE user
+        SET name = #{name},
+            birth = #{birth},
+            phone = #{phone},
+            profile_image = #{profileImage},
+            is_public = #{isPublic},
+            sido = #{sido},
+            sigungu = #{sigungu},
+            roadname = #{roadname},
+            rest_address = #{restAddress},
+            postcode = #{postcode}
+        WHERE user_id = #{userId}
+    </update>
 
 </mapper>
