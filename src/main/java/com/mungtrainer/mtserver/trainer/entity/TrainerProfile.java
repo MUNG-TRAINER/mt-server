@@ -45,6 +45,11 @@ public class TrainerProfile extends BaseEntity {
     private String tag;
 
     /**
+     * 등록 코드
+     */
+    private String registCode;
+
+    /**
      * 자격증 이미지 URL
      */
     private String certificationImageUrl;
