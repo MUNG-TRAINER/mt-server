@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mungtrainer.mtserver.training.dao.ApplicationDao">
+
+    <!-- 유저 Id로 신청 리스트 조회 -->
+    <select id="findByUserId" parameterType="long" resultType="com.mungtrainer.mtserver.training.entity.TrainingCourseApplication">
+        SELECT a.*
+        FROM training_course_application a
+                 JOIN dog d ON a.dog_id = d.dog_id
+        WHERE d.user_id = #{userId}
+          AND a.is_deleted = 0
+        ORDER BY a.applied_at DESC
+    </select>
+
+    <!-- 신청 상세 조회 -->
+    <select id="findById" parameterType="long" resultType="com.mungtrainer.mtserver.training.entity.TrainingCourseApplication">
+        SELECT *
+        FROM training_course_application
+        WHERE application_id = #{applicationId}
+          AND is_deleted = 0
+    </select>
+
+    <!-- 신청 생성 -->
+    <insert id="insertApplication" parameterType="com.mungtrainer.mtserver.training.entity.TrainingCourseApplication" useGeneratedKeys="true" keyProperty="applicationId">
+        INSERT INTO training_course_application (
+            session_id,
+            dog_id,
+            applied_at,
+            status,
+            reject_reason,
+            created_by,
+            created_at,
+            updated_by,
+            updated_at,
+            is_deleted
+        ) VALUES (
+                     #{sessionId},
+                     #{dogId},
+                     #{appliedAt},
+                     #{status},
+                     #{rejectReason},
+                     1,
+                     #{appliedAt},
+                     1,
+                     #{appliedAt},
+                     0
+                 )
+    </insert>
+
+    <select id="existsByDogAndSession" resultType="boolean" parameterType="map">
+        SELECT COUNT(*) > 0
+        FROM training_course_application
+        WHERE dog_id = #{dogId}
+          AND session_id = #{sessionId}
+          AND is_deleted = 0
+    </select>
+
+    <!-- 신청 취소 (상태 업데이트) -->
+    <update id="updateApplicationStatus" parameterType="map">
+        UPDATE training_course_application
+        SET status = #{status},
+            updated_at = NOW()
+        WHERE application_id = #{applicationId}
+    </update>
+
+</mapper>

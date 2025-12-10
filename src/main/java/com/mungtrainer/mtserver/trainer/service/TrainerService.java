@@ -46,12 +46,12 @@ public class TrainerService {
         }
 
         // 수정
-        profile.setCareerInfo(request.getCareerInfo());
-        profile.setIntroduce(request.getIntroduce());
-        profile.setDescription(request.getDescription());
-        profile.setStyle(request.getStyle());
-        profile.setTag(request.getTag());
-        profile.setCertificationImageUrl(request.getCertificationImageUrl());
+        if(request.getCareerInfo() != null) profile.setCareerInfo(request.getCareerInfo());
+        if(request.getIntroduce() != null) profile.setIntroduce(request.getIntroduce());
+        if(request.getDescription() != null) profile.setDescription(request.getDescription());
+        if(request.getStyle() != null) profile.setStyle(request.getStyle());
+        if(request.getTag() != null) profile.setTag(request.getTag());
+        if(request.getCertificationImageUrl() != null) profile.setCertificationImageUrl(request.getCertificationImageUrl());
 
         trainerDao.updateTrainerProfile(profile);
 

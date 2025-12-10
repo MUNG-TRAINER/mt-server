@@ -24,11 +24,17 @@ public class TrainerController {
     }
 
     //프로필 수정
-    @PutMapping("/me")
-    public ResponseEntity<TrainerResponse> updateTrainerProfile(@RequestBody TrainerProfileUpdateRequest request, @RequestAttribute("user")User user){
+    @PatchMapping("/me")
+//    public ResponseEntity<TrainerResponse> updateTrainerProfile(@RequestBody TrainerProfileUpdateRequest request, @RequestAttribute("user")User user){
+//        TrainerResponse profile = trainerService.updateTrainerProfile(request, user);
+//        return ResponseEntity.ok(profile);
+//    }
+
+    public ResponseEntity<TrainerResponse> updateTrainerProfile(
+            @RequestBody TrainerProfileUpdateRequest request) {
+        User user = new User();
+        user.setUserId(2L); // 테스트용 고정
         TrainerResponse profile = trainerService.updateTrainerProfile(request, user);
         return ResponseEntity.ok(profile);
     }
-
-
 }
