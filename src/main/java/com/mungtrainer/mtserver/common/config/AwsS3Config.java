@@ -19,4 +19,7 @@ public class AwsS3Config {
 
     @Value("${aws.s3.bucket}")
     private String bucket;
+
+    @Value("${aws.s3.presigned-url.expiration-minutes:10}")
+    private int presignedUrlExpirationMinutes;
 }

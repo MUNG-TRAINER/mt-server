@@ -114,7 +114,10 @@ public class CounselingService {
         }
 
         // 2. 상담 내용 업데이트 + 완료 처리
-        counselingDao.updateContentAndComplete(counselingId, requestDto.getContent(), trainerId);
+        int updatedRows = counselingDao.updateContentAndComplete(counselingId, requestDto.getContent(), trainerId);
+        if (updatedRows == 0) {
+            return new CounselingPostResponseDto(false, "상담 내용 저장에 실패했습니다.");
+        }
 
         return new CounselingPostResponseDto(true, "상담 내용이 저장되었습니다.");
     }

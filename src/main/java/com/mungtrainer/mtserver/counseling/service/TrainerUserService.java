@@ -25,19 +25,28 @@ public class TrainerUserService {
 
     // 반려견 목록 조회
     public List<DogResponse> getDogsByUser(Long userId) {
-
+// 훈련사가 해당 회원을 관리하는지 확인
+//        if (!isUserManagedByTrainer(trainerId, userId)) {
+//            throw new UnauthorizedException("해당 회원의 정보에 접근할 권한이 없습니다.");
+//        }
         // 1. DB에서 반려견 리스트 조회
         List<DogResponse> dogs = dogMapper.selectDogsByUserId(userId);
 
-        // 2. S3 Presigned URL 발급
-        return dogs.stream()
-                .map(dog -> {
-                    // DB에 저장된 S3 key를 가져와서 Presigned URL 생성
-                    String presignedUrl = s3Service.generateDownloadPresignedUrl(dog.getProfileImage());
-                    // 최종적으로 DTO 필드에 URL 세팅
-                    dog.setProfileImage(presignedUrl);
-                    return dog;
-                })
+        if (dogs.isEmpty()) return List.of();
+
+        // 2. 모든 반려견의 S3 키 추출
+        List<String> imageKeys = dogs.stream()
+                .map(DogResponse::getProfileImage)
                 .collect(Collectors.toList());
+
+        // 3. S3 Presigned URL 일괄 발급
+        List<String> presignedUrls = s3Service.generateDownloadPresignedUrls(imageKeys);
+
+        // 4. 각 반려견 객체에 URL 매핑
+        for (int i = 0; i < dogs.size(); i++) {
+            dogs.get(i).setProfileImage(presignedUrls.get(i));
+        }
+
+        return dogs;
     }
 }

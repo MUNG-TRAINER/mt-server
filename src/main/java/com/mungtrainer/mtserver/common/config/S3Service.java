@@ -30,7 +30,7 @@ public class S3Service {
 
         GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
                 .getObjectRequest(getObjectRequest)
-                .signatureDuration(Duration.ofMinutes(10))
+                .signatureDuration(Duration.ofMinutes(awsS3Config.getPresignedUrlExpirationMinutes()))
                 .build();
 
         return presigner.presignGetObject(presignRequest).url().toString();
