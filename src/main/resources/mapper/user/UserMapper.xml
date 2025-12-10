@@ -1,6 +1,49 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "https://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
 <mapper namespace="com.mungtrainer.mtserver.user.mapper.UserMapper">
+
+    <resultMap id="userResultMap" type="com.mungtrainer.mtserver.user.entity.User">
+        <id property="userId" column="user_id"/>
+        <result property="userName" column="user_name"/>
+        <result property="name" column="name"/>
+        <result property="birth" column="birth"/>
+        <result property="email" column="email"/>
+        <result property="phone" column="phone"/>
+        <result property="profileImage" column="profile_image"/>
+        <result property="isPublic" column="is_public"/>
+        <result property="role" column="role"/>
+        <result property="sido" column="sido"/>
+        <result property="sigungu" column="sigungu"/>
+        <result property="roadname" column="roadname"/>
+        <result property="restAddress" column="rest_address"/>
+        <result property="postcode" column="postcode"/>
+    </resultMap>
+
+    <select id="findById" resultMap="userResultMap">
+        SELECT user_id, user_name, name, birth, email, phone,
+               profile_image, is_public, role, sido, sigungu,
+               roadname, rest_address, postcode
+        FROM user
+        WHERE user_id = #{userId}
+    </select>
+
+    <update id="updateUserProfile">
+        UPDATE user
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="birth != null">birth = #{birth},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="profileImage != null">profile_image = #{profileImage},</if>
+            <if test="isPublic != null">is_public = #{isPublic},</if>
+            <if test="sido != null">sido = #{sido},</if>
+            <if test="sigungu != null">sigungu = #{sigungu},</if>
+            <if test="roadname != null">roadname = #{roadname},</if>
+            <if test="restAddress != null">rest_address = #{restAddress},</if>
+            <if test="postcode != null">postcode = #{postcode}</if>
+        </set>
+        WHERE user_id = #{userId}
+    </update>
 
 </mapper>
