@@ -3,10 +3,10 @@ package com.mungtrainer.mtserver.counseling.controller;
 import com.mungtrainer.mtserver.counseling.dto.request.CounselingPostRequestDto;
 import com.mungtrainer.mtserver.counseling.dto.response.CounselingDogResponseDto;
 import com.mungtrainer.mtserver.counseling.dto.response.CounselingPostResponseDto;
-import com.mungtrainer.mtserver.counseling.dto.response.TrainerDogListResponseDto;
 import com.mungtrainer.mtserver.counseling.dto.response.TrainerUserListResponseDto;
 import com.mungtrainer.mtserver.counseling.service.CounselingService;
-import com.mungtrainer.mtserver.counseling.service.TrainerService;
+import com.mungtrainer.mtserver.counseling.service.TrainerUserService;
+import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +19,7 @@ import java.util.List;
 public class CounselingTrainerController {
 
     private final CounselingService counselingService;
-    private final TrainerService trainerService;
+    private final TrainerUserService trainerService;
 
     // 상담 완료 전 후 리스트 조회
     @GetMapping("/counseling")
@@ -48,18 +48,23 @@ public class CounselingTrainerController {
     }
 
     // 훈련사가 관리하는 회원 목록 조회
-    @GetMapping("/users")
+    @GetMapping("/users/{trainerId}")
     public List<TrainerUserListResponseDto> getTrainerUsers(
-            @RequestParam Long trainerId
+            @PathVariable Long trainerId
     ) {
         return trainerService.getUsersByTrainer(trainerId);
     }
 
     // 내 회원의 반려견 목록 조회
-    @GetMapping("/dogs")
-    public List<TrainerDogListResponseDto> getTrainerDogs(
-            @RequestParam Long trainerId
+    @GetMapping("/dogs/{userId}")
+    public List<DogResponse> getDogList(
+//            @AuthenticationPrincipal JwtUser user,
+            @PathVariable Long userId
     ) {
-        return trainerService.getDogsByTrainer(trainerId);
+//        return trainerService.getDogsByTrainer(user.getId(), userId);
+        // 테스트용: 항상 userId = 2L 로 조회
+        Long fixedUserId = 1L;
+        return trainerService.getDogsByUser(fixedUserId);
     }
+
 }
