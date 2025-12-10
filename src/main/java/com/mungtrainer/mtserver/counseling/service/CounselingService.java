@@ -2,8 +2,11 @@ package com.mungtrainer.mtserver.counseling.service;
 
 import com.mungtrainer.mtserver.common.exception.InvalidInputException;
 import com.mungtrainer.mtserver.counseling.dao.CounselingDao;
+import com.mungtrainer.mtserver.counseling.dto.request.CounselingPostRequestDto;
 import com.mungtrainer.mtserver.counseling.dto.request.CreateCounselingRequestDto;
 import com.mungtrainer.mtserver.counseling.dto.response.CancelCounselingResponseDto;
+import com.mungtrainer.mtserver.counseling.dto.response.CounselingDogResponseDto;
+import com.mungtrainer.mtserver.counseling.dto.response.CounselingPostResponseDto;
 import com.mungtrainer.mtserver.counseling.dto.response.CreateCounselingResponseDto;
 import com.mungtrainer.mtserver.counseling.entity.Counseling;
 import com.mungtrainer.mtserver.common.exception.CounselingCreateException;
@@ -11,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -85,6 +89,36 @@ public class CounselingService {
             return new CancelCounselingResponseDto(true, "상담이 성공적으로 취소되었습니다.");
         }
     }
+
+    // <============ (훈련사) 상담 완료 전 후 반려견 리스트 조회 ==============>
+    public List<CounselingDogResponseDto> getDogsByCompleted(boolean completed){
+        return counselingDao.findDogsByCompleted(completed);
+    }
+
+
+    // <============ (훈련사) 상담 내용 작성 ==============>
+    public CounselingPostResponseDto addCounselingContent(
+            Long counselingId,
+            CounselingPostRequestDto requestDto,
+            Long trainerId
+    ) {
+
+        // 1. 상담 존재 여부 & 완료 여부 확인
+        Counseling counseling = counselingDao.findById(counselingId);
+        if (counseling == null) {
+            return new CounselingPostResponseDto(false, "존재하지 않는 상담입니다.");
+        }
+
+        if (Boolean.TRUE.equals(counseling.getIsCompleted())) {
+            return new CounselingPostResponseDto(false, "이미 완료된 상담입니다.");
+        }
+
+        // 2. 상담 내용 업데이트 + 완료 처리
+        counselingDao.updateContentAndComplete(counselingId, requestDto.getContent(), trainerId);
+
+        return new CounselingPostResponseDto(true, "상담 내용이 저장되었습니다.");
+    }
+
 
 
 }

@@ -29,4 +29,65 @@
         AND is_deleted = 0
     </select>
 
+    <!-- 훈련사 상담 완료 전후 반려견 리스트 조회 -->
+    <select id="findDogsByCompleted" resultType="com.mungtrainer.mtserver.counseling.dto.response.CounselingDogResponseDto">
+        SELECT
+        c.counseling_id AS counselingId,
+        d.name AS dogName,
+        u.name AS ownerName
+        FROM counseling c
+        JOIN dog d ON c.dog_id = d.dog_id
+        JOIN user u ON d.user_id = u.user_id
+        WHERE c.is_completed = CASE WHEN #{completed} = true THEN 1 ELSE 0 END
+        AND c.is_deleted = 0
+    </select>
+
+
+<!--    훈련사 상담 내용 작성-->
+    <update id="updateContentAndComplete">
+        UPDATE counseling
+        SET
+        content = #{content},
+        is_completed = 1,
+        updated_by = #{trainerId},
+        updated_at = NOW()
+        WHERE
+        counseling_id = #{counselingId}
+        AND is_deleted = 0;
+    </update>
+
+<!--    훈련사가 관리하는 회원 목록 조회-->
+    <select id="findUsersByTrainerId"
+            resultType="com.mungtrainer.mtserver.trainer.dto.TrainerUserListResponseDto">
+
+        SELECT
+        u.user_id AS userId,
+        u.name AS name,
+        u.phone AS phone,
+        u.email AS email
+        FROM trainer_user tu
+        JOIN user u ON tu.user_id = u.user_id
+        WHERE tu.trainer_id = #{trainerId}
+        AND tu.is_deleted = 0
+        AND u.is_deleted = 0;
+    </select>
+
+<!--    훈련사가 관리하는 회원들의 반려견 목록 조회-->
+    <select id="findDogsByTrainerId"
+            resultType="com.mungtrainer.mtserver.trainer.dto.TrainerDogListResponseDto">
+
+        SELECT
+        d.dog_id AS dogId,
+        d.name AS dogName,
+        u.user_id AS ownerId,
+        u.name AS ownerName
+        FROM trainer_user tu
+        JOIN user u ON tu.user_id = u.user_id
+        JOIN dog d ON d.user_id = u.user_id
+        WHERE tu.trainer_id = #{trainerId}
+        AND tu.is_deleted = 0
+        AND u.is_deleted = 0
+        AND d.is_deleted = 0;
+    </select>
+
 </mapper>
