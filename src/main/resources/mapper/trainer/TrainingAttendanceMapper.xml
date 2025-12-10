@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+                "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+        <mapper namespace="com.mungtrainer.mtserver.training.mapper.TrainingAttendanceMapper">
+
+            <resultMap id="TrainingAttendanceResultMap" type="com.mungtrainer.mtserver.training.entity.TrainingAttendance">
+                <id property="attendanceId" column="attendance_id"/>
+                <result property="applicationId" column="application_id"/>
+                <result property="status" column="status"/>
+                <result property="checkinTime" column="checkin_time"/>
+                <result property="checkoutTime" column="checkout_time"/>
+                <result property="memo" column="memo"/>
+                <result property="createdAt" column="created_at"/>
+                <result property="updatedAt" column="updated_at"/>
+            </resultMap>
+
+            <!-- 출석 목록 조회용 ResultMap (사용자 및 반려견 정보 포함) -->
+            <resultMap id="AttendanceListResultMap" type="com.mungtrainer.mtserver.training.dto.response.AttendanceListResponse">
+                <result property="attendanceId" column="attendance_id"/>
+                <result property="userName" column="user_name"/>
+                <result property="dogName" column="dog_name"/>
+                <result property="status" column="status"/>
+                <result property="checkinTime" column="checkin_time"/>
+                <result property="checkoutTime" column="checkout_time"/>
+                <result property="memo" column="memo"/>
+                <result property="createdAt" column="created_at"/>
+            </resultMap>
+
+            <!-- 특정 세션의 모든 출석 목록 조회 -->
+            <select id="findBySessionId" resultMap="AttendanceListResultMap">
+                SELECT
+                    ta.attendance_id,
+                    u.name AS user_name,
+                    d.name AS dog_name,
+                    ta.status,
+                    ta.checkin_time,
+                    ta.checkout_time,
+                    ta.memo,
+                    ta.created_at
+                FROM training_attendance ta
+                INNER JOIN training_course_application tca ON ta.application_id = tca.application_id
+                INNER JOIN dog d ON tca.dog_id = d.dog_id
+                INNER JOIN user u ON d.user_id = u.user_id
+                WHERE tca.session_id = #{sessionId}
+                AND ta.deleted_at IS NULL
+                ORDER BY u.name, ta.created_at DESC
+            </select>
+
+            <!-- 특정 세션에서 특정 사용자의 출석 정보 조회 -->
+            <select id="findBySessionIdAndUserName" resultMap="TrainingAttendanceResultMap">
+                SELECT
+                    ta.attendance_id,
+                    ta.application_id,
+                    ta.status,
+                    ta.checkin_time,
+                    ta.checkout_time,
+                    ta.memo,
+                    ta.created_at,
+                    ta.updated_at
+                FROM training_attendance ta
+                INNER JOIN training_course_application tca ON ta.application_id = tca.application_id
+                INNER JOIN dog d ON tca.dog_id = d.dog_id
+                INNER JOIN user u ON d.user_id = u.user_id
+                WHERE tca.session_id = #{sessionId}
+                AND u.name = #{userName}
+                AND ta.deleted_at IS NULL
+            </select>
+
+            <!-- 출석 상태 업데이트 -->
+            <update id="updateStatus">
+                UPDATE training_attendance ta
+                INNER JOIN training_course_application tca ON ta.application_id = tca.application_id
+                INNER JOIN dog d ON tca.dog_id = d.dog_id
+                INNER JOIN user u ON d.user_id = u.user_id
+                SET ta.status = #{status},
+                    ta.memo = #{memo},
+                    ta.updated_at = NOW()
+                WHERE tca.session_id = #{sessionId}
+                AND u.name = #{userName}
+                AND ta.deleted_at IS NULL
+            </update>
+
+        </mapper>
