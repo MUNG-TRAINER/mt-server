@@ -10,7 +10,9 @@ public interface CounselingDao {
     int insertCounseling(Counseling counseling);
 
     // 상담 취소
-    int cancelCounseling(Long counselingId);
+    int cancelCounseling(@Param("counselingId") Long counselingId);
 
-//    Counseling selectCounselingById(Long counselingId);
+    // 상담 조회
+    Counseling findById(@Param("counselingId") Long counselingId);
+
 }
