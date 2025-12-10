@@ -8,9 +8,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 반려견 정보 서비스
@@ -22,18 +23,15 @@ import java.util.List;
 public class DogService {
 
     private final DogMapper dogMapper;
-    // TODO: 이미지 업로드 서비스 추가 필요
-    // private final ImageUploadService imageUploadService;
 
     /**
      * 반려견 정보 생성
      * @param userId 사용자 ID
-     * @param request 반려견 생성 요청 정보
-     * @param profileImage 프로필 이미지 (선택)
+     * @param request 반려견 생성 요청 정보 (profileImageUrl 포함)
      * @return 생성된 반려견 ID
      */
     @Transactional
-    public Long createDog(Long userId, DogCreateRequest request, MultipartFile profileImage) {
+    public Long createDog(Long userId, DogCreateRequest request) {
         log.info("반려견 생성 요청 - userId: {}, dogName: {}", userId, request.getName());
 
         // 이름 중복 확인
@@ -41,21 +39,24 @@ public class DogService {
             throw new IllegalArgumentException("이미 등록된 반려견 이름입니다: " + request.getName());
         }
 
-        // 반려견 정보 저장
-        int result = dogMapper.insertDog(userId, request, userId);
+        // 파라미터 맵 생성
+        Map<String, Object> params = new HashMap<>();
+        params.put("userId", userId);
+        params.put("request", request);
+        params.put("createdBy", userId);
+        params.put("updatedBy", userId);
+        params.put("dogId", null); // MyBatis가 생성된 ID를 여기에 넣음
+
+        // 반려견 정보 저장 (프로필 이미지 URL 포함)
+        int result = dogMapper.insertDog(params);
         if (result == 0) {
             throw new RuntimeException("반려견 정보 저장에 실패했습니다");
         }
 
-        // 생성된 ID 조회
-        Long dogId = dogMapper.selectLastInsertId();
-
-        // 프로필 이미지 업로드 (선택사항)
-        if (profileImage != null && !profileImage.isEmpty()) {
-            // TODO: 이미지 업로드 로직 구현
-            // String imageUrl = imageUploadService.uploadImage(profileImage, "dog/" + dogId);
-            // dogMapper.updateProfileImage(dogId, imageUrl, userId);
-            log.info("프로필 이미지 업로드 예정 - dogId: {}", dogId);
+        // 생성된 ID 가져오기
+        Long dogId = (Long) params.get("dogId");
+        if (dogId == null) {
+            throw new RuntimeException("생성된 반려견 ID를 가져오지 못했습니다");
         }
 
         log.info("반려견 생성 완료 - dogId: {}", dogId);
@@ -102,11 +103,10 @@ public class DogService {
      * 반려견 정보 수정
      * @param userId 사용자 ID
      * @param dogId 반려견 ID
-     * @param request 수정 요청 정보
-     * @param profileImage 프로필 이미지 (선택)
+     * @param request 수정 요청 정보 (profileImageUrl 포함)
      */
     @Transactional
-    public void updateDog(Long userId, Long dogId, DogUpdateRequest request, MultipartFile profileImage) {
+    public void updateDog(Long userId, Long dogId, DogUpdateRequest request) {
         log.info("반려견 정보 수정 요청 - userId: {}, dogId: {}", userId, dogId);
 
         // 소유자 확인
@@ -122,19 +122,12 @@ public class DogService {
             }
         }
 
-        // 반려견 정보 수정
+        // 반려견 정보 수정 (프로필 이미지 URL 포함)
         int result = dogMapper.updateDog(dogId, userId, request, userId);
         if (result == 0) {
             throw new RuntimeException("반려견 정보 수정에 실패했습니다");
         }
 
-        // 프로필 이미지 업데이트 (선택사항)
-        if (profileImage != null && !profileImage.isEmpty()) {
-            // TODO: 이미지 업로드 로직 구현
-            // String imageUrl = imageUploadService.uploadImage(profileImage, "dog/" + dogId);
-            // dogMapper.updateProfileImage(dogId, imageUrl, userId);
-            log.info("프로필 이미지 업데이트 예정 - dogId: {}", dogId);
-        }
 
         log.info("반려견 정보 수정 완료 - dogId: {}", dogId);
     }

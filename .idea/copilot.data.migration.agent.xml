@@ -4,6 +4,7 @@
     <option name="pendingSessionIds">
       <option value="1d46f2e7-82d0-452f-a26a-3fb0d884e792" />
       <option value="60c8aefc-7f1d-4eb8-b655-53dc8a71911d" />
+      <option value="75c9b6a9-f67d-49eb-af78-82f9b134a041" />
     </option>
     <option name="pendingTurns">
       <map>
@@ -32,10 +33,47 @@
               <option value="7692f244-c4f5-460d-bad2-5c72d85f598d" />
               <option value="7bfb67e1-973f-4de9-af86-b4d9c360a2b6" />
               <option value="00ab5db4-5fdb-4f81-b054-afda83ecba7c" />
+              <option value="1b58fe56-3184-4728-93da-e79f1120edc1" />
+              <option value="e8fb6b4b-4d8b-40e5-b317-0b135cca9691" />
+              <option value="b536975e-b6e2-432e-999c-cea2fcb156e3" />
+              <option value="ba6cd321-f5ab-4dd0-a127-67009f1850f4" />
+              <option value="28b95b6a-0188-446b-a13c-f9424f7f8190" />
+              <option value="1b25d41a-7b41-438c-8758-2098d6e16c52" />
+              <option value="4ad8a3c1-9810-4351-8ea7-dafabecf2217" />
+              <option value="93820e88-22fb-4036-aa37-c72a205b3b0e" />
+              <option value="88bab9de-fac6-4490-815d-9b92f10a1e82" />
+              <option value="6d657513-576d-4acb-b257-aaa58333afd0" />
+              <option value="0ac4afb4-e4d6-4b08-9d4d-25c3e1fbce9e" />
+              <option value="7b8a315b-37b7-443a-9646-c3b0affe4d5b" />
+              <option value="fb750363-9f37-4a2f-a5a1-795d2202fb48" />
+              <option value="e602d8fe-f6fa-4290-90f7-9aad7ea1fd70" />
+              <option value="d82383ea-8e18-49f0-922b-8f04ad4785fc" />
+              <option value="172c2f69-96f5-4f8b-b820-be74dcf5b44d" />
+              <option value="6f640bf2-b73e-4cb4-bc78-45a0a354dc8f" />
+              <option value="f1e8de61-5dd3-4c3a-83c7-0c02fb9d418a" />
+            </set>
+          </value>
+        </entry>
+        <entry key="75c9b6a9-f67d-49eb-af78-82f9b134a041">
+          <value>
+            <set>
+              <option value="03c6be2c-3b19-430a-9c42-2924f496db53" />
+              <option value="885de2d6-1493-4183-915e-27daadedca52" />
+              <option value="a76ac0b5-be84-44dd-bf80-5f184a3098c6" />
             </set>
           </value>
         </entry>
       </map>
     </option>
+    <pendingWorkingSetItems>
+      <entry key="60c8aefc-7f1d-4eb8-b655-53dc8a71911d">
+        <set>
+          <option value="file://$PROJECT_DIR$/src/main/java/com/mungtrainer/mtserver/dog/service/DogService.java" />
+          <option value="file://$PROJECT_DIR$/src/main/resources/mapper/dog/DogMapper.xml" />
+          <option value="file://$PROJECT_DIR$/src/main/java/com/mungtrainer/mtserver/dog/controller/DogController.java" />
+          <option value="file://$PROJECT_DIR$/src/main/java/com/mungtrainer/mtserver/dog/mapper/DogMapper.java" />
+        </set>
+      </entry>
+    </pendingWorkingSetItems>
   </component>
 </project>

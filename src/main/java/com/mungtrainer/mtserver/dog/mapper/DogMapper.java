@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 반려견 정보 매퍼 인터페이스
@@ -16,14 +17,10 @@ public interface DogMapper {
 
     /**
      * 반려견 정보 생성
-     * @param userId 사용자 ID
-     * @param request 반려견 생성 요청 정보
-     * @param createdBy 생성자 ID
+     * @param params userId, request, createdBy, updatedBy, dogId를 포함한 맵
      * @return 생성된 행 수
      */
-    int insertDog(@Param("userId") Long userId,
-                  @Param("request") DogCreateRequest request,
-                  @Param("createdBy") Long createdBy);
+    int insertDog(Map<String, Object> params);
 
     /**
      * 반려견 정보 조회 (단건)

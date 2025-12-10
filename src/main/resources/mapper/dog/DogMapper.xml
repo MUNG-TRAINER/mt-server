@@ -22,7 +22,7 @@
     </resultMap>
 
     <!-- 반려견 생성 -->
-    <insert id="insertDog" useGeneratedKeys="true" keyProperty="request.dogId">
+    <insert id="insertDog" parameterType="map">
         INSERT INTO dog (
             user_id,
             name,
@@ -34,6 +34,7 @@
             personality,
             habits,
             health_info,
+            profile_image,
             created_by,
             created_at,
             updated_by,
@@ -50,12 +51,16 @@
             #{request.personality},
             #{request.habits},
             #{request.healthInfo},
+            #{request.profileImageUrl},
             #{createdBy},
             NOW(),
-            #{createdBy},
+            #{updatedBy},
             NOW(),
             0
         )
+        <selectKey keyProperty="dogId" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
     </insert>
 
     <!-- 반려견 단건 조회 -->
@@ -160,6 +165,7 @@
             <if test="request.personality != null">personality = #{request.personality},</if>
             <if test="request.habits != null">habits = #{request.habits},</if>
             <if test="request.healthInfo != null">health_info = #{request.healthInfo},</if>
+            <if test="request.profileImageUrl != null">profile_image = #{request.profileImageUrl},</if>
             updated_by = #{updatedBy},
             updated_at = NOW()
         </set>
