@@ -1,13 +1,11 @@
-package com.mungtrainer.mtserver.trainer.dto.response;
-
-
-import lombok.Builder;
+package com.mungtrainer.mtserver.trainer.dto.request;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
-@Builder
-public class TrainerResponse {
-    private Long trainerId;
+@Setter
+public class TrainerProfileUpdateRequest {
+
     private String careerInfo;
     private String introduce;
     private String description;

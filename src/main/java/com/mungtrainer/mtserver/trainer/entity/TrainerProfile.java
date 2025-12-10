@@ -50,11 +50,6 @@ public class TrainerProfile extends BaseEntity {
     private String registCode;
 
     /**
-     * 인기 훈련사 여부
-     */
-    private Boolean isPopular;
-
-    /**
      * 자격증 이미지 URL
      */
     private String certificationImageUrl;
