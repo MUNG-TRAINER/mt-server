@@ -20,11 +20,11 @@ public class TrainerService {
         TrainerProfile profile = trainerDao.findById(trainerId);
 
         if (profile == null) {
-            // **
             throw new RuntimeException("훈련사 프로필을 찾을 수 없습니다.");
         }
 
         return TrainerResponse.builder()
+                .trainerId(profile.getTrainerId())
                 .careerInfo(profile.getCareerInfo())
                 .introduce(profile.getIntroduce())
                 .description(profile.getDescription())
@@ -56,6 +56,7 @@ public class TrainerService {
         trainerDao.updateTrainerProfile(profile);
 
         return TrainerResponse.builder()
+                .trainerId(profile.getTrainerId())
                 .careerInfo(profile.getCareerInfo())
                 .introduce(profile.getIntroduce())
                 .description(profile.getDescription())
