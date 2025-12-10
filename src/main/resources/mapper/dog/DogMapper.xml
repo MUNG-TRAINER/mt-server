@@ -174,16 +174,6 @@
           AND is_deleted = 0
     </update>
 
-    <!-- 프로필 이미지 업데이트 -->
-    <update id="updateProfileImage">
-        UPDATE dog
-        SET profile_image = #{profileImage},
-            updated_by = #{updatedBy},
-            updated_at = NOW()
-        WHERE dog_id = #{dogId}
-          AND is_deleted = 0
-    </update>
-
     <!-- 반려견 삭제 (소프트 삭제) -->
     <update id="deleteDog">
         UPDATE dog
@@ -205,11 +195,6 @@
               AND name = #{name}
               AND is_deleted = 0
         )
-    </select>
-
-    <!-- 마지막 생성 ID 조회 -->
-    <select id="selectLastInsertId" resultType="Long">
-        SELECT LAST_INSERT_ID()
     </select>
 
 </mapper>

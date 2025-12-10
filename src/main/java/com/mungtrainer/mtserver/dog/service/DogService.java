@@ -6,6 +6,7 @@ import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
 import com.mungtrainer.mtserver.dog.mapper.DogMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +37,8 @@ public class DogService {
 
         // 이름 중복 확인
         if (dogMapper.existsByUserIdAndName(userId, request.getName())) {
-            throw new IllegalArgumentException("이미 등록된 반려견 이름입니다: " + request.getName());
+          log.warn("반려견 이름 중복 - userId: {}, name: {}", userId, request.getName());
+          throw new IllegalArgumentException("이미 등록된 반려견 이름입니다");
         }
 
         // 파라미터 맵 생성
@@ -48,9 +50,10 @@ public class DogService {
         params.put("dogId", null); // MyBatis가 생성된 ID를 여기에 넣음
 
         // 반려견 정보 저장 (프로필 이미지 URL 포함)
-        int result = dogMapper.insertDog(params);
-        if (result == 0) {
-            throw new RuntimeException("반려견 정보 저장에 실패했습니다");
+        try {
+          int result = dogMapper.insertDog(params);
+        } catch (DuplicateKeyException e) {
+          throw new IllegalArgumentException("이미 등록된 반려견 이름입니다");
         }
 
         // 생성된 ID 가져오기
@@ -73,7 +76,8 @@ public class DogService {
 
         DogResponse dog = dogMapper.selectDogById(dogId);
         if (dog == null) {
-            throw new IllegalArgumentException("존재하지 않는 반려견입니다: " + dogId);
+          log.warn("존재하지 않는 반려견 조회 시도 - dogId: {}", dogId);
+          throw new IllegalArgumentException("존재하지 않는 반려견입니다");
         }
 
         return dog;
@@ -127,7 +131,6 @@ public class DogService {
         if (result == 0) {
             throw new RuntimeException("반려견 정보 수정에 실패했습니다");
         }
-
 
         log.info("반려견 정보 수정 완료 - dogId: {}", dogId);
     }

@@ -43,7 +43,7 @@ public class DogUpdateRequest {
     @Size(max = 255, message = "건강 정보는 255자 이내로 입력해주세요")
     private String healthInfo;
 
-    //추가: 프로필 이미지 URL (선택)
+    //프로필 이미지 URL (선택)
     @Size(max = 500, message = "프로필 이미지 URL은 500자 이내로 입력해주세요")
     private String profileImageUrl;
 }

@@ -39,28 +39,28 @@ package com.mungtrainer.mtserver.dog.controller;
             return ResponseEntity.status(HttpStatus.CREATED).body(dogId);
         }
 
-    /**
-     * 반려견 정보 조회
-     * @param dogId 반려견 ID
-     * @return 반려견 정보
-     */
-    @GetMapping("/dogs/{dogId}")
-    public ResponseEntity<DogResponse> getDog(@PathVariable Long dogId) {
-        log.info("반려견 조회 API 호출 - dogId: {}", dogId);
-        DogResponse dog = dogService.getDog(dogId);
-        return ResponseEntity.ok(dog);
-    }
+        /**
+         * 반려견 정보 조회
+         * @param dogId 반려견 ID
+         * @return 반려견 정보
+         */
+        @GetMapping("/dogs/{dogId}")
+        public ResponseEntity<DogResponse> getDog(@PathVariable Long dogId) {
+            log.info("반려견 조회 API 호출 - dogId: {}", dogId);
+            DogResponse dog = dogService.getDog(dogId);
+            return ResponseEntity.ok(dog);
+        }
 
-    /**
-     * 본인의 반려견 리스트 조회 (임시: userId=2 고정)
-     * @return 반려견 리스트
-     */
-    @GetMapping("/dogs")
-    public ResponseEntity<List<DogResponse>> getMyDogs() {
-        log.info("본인 반려견 리스트 조회 API 호출 - userId: {}", TEMP_USER_ID);
-        List<DogResponse> dogs = dogService.getMyDogs(TEMP_USER_ID);
-        return ResponseEntity.ok(dogs);
-    }
+        /**
+         * 본인의 반려견 리스트 조회 (임시: userId=2 고정)
+         * @return 반려견 리스트
+         */
+        @GetMapping("/dogs")
+        public ResponseEntity<List<DogResponse>> getMyDogs() {
+            log.info("본인 반려견 리스트 조회 API 호출 - userId: {}", TEMP_USER_ID);
+            List<DogResponse> dogs = dogService.getMyDogs(TEMP_USER_ID);
+            return ResponseEntity.ok(dogs);
+        }
 
         /**
          * 타인의 반려견 리스트 조회
