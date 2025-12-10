@@ -16,7 +16,7 @@ public class AuthUserJoinRequest {
   @NotBlank(message = "이름은 필수입니다.")
   private String name;
 
-  @NotNull(message = "생년월일을 필수입니다.")
+  @NotNull(message = "생년월일은 필수입니다.")
   private LocalDate birth;
 
   @NotBlank(message = "이메일은 필수입니다.")
