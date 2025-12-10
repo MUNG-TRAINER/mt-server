@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AgentMigrationStateService">
+    <option name="pendingSessionIds">
+      <option value="1d46f2e7-82d0-452f-a26a-3fb0d884e792" />
+      <option value="60c8aefc-7f1d-4eb8-b655-53dc8a71911d" />
+    </option>
+    <option name="pendingTurns">
+      <map>
+        <entry key="1d46f2e7-82d0-452f-a26a-3fb0d884e792">
+          <value>
+            <set>
+              <option value="ba425f21-8e56-4291-a304-30f342863eb1" />
+              <option value="f19a0d9f-aebd-4da2-a1d6-0915308f6558" />
+              <option value="0c082ea2-6f9b-43c5-9ffd-d63cd4649055" />
+            </set>
+          </value>
+        </entry>
+        <entry key="60c8aefc-7f1d-4eb8-b655-53dc8a71911d">
+          <value>
+            <set>
+              <option value="a3d51246-a598-4c5f-b74b-2096bb7ef353" />
+              <option value="6fbed831-0867-4676-ac17-46179615ff90" />
+              <option value="0b2ccdcb-269e-49b8-9938-c0896d4d3cff" />
+              <option value="9409baf9-86bc-4df8-9229-8b939bb1ce81" />
+              <option value="971afb61-6721-4b83-8934-3699aa4d6188" />
+              <option value="d32d0eca-2876-4e2f-a78f-88d48a81dd03" />
+              <option value="aa4d2a1a-1836-443d-a885-381b2594e86c" />
+              <option value="23447b4a-a6bf-452a-a7d2-afe7ed5f59f1" />
+              <option value="055b3654-7d9b-4507-b01e-deebf0efde35" />
+              <option value="0f4e803e-b6c8-47a4-a5c3-21883074fa8d" />
+              <option value="7692f244-c4f5-460d-bad2-5c72d85f598d" />
+              <option value="7bfb67e1-973f-4de9-af86-b4d9c360a2b6" />
+            </set>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
