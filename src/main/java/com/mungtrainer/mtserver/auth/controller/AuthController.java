@@ -3,6 +3,7 @@ package com.mungtrainer.mtserver.auth.controller;
 import com.mungtrainer.mtserver.auth.dto.request.AuthTrainerJoinRequest;
 import com.mungtrainer.mtserver.auth.dto.request.AuthUserJoinRequest;
 import com.mungtrainer.mtserver.auth.dto.request.LoginRequest;
+import com.mungtrainer.mtserver.auth.dto.response.AuthDuplicatedCheckResponse;
 import com.mungtrainer.mtserver.auth.dto.response.AuthJoinResponse;
 import com.mungtrainer.mtserver.auth.dto.response.LoginResponse;
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
@@ -141,4 +142,14 @@ public class AuthController {
 
     return ResponseEntity.ok(new LoginResponse("토큰 재발급 성공"));
   }
+
+  @GetMapping("/check-email")
+  public ResponseEntity<AuthDuplicatedCheckResponse> emailDuplicatedCheck(@RequestParam("email") String email) {
+    return ResponseEntity.ok(authService.emailDuplicatedCheck(email));
+  }
+  @GetMapping("/check-username")
+  public ResponseEntity<AuthDuplicatedCheckResponse> userNameDuplicatedCheck(@RequestParam("username") String userName) {
+    return ResponseEntity.ok(authService.userNameDuplicatedCheck(userName));
+  }
+
 }

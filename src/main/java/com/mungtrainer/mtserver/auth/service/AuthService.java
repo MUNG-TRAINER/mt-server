@@ -3,6 +3,7 @@ package com.mungtrainer.mtserver.auth.service;
 import com.mungtrainer.mtserver.auth.dao.AuthDAO;
 import com.mungtrainer.mtserver.auth.dto.request.AuthTrainerJoinRequest;
 import com.mungtrainer.mtserver.auth.dto.request.AuthUserJoinRequest;
+import com.mungtrainer.mtserver.auth.dto.response.AuthDuplicatedCheckResponse;
 import com.mungtrainer.mtserver.auth.dto.response.AuthJoinResponse;
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
@@ -25,6 +26,24 @@ public class AuthService {
 
   public enum Role {
     USER, TRAINER, ADMIN
+  }
+
+  @Transactional
+  public AuthDuplicatedCheckResponse emailDuplicatedCheck(String email) {
+    boolean isValid = !authDAO.existsEmail(email);
+    return AuthDuplicatedCheckResponse.builder()
+        .isValid(isValid)
+        .message(isValid ? "사용 가능 이메일입니다." : "사용 중인 이메일입니다.")
+        .build();
+  }
+
+  @Transactional(readOnly = true)
+  public AuthDuplicatedCheckResponse userNameDuplicatedCheck(String userName) {
+    boolean isValid = !authDAO.existsUsername(userName);
+    return AuthDuplicatedCheckResponse.builder()
+        .isValid(isValid)
+        .message(isValid ? "사용 가능한 아이디입니다." : "사용 중인 아이디입니다.")
+        .build();
   }
 
   @Transactional
