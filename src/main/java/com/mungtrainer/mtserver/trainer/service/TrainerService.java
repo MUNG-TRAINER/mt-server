@@ -14,26 +14,6 @@ public class TrainerService {
 
     private final TrainerDao trainerDao;
 
-     // 훈련사 프로필 조회
-    public TrainerResponse getTrainerProfileById(Long trainerId) {
-
-        TrainerProfile profile = trainerDao.findById(trainerId);
-
-        if (profile == null) {
-            throw new RuntimeException("훈련사 프로필을 찾을 수 없습니다.");
-        }
-
-        return TrainerResponse.builder()
-                .trainerId(profile.getTrainerId())
-                .careerInfo(profile.getCareerInfo())
-                .introduce(profile.getIntroduce())
-                .description(profile.getDescription())
-                .style(profile.getStyle())
-                .tag(profile.getTag())
-                .certificationImageUrl(profile.getCertificationImageUrl())
-                .build();
-    }
-
      // 로그인한 훈련사 프로필 수정
     public TrainerResponse updateTrainerProfile(TrainerProfileUpdateRequest request, User user) {
 

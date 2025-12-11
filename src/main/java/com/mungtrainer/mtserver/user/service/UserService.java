@@ -1,5 +1,8 @@
 package com.mungtrainer.mtserver.user.service;
 
+import com.mungtrainer.mtserver.common.config.S3Service;
+import com.mungtrainer.mtserver.trainer.dto.response.TrainerResponse;
+import com.mungtrainer.mtserver.trainer.entity.TrainerProfile;
 import com.mungtrainer.mtserver.user.dto.request.UserProfileUpdateRequest;
 import com.mungtrainer.mtserver.user.dto.response.UserProfileResponse;
 import com.mungtrainer.mtserver.user.entity.User;
@@ -14,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserMapper userMapper;
+    private final S3Service s3Service;
 
     /**
      * 공통 프로필 조회
@@ -37,6 +41,32 @@ public class UserService {
                 .roadname(user.getRoadname())
                 .restAddress(user.getRestAddress())
                 .postcode(user.getPostcode())
+                .build();
+    }
+
+    // 훈련사 프로필 조회
+    public TrainerResponse getTrainerProfileById(Long trainerId) {
+
+        TrainerProfile profile = userMapper.findByTrainerId(trainerId);
+
+        if (profile == null) {
+            throw new RuntimeException("훈련사 프로필을 찾을 수 없습니다.");
+        }
+        // DB에 저장된 파일 key
+        String fileKey = profile.getCertificationImageUrl();
+
+        // presigned URL 생성
+        String presignedUrl = s3Service.generateDownloadPresignedUrl(fileKey);
+
+
+        return TrainerResponse.builder()
+                .trainerId(profile.getTrainerId())
+                .careerInfo(profile.getCareerInfo())
+                .introduce(profile.getIntroduce())
+                .description(profile.getDescription())
+                .style(profile.getStyle())
+                .tag(profile.getTag())
+                .certificationImageUrl(presignedUrl)
                 .build();
     }
 

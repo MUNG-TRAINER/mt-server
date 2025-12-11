@@ -1,5 +1,6 @@
 package com.mungtrainer.mtserver.user.controller;
 
+import com.mungtrainer.mtserver.trainer.dto.response.TrainerResponse;
 import com.mungtrainer.mtserver.user.dto.request.UserProfileUpdateRequest;
 import com.mungtrainer.mtserver.user.dto.response.UserProfileResponse;
 import com.mungtrainer.mtserver.user.service.UserService;
@@ -36,4 +37,12 @@ public class UserController {
         UserProfileResponse response = userService.updateUserProfile(userId, request);
         return ResponseEntity.ok(response);
     }
+
+    //훈련사 프로필 조회
+    @GetMapping("/trainers/{trainerId}")
+    public ResponseEntity<TrainerResponse> getTrainerProfileById(@PathVariable Long trainerId){
+        TrainerResponse profile = userService.getTrainerProfileById(trainerId);
+        return ResponseEntity.ok(profile);
+    }
+
 }

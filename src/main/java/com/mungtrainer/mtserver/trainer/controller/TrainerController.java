@@ -16,13 +16,6 @@ import org.springframework.web.bind.annotation.*;
 public class TrainerController {
     private final TrainerService trainerService;
 
-    //프로필 조회
-    @GetMapping("/{trainerId}")
-    public ResponseEntity<TrainerResponse> getTrainerProfileById(@PathVariable Long trainerId){
-        TrainerResponse profile = trainerService.getTrainerProfileById(trainerId);
-        return ResponseEntity.ok(profile);
-    }
-
     //프로필 수정
     @PatchMapping("/me")
     public ResponseEntity<TrainerResponse> updateTrainerProfile(@RequestBody TrainerProfileUpdateRequest request, @RequestAttribute("user")User user){
