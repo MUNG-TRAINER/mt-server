@@ -44,32 +44,6 @@ public class UserService {
                 .build();
     }
 
-    // 훈련사 프로필 조회
-    public TrainerResponse getTrainerProfileById(Long trainerId) {
-
-        TrainerProfile profile = userMapper.findByTrainerId(trainerId);
-
-        if (profile == null) {
-            throw new RuntimeException("훈련사 프로필을 찾을 수 없습니다.");
-        }
-        // DB에 저장된 파일 key
-        String fileKey = profile.getCertificationImageUrl();
-
-        // presigned URL 생성
-        String presignedUrl = s3Service.generateDownloadPresignedUrl(fileKey);
-
-
-        return TrainerResponse.builder()
-                .trainerId(profile.getTrainerId())
-                .careerInfo(profile.getCareerInfo())
-                .introduce(profile.getIntroduce())
-                .description(profile.getDescription())
-                .style(profile.getStyle())
-                .tag(profile.getTag())
-                .certificationImageUrl(presignedUrl)
-                .build();
-    }
-
     /**
      * 공통 프로필 수정
      */

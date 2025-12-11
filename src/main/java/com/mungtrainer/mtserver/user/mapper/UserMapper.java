@@ -20,7 +20,6 @@ public interface UserMapper {
      */
     int updateUserProfile(User user);
 
-    // 트레이너 Id로 조회
-    TrainerProfile findByTrainerId(@Param("trainerId") Long trainerId);
+
 
 }

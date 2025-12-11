@@ -15,8 +15,16 @@ public enum ErrorCode {
   INVALID_OLD_PASSWORD(400, "비밀번호 변경에 실패했습니다."),
   INVALID_CONFIRM_PASSWORD(400, "새 비밀번호와 확인 비밀번호가 일치하지 않습니다."),
 
+    // 신청 관련
+    DUPLICATE_APPLICATION(409, "이미 신청한 세션입니다.(APPLIED 상태)"),
+    APPLICATION_NOT_FOUND(404, "신청 정보를 찾을 수 없습니다."),
+    UNAUTHORIZED_APPLICATION(403, "본인만 신청 가능합니다."),
+    APPLICATION_CREATION_FAILED(500, "신청 생성 실패"),
+
   // 출석 관련
   ATTENDANCE_UPDATE_FAILED(500,"출석 상태 변경에 실패했습니다");
+
+
 
   public final int status;
   public final String message;

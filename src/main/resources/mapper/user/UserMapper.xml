@@ -29,22 +29,6 @@
         WHERE user_id = #{userId}
     </select>
 
-    <!-- 트레이너 ID로 단건 조회 -->
-    <select id="findByTrainerId" resultType="com.mungtrainer.mtserver.trainer.entity.TrainerProfile">
-        SELECT
-            trainer_id,
-            career_info,
-            introduce,
-            description,
-            style,
-            tag,
-            certification_image_url,
-            created_at,
-            updated_at
-        FROM trainer_profile
-        WHERE trainer_id = #{trainerId}
-    </select>
-
 
     <update id="updateUserProfile">
         UPDATE user

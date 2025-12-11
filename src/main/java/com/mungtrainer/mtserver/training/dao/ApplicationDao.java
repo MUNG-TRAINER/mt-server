@@ -1,6 +1,5 @@
 package com.mungtrainer.mtserver.training.dao;
 
-import com.mungtrainer.mtserver.training.entity.TrainingCourse;
 import com.mungtrainer.mtserver.training.entity.TrainingCourseApplication;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;

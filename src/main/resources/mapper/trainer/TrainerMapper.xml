@@ -20,7 +20,6 @@
         WHERE trainer_id = #{trainerId}
     </select>
 
-
     <!-- 트레이너 프로필 업데이트 -->
     <update id="updateTrainerProfile" parameterType="com.mungtrainer.mtserver.trainer.entity.TrainerProfile">
         UPDATE trainer_profile

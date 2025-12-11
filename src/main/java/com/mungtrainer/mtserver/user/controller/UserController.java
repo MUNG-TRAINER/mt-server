@@ -1,6 +1,7 @@
 package com.mungtrainer.mtserver.user.controller;
 
 import com.mungtrainer.mtserver.trainer.dto.response.TrainerResponse;
+import com.mungtrainer.mtserver.trainer.service.TrainerService;
 import com.mungtrainer.mtserver.user.dto.request.UserProfileUpdateRequest;
 import com.mungtrainer.mtserver.user.dto.response.UserProfileResponse;
 import com.mungtrainer.mtserver.user.service.UserService;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final TrainerService trainerService;
 
     /**
      * 사용자 프로필 조회
@@ -39,10 +41,11 @@ public class UserController {
     }
 
     //훈련사 프로필 조회
-    @GetMapping("/{trainerId}")
+    @GetMapping("/trainer/{trainerId}")
     public ResponseEntity<TrainerResponse> getTrainerProfileById(@PathVariable Long trainerId){
-        TrainerResponse profile = userService.getTrainerProfileById(trainerId);
+        TrainerResponse profile = trainerService.getTrainerProfileById(trainerId);
         return ResponseEntity.ok(profile);
     }
+
 
 }
