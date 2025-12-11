@@ -156,22 +156,42 @@
     <update id="updateDog">
         UPDATE dog
         <set>
-            <if test="request.name != null">name = #{request.name},</if>
-            <if test="request.breed != null">breed = #{request.breed},</if>
-            <if test="request.age != null">age = #{request.age},</if>
-            <if test="request.gender != null">gender = #{request.gender},</if>
-            <if test="request.isNeutered != null">is_neutered = #{request.isNeutered},</if>
-            <if test="request.weight != null">weight = #{request.weight},</if>
-            <if test="request.personality != null">personality = #{request.personality},</if>
-            <if test="request.habits != null">habits = #{request.habits},</if>
-            <if test="request.healthInfo != null">health_info = #{request.healthInfo},</if>
-            <if test="request.profileImageUrl != null">profile_image = #{request.profileImageUrl},</if>
+            <if test="request.name != null and request.name != ''">
+                name = #{request.name},
+            </if>
+            <if test="request.breed != null and request.breed != ''">
+                breed = #{request.breed},
+            </if>
+            <if test="request.age != null">
+                age = #{request.age},
+            </if>
+            <if test="request.gender != null and request.gender != ''">
+                gender = #{request.gender},
+            </if>
+            <if test="request.isNeutered != null">
+                is_neutered = #{request.isNeutered},
+            </if>
+            <if test="request.weight != null">
+                weight = #{request.weight},
+            </if>
+            <if test="request.personality != null and request.personality != ''">
+                personality = #{request.personality},
+            </if>
+            <if test="request.habits != null and request.habits != ''">
+                habits = #{request.habits},
+            </if>
+            <if test="request.healthInfo != null and request.healthInfo != ''">
+                health_info = #{request.healthInfo},
+            </if>
+            <if test="request.profileImageUrl != null and request.profileImageUrl != ''">
+                profile_image = #{request.profileImageUrl},
+            </if>
             updated_by = #{updatedBy},
             updated_at = NOW()
         </set>
         WHERE dog_id = #{dogId}
-          AND user_id = #{userId}
-          AND is_deleted = 0
+        AND user_id = #{userId}
+        AND is_deleted = 0
     </update>
 
     <!-- 반려견 삭제 (소프트 삭제) -->

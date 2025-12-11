@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class AttendanceUpdateRequest {
 
     @NotBlank(message = "출석 상태는 필수입니다")
-    @Pattern(regexp = "ATTENDED|ABSENT|LATE|EXCUSED",
+    @Pattern(regexp = "PENDING|ATTENDED|ABSENT|LATE|EXCUSED",
              message = "출석 상태는 ATTENDED, ABSENT, LATE, EXCUSED 중 하나여야 합니다")
     private String status;
 
