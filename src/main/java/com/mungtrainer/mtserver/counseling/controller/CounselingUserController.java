@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users/counseling")
-public class CounselingController {
+public class CounselingUserController {
     private final CounselingService counselingService;
 
     // 상담 신청
