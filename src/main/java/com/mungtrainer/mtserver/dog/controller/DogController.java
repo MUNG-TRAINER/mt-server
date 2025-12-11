@@ -107,7 +107,7 @@ package com.mungtrainer.mtserver.dog.controller;
         /**
          * 프로필 이미지 업로드용 Presigned URL 발급 (신규 등록용)
          * @param request 파일 키 및 메타정보
-         * @return 업로드 URL 및 S3 키
+         * @return 업로드 URL
          */
         @PostMapping("/dogs/upload-url")
         public ResponseEntity<DogImageUploadResponse> generateUploadUrl(
@@ -123,7 +123,7 @@ package com.mungtrainer.mtserver.dog.controller;
          * 프로필 이미지 업로드용 Presigned URL 발급 (수정용)
          * @param dogId 반려견 ID
          * @param request 파일 키 및 메타정보
-         * @return 업로드 URL 및 S3 키
+         * @return 업로드 URL
          */
         @PostMapping("/dogs/{dogId}/upload-url")
         public ResponseEntity<DogImageUploadResponse> generateUploadUrlForUpdate(

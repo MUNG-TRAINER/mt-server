@@ -14,7 +14,7 @@ public class AttendanceUpdateRequest {
 
     @NotBlank(message = "출석 상태는 필수입니다")
     @Pattern(regexp = "PENDING|ATTENDED|ABSENT|LATE|EXCUSED",
-             message = "출석 상태는 ATTENDED, ABSENT, LATE, EXCUSED 중 하나여야 합니다")
+             message = "출석 상태는 PENDING, ATTENDED, ABSENT, LATE, EXCUSED 중 하나여야 합니다")
     private String status;
 
     @Size(max = 500, message = "메모는 500자 이내로 입력해주세요")

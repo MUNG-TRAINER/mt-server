@@ -76,7 +76,7 @@ public class S3Service {
         log.info("S3 파일 삭제 완료 - key: {}", fileKey);
       } catch (S3Exception e) {
         log.error("S3 파일 삭제 실패 - key: {}, error: {}", fileKey, e.getMessage());
-        throw new RuntimeException("S3 파일 삭제에 실패했습니다: " + fileKey, e);
+        throw new RuntimeException("S3 파일 삭제에 실패했습니다.", e);
       }
     }
 
@@ -109,7 +109,7 @@ public class S3Service {
             return presignedUrl;
         } catch (S3Exception e) {
             log.error("Presigned URL 생성 실패 - key: {}, error: {}", fileKey, e.getMessage());
-            throw new RuntimeException("Presigned URL 생성에 실패했습니다: " + fileKey, e);
+          throw new RuntimeException("Presigned URL 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.", e);
         }
     }
 
