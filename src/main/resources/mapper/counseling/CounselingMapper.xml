@@ -29,6 +29,13 @@
         AND is_deleted = 0
     </select>
 
+    <select id="selectCounselingsByDogAndTrainer" resultType="com.mungtrainer.mtserver.counseling.dto.response.CounselingResponseDto">
+        SELECT *
+        FROM counseling
+        WHERE dog_id = #{dogId}
+        AND is_deleted = 0
+    </select>
+
     <!-- 훈련사 상담 완료 전후 반려견 리스트 조회 -->
     <select id="findDogsByCompleted" resultType="com.mungtrainer.mtserver.counseling.dto.response.CounselingDogResponseDto">
         SELECT

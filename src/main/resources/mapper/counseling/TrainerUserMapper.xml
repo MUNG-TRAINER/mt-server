@@ -18,4 +18,132 @@
         AND u.is_deleted = 0
         ORDER BY u.created_at DESC
     </select>
+
+<!--    특정 반려견이 신청한 과정 중 같은 tags 기준으로 몇 회차 들었는지 조회-->
+    <select id="findTrainingApplicationsByDogId"
+            resultType="com.mungtrainer.mtserver.counseling.dto.response.TrainingApplicationResponseDto">
+        SELECT
+        c.course_id,
+        c.title AS course_title,
+        c.description AS course_description,
+        c.tags,
+        c.type,
+
+        s.session_id,
+        s.session_date,
+        s.start_time AS session_start_time,
+        s.end_time AS session_end_time,
+
+        COUNT(a.application_id) OVER (PARTITION BY c.tags) AS times_applied,
+
+
+        attended.attended_count,
+
+        ta.`status` AS attendance_status
+
+        FROM training_course c
+        JOIN training_session s ON s.course_id = c.course_id
+        JOIN training_course_application a ON a.session_id = s.session_id
+        LEFT JOIN training_attendance ta
+        ON ta.application_id = a.application_id
+        AND ta.is_deleted = 0
+
+<!--    ATTENDED 개수를 course.tags 기준으로 미리 group by 해서 가져오기-->
+        LEFT JOIN (
+        SELECT
+        c2.tags,
+        COUNT(ta2.attendance_id) AS attended_count
+        FROM training_course c2
+        JOIN training_session s2 ON s2.course_id = c2.course_id
+        JOIN training_course_application a2 ON a2.session_id = s2.session_id
+        JOIN training_attendance ta2 ON ta2.application_id = a2.application_id
+        WHERE ta2.status = 'ATTENDED'
+        GROUP BY c2.tags
+        ) attended ON attended.tags = c.tags
+
+        WHERE a.dog_id = #{dogId}
+        AND c.is_deleted = 0
+        AND a.is_deleted = 0
+        AND c.type != '다회차'
+
+        ORDER BY c.tags, s.session_date;
+    </select>
+
+<!--    신청한 다회차 course 목록-->
+    <select id="findMultiCoursesByDogId"
+            parameterType="long"
+            resultType="com.mungtrainer.mtserver.counseling.dto.response.MultiCourseGroupDto">
+
+        SELECT DISTINCT
+        tc.course_id AS courseId,
+        tc.title,
+        tc.tags,
+        tc.description,
+        tc.location,
+        tc.type,
+        tc.difficulty,
+        tc.main_image AS mainImage
+        FROM training_course tc
+        JOIN training_session ts
+        ON tc.course_id = ts.course_id
+        JOIN training_course_application tca
+        ON ts.session_id = tca.session_id
+        WHERE tca.dog_id = #{dogId}
+        AND tc.type = '다회차'
+        AND tc.is_deleted = 0
+    </select>
+
+    <select id="findSessionsWithAttendance"
+            parameterType="map"
+            resultType="com.mungtrainer.mtserver.counseling.dto.response.MultiSessionDto">
+
+        SELECT
+        ts.session_id AS sessionId,
+        ts.session_no AS sessionNo,
+        ts.session_date AS sessionDate,
+        ts.start_time AS startTime,
+        ts.end_time AS endTime,
+        ts.location_detail AS locationDetail,
+        ta.status AS attendanceStatus
+        FROM training_session ts
+        LEFT JOIN training_course_application tca
+        ON ts.session_id = tca.session_id
+        AND tca.dog_id = #{dogId}
+        LEFT JOIN training_attendance ta
+        ON tca.application_id = ta.application_id
+        WHERE ts.course_id = #{courseId}
+        ORDER BY ts.session_no
+
+    </select>
+
+
+<!--    출석률 계산용 count 쿼리-->
+<!--    총 회차 수-->
+    <select id="countSessionsByCourseId"
+            parameterType="long"
+            resultType="int">
+        SELECT COUNT(*)
+        FROM training_session
+        WHERE course_id = #{courseId}
+    </select>
+
+<!--    출석한 회차 수-->
+    <select id="countAttendedSessions"
+            parameterType="map"
+            resultType="int">
+
+        SELECT COUNT(*)
+        FROM training_attendance ta
+        JOIN training_course_application tca
+        ON ta.application_id = tca.application_id
+        JOIN training_session ts
+        ON tca.session_id = ts.session_id
+        WHERE tca.dog_id = #{dogId}
+        AND ts.course_id = #{courseId}
+        AND ta.status = 'PRESENT'
+    </select>
+
+
+
+
 </mapper>

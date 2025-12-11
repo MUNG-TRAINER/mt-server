@@ -1,14 +1,17 @@
 package com.mungtrainer.mtserver.counseling.service;
 
 import com.mungtrainer.mtserver.common.config.S3Service;
+import com.mungtrainer.mtserver.counseling.dao.CounselingDao;
 import com.mungtrainer.mtserver.counseling.dao.TrainerUserDao;
-import com.mungtrainer.mtserver.counseling.dto.response.TrainerUserListResponseDto;
+import com.mungtrainer.mtserver.counseling.dto.response.*;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
 import com.mungtrainer.mtserver.dog.mapper.DogMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -18,6 +21,7 @@ public class TrainerUserService {
     private final DogMapper dogMapper;
     private final TrainerUserDao trainerUserDao;
     private final S3Service s3Service;
+    private final CounselingDao counselingDao;
 
     public List<TrainerUserListResponseDto> getUsersByTrainer(Long trainerId) {
         return trainerUserDao.findUsersByTrainerId(trainerId);
@@ -49,4 +53,87 @@ public class TrainerUserService {
 
         return dogs;
     }
+
+    @Transactional(readOnly = true)
+    public DogStatsResponseDto getDogStats(Long dogId, Long trainerId) {
+
+        // 1. 반려견 조회 + Presigned URL 변환
+        DogResponse dog = dogMapper.selectDogById(dogId);
+        if (dog == null) {
+            throw new RuntimeException("Dog not found");
+        }
+        if (dog.getProfileImage() != null && !dog.getProfileImage().isBlank()) {
+            String presignedUrl = s3Service.generateDownloadPresignedUrl(dog.getProfileImage());
+            dog.setProfileImage(presignedUrl);
+        }
+
+        // 2. 해당 훈련사가 작성한 상담 내역 조회
+        List<CounselingResponseDto> counselings =
+                counselingDao.selectCounselingsByDogAndTrainer(dogId);
+
+        // 2. 단회차(일회차) 신청 내역 조회
+        List<TrainingApplicationResponseDto> list =
+                trainerUserDao.findTrainingApplicationsByDogId(dogId);
+
+        // timesApplied / attendedCount는 첫 row에서만 가져오기
+        Integer timesApplied = list.isEmpty() ? 0 : list.get(0).getTimesApplied();
+        Integer attendedCount = list.isEmpty() ? 0 : list.get(0).getAttendedCount();
+
+        // 응답용 세션 리스트 변환 — 통계 정보 제거
+        List<DogStatsResponseDto.TrainingSessionDto> simplified =
+                list.stream()
+                        .map(item -> DogStatsResponseDto.TrainingSessionDto.builder()
+                                .courseId(item.getCourseId())
+                                .courseTitle(item.getCourseTitle())
+                                .courseDescription(item.getCourseDescription())
+                                .tags(item.getTags())
+                                .type(item.getType())
+                                .sessionId(item.getSessionId())
+                                .sessionDate(item.getSessionDate())
+                                .sessionStartTime(item.getSessionStartTime())
+                                .sessionEndTime(item.getSessionEndTime())
+                                .build()
+                        ).toList();
+
+        // 3. 다회차 과정 목록 조회
+        List<MultiCourseGroupDto> rawMultiCourses = trainerUserDao.findMultiCoursesByDogId(dogId);
+
+
+        // 3-1. 세션 + 출석률 계산
+        for (MultiCourseGroupDto mc : rawMultiCourses) {
+
+            int totalSessions = trainerUserDao.countSessionsByCourseId(mc.getCourseId());
+            mc.setTotalSessions(totalSessions);
+
+            List<MultiSessionDto> sessions =
+                    trainerUserDao.findSessionsWithAttendance(dogId, mc.getCourseId());
+            mc.setSessions(sessions);
+
+            int attendedSessions = trainerUserDao.countAttendedSessions(dogId, mc.getCourseId());
+            mc.setAttendedSessions(attendedSessions);
+
+            double rate = totalSessions == 0 ? 0 : (attendedSessions * 100.0 / totalSessions);
+            mc.setAttendanceRate(rate);
+        }
+
+        // 3-2. tags 기준으로 그룹화
+        Map<String, List<MultiCourseGroupDto>> grouped =
+                rawMultiCourses.stream()
+                        .collect(Collectors.groupingBy(MultiCourseGroupDto::getTags));
+
+        // 3-3. 응답용 구조로 변환
+        List<MultiCourseCategory> finalGroups = grouped.entrySet().stream()
+                .map(e -> new MultiCourseCategory(e.getKey(), e.getValue()))
+                .toList();
+
+        return DogStatsResponseDto.builder()
+                .dog(dog)
+                .counselings(counselings)
+                .stats(new DogStatsResponseDto.Stats(timesApplied, attendedCount))
+                .trainingApplications(simplified)
+                .multiCourses(finalGroups)
+                .build();
+
+    }
+
 }

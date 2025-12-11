@@ -1,6 +1,7 @@
 package com.mungtrainer.mtserver.counseling.dao;
 
 import com.mungtrainer.mtserver.counseling.dto.response.CounselingDogResponseDto;
+import com.mungtrainer.mtserver.counseling.dto.response.CounselingResponseDto;
 import com.mungtrainer.mtserver.counseling.entity.Counseling;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -25,4 +26,11 @@ public interface CounselingDao {
     int updateContentAndComplete(@Param("counselingId") Long counselingId,
                                  @Param("content") String content,
                                  @Param("trainerId") Long trainerId);
+
+    /**
+     * 특정 반려견과 훈련사 기준 상담 내역 조회
+     */
+    List<CounselingResponseDto> selectCounselingsByDogAndTrainer(
+            @Param("dogId") Long dogId
+    );
 }
