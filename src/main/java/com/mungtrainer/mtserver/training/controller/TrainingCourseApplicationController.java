@@ -46,6 +46,4 @@ public class TrainingCourseApplicationController {
         return ResponseEntity.ok().build();
     }
 
-
-
 }

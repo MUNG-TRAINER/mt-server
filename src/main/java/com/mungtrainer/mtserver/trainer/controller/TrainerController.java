@@ -24,18 +24,11 @@ public class TrainerController {
         return ResponseEntity.ok(presignedUrl);
     }
 
-//    //프로필 수정
-//    @PatchMapping("/me")
-//    public ResponseEntity<TrainerResponse> updateTrainerProfile(@RequestBody TrainerProfileUpdateRequest request, @RequestAttribute("user")User user){
-//        TrainerResponse profile = trainerService.updateTrainerProfile(request, user);
-//        return ResponseEntity.ok(profile);
-//    }
     //프로필 수정
     @PatchMapping("/me")
-    public ResponseEntity<TrainerResponse> updateTrainerProfile(@RequestBody TrainerProfileUpdateRequest request){
-        User user = new User();
-        user.setUserId(1L); // 테스트용 고정
+    public ResponseEntity<TrainerResponse> updateTrainerProfile(@RequestBody TrainerProfileUpdateRequest request, @RequestAttribute("user")User user){
         TrainerResponse profile = trainerService.updateTrainerProfile(request, user);
         return ResponseEntity.ok(profile);
     }
+
 }
