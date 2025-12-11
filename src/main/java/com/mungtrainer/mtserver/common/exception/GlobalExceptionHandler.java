@@ -59,7 +59,7 @@ public class GlobalExceptionHandler {
   // 401 로그인 실패
   @ExceptionHandler(BadCredentialsException.class)
   public ResponseEntity<?> handleBadCredentials(BadCredentialsException e) {
-    ErrorCode code = ErrorCode.LOGIN_FALIED;
+    ErrorCode code = ErrorCode.LOGIN_FAILED;
 
     ErrorResponse response = ErrorResponse.builder()
                                           .status(code.getStatus())
