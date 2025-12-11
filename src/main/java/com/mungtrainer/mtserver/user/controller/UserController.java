@@ -1,11 +1,17 @@
 package com.mungtrainer.mtserver.user.controller;
 
+import com.mungtrainer.mtserver.trainer.dto.response.TrainerResponse;
+import com.mungtrainer.mtserver.trainer.service.TrainerService;
+import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
+import com.mungtrainer.mtserver.user.dto.request.UserImageUploadRequest;
 import com.mungtrainer.mtserver.user.dto.request.UserProfileUpdateRequest;
+import com.mungtrainer.mtserver.user.dto.response.UserImageUploadResponse;
 import com.mungtrainer.mtserver.user.dto.response.UserProfileResponse;
 import com.mungtrainer.mtserver.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,26 +20,49 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final TrainerService trainerService;
 
     /**
      * 사용자 프로필 조회
-     * GET /api/users/{userId}/profile
+     * GET /api/users
      */
-    @GetMapping("/{userId}/profile")
-    public ResponseEntity<UserProfileResponse> getUserProfile(@PathVariable Long userId) {
-        UserProfileResponse response = userService.getUserProfile(userId);
+    @GetMapping
+    public ResponseEntity<UserProfileResponse> getUserProfile(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        UserProfileResponse response = userService.getUserProfile(customUserDetails.getUserId());
         return ResponseEntity.ok(response);
     }
 
     /**
      * 사용자 프로필 수정
-     * PUT /api/users/{userId}/profile
+     * PUT /api/users
      */
-    @PutMapping("/{userId}/profile")
+    @PatchMapping
     public ResponseEntity<UserProfileResponse> updateUserProfile(
-            @PathVariable Long userId,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @Valid @RequestBody UserProfileUpdateRequest request) {
-        UserProfileResponse response = userService.updateUserProfile(userId, request);
+        UserProfileResponse response = userService.updateUserProfile(customUserDetails.getUserId(), request);
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * 프로필 이미지 업로드용 Presigned URL 발급
+     * POST /api/users/upload-url
+     */
+    @PostMapping("/upload-url")
+    public ResponseEntity<UserImageUploadResponse> generateUploadUrl(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @Valid @RequestBody UserImageUploadRequest request) {
+        UserImageUploadResponse response = userService.generateUploadUrl(customUserDetails.getUserId(), request);
+        return ResponseEntity.ok(response);
+    }
+
+    //훈련사 프로필 조회
+    @GetMapping("/trainer/{trainerId}")
+    public ResponseEntity<TrainerResponse> getTrainerProfileById(@PathVariable Long trainerId){
+        TrainerResponse profile = trainerService.getTrainerProfileById(trainerId);
+        return ResponseEntity.ok(profile);
+    }
+
+
 }

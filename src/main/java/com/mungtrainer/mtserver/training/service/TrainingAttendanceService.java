@@ -4,7 +4,7 @@ package com.mungtrainer.mtserver.training.service;
      import com.mungtrainer.mtserver.common.exception.ErrorCode;
      import com.mungtrainer.mtserver.training.dto.request.AttendanceUpdateRequest;
      import com.mungtrainer.mtserver.training.dto.response.AttendanceListResponse;
-     import com.mungtrainer.mtserver.training.mapper.TrainingAttendanceMapper;
+     import com.mungtrainer.mtserver.training.dao.TrainingAttendanceMapper;
      import lombok.RequiredArgsConstructor;
      import lombok.extern.slf4j.Slf4j;
      import org.springframework.stereotype.Service;

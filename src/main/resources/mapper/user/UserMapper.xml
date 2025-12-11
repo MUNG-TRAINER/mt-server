@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.mungtrainer.mtserver.user.mapper.UserMapper">
+<mapper namespace="com.mungtrainer.mtserver.user.dao.UserMapper">
 
     <resultMap id="userResultMap" type="com.mungtrainer.mtserver.user.entity.User">
         <id property="userId" column="user_id"/>
@@ -28,6 +28,7 @@
         FROM user
         WHERE user_id = #{userId}
     </select>
+
 
     <update id="updateUserProfile">
         UPDATE user
