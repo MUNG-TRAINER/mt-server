@@ -1,9 +1,11 @@
 package com.mungtrainer.mtserver.dog.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
@@ -11,6 +13,7 @@ import java.math.BigDecimal;
  * 반려견 정보 수정 요청 DTO
  */
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class DogUpdateRequest {
@@ -44,6 +47,7 @@ public class DogUpdateRequest {
     private String healthInfo;
 
     //프로필 이미지 URL (선택)
+    @JsonProperty("profileImage")
     @Size(max = 500, message = "프로필 이미지 URL은 500자 이내로 입력해주세요")
     private String profileImageUrl;
 }
