@@ -15,7 +15,7 @@ public class UserImageUploadRequest {
     private String fileKey;
 
     @NotBlank(message = "Content-Type은 필수입니다")
-    @Pattern(regexp = "^image/(jpeg|jpg|png|gif|webp)$",
+    @Pattern(regexp = "^image/(jpeg|png|gif|webp)$",
              message = "지원하지 않는 이미지 형식입니다")
     private String contentType;
 }

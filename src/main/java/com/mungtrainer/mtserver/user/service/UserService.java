@@ -54,39 +54,39 @@ public class UserService {
 
       // null이 아닌 필드만 업데이트
       if (request.getName() != null) {
-        user.setName(request.getName());
+          user.setName(request.getName());
       }
       if (request.getBirth() != null) {
-        user.setBirth(request.getBirth());
+          user.setBirth(request.getBirth());
       }
       if (request.getPhone() != null) {
-        user.setPhone(request.getPhone());
+          user.setPhone(request.getPhone());
       }
       if (request.getProfileImage() != null) {
-        user.setProfileImage(request.getProfileImage());
+          user.setProfileImage(request.getProfileImage());
       }
       if (request.getIsPublic() != null) {
-        user.setIsPublic(request.getIsPublic());
+          user.setIsPublic(request.getIsPublic());
       }
       if (request.getSido() != null) {
-        user.setSido(request.getSido());
+          user.setSido(request.getSido());
       }
       if (request.getSigungu() != null) {
-        user.setSigungu(request.getSigungu());
+          user.setSigungu(request.getSigungu());
       }
       if (request.getRoadname() != null) {
-        user.setRoadname(request.getRoadname());
+          user.setRoadname(request.getRoadname());
       }
       if (request.getRestAddress() != null) {
-        user.setRestAddress(request.getRestAddress());
+          user.setRestAddress(request.getRestAddress());
       }
       if (request.getPostcode() != null) {
-        user.setPostcode(request.getPostcode());
+          user.setPostcode(request.getPostcode());
       }
 
         int result = userMapper.updateUserProfile(user);
         if (result == 0) {
-          throw new CustomException(ErrorCode.PROFILE_UPDATE_FAILED);
+            throw new CustomException(ErrorCode.PROFILE_UPDATE_FAILED);
         }
         return convertToResponse(user);
     }
