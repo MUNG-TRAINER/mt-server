@@ -43,7 +43,7 @@ public class AuthService {
       throw new CustomException(ErrorCode.USER_USERNAME_DUPLICATE);
     }
     // Email 중복 확인
-    if (!authDAO.existsEmail(req.getEmail())) {
+    if (authDAO.existsEmail(req.getEmail())) {
       throw new CustomException(ErrorCode.USER_EMAIL_DUPLICATE);
     }
 
