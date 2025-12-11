@@ -37,7 +37,7 @@ public class AuthService {
         .build();
   }
 
-  @Transactional
+  @Transactional(readOnly = true)
   public AuthDuplicatedCheckResponse userNameDuplicatedCheck(String userName) {
     boolean isValid = !authDAO.existsUsername(userName);
     return AuthDuplicatedCheckResponse.builder()
