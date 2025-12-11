@@ -49,7 +49,7 @@ public class AuthController {
 
   @PostMapping("/login")
   public ResponseEntity<LoginResponse> login(
-      @RequestBody LoginRequest loginRequest,
+      @Valid @RequestBody LoginRequest loginRequest,
       HttpServletResponse response
   ) {
     Authentication authentication = authenticationManager.authenticate(
