@@ -158,7 +158,7 @@ public class AuthController {
       @Valid @RequestBody PasswordChangeRequest request,
       @AuthenticationPrincipal CustomUserDetails principal) {
     String userName = principal.getUsername();
-    authService.passwordChange(request,userName);
+    authService.passwordChange(request, userName);
     return ResponseEntity.ok(PasswordChangeResponse.builder().message("비밀번호 변경 성공").build());
   }
 }
