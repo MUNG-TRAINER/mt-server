@@ -105,7 +105,7 @@ public class AuthController {
     // 1. 쿠키에 RT 없거나 무효한 JWT
     if (refreshToken == null ||
         !jwtTokenProvider.validateToken(refreshToken, JwtTokenProvider.TokenType.REFRESH)) {
-      return ResponseEntity.status(401).body(new LoginResponse("Invalid refresh token"));
+      return ResponseEntity.status(401).body(new LoginResponse("유효하지 않은 리프레시 토큰입니다"));
     }
 
     // 2. username 추출
