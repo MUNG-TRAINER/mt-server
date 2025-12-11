@@ -86,7 +86,7 @@ public class AuthController {
       @AuthenticationPrincipal CustomUserDetails principal,
       HttpServletResponse response) {
     Cookie deleteAt = CookieUtil.deleteCookie(ACCESS_TOKEN);
-    Cookie deleteRt = CookieUtil.deleteCookie(ACCESS_TOKEN);
+    Cookie deleteRt = CookieUtil.deleteCookie(REFRESH_TOKEN);
 
     response.addCookie(deleteAt);
     response.addCookie(deleteRt);
