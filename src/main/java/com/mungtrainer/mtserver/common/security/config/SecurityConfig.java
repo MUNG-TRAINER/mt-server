@@ -6,6 +6,7 @@ import com.mungtrainer.mtserver.common.security.handler.CustomAuthenticationEntr
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -34,14 +35,15 @@ public class SecurityConfig {
         .sessionManagement(session ->
             session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
-                                    // 인증 없이 허용할 api
-                                   .requestMatchers("/api/auth/**").permitAll()
 
-                                    // 인증 절차 받을 api
+                                    // 인가 검증 절차 받을 api
                                    .requestMatchers("/api/trainer/**").hasAnyRole("TRAINER","ADMIN")
+                                   .requestMatchers(HttpMethod.PATCH,"/api/course/**").hasAnyRole("TRAINER","ADMIN")
+                                   .requestMatchers(HttpMethod.DELETE,"/api/course/**").hasAnyRole("TRAINER","ADMIN")
 
                                     // User 인증만 받을 api
-                                   .requestMatchers("/api/user/**").authenticated()
+                                   .requestMatchers("/api/users/**","/api/applications/**", "/api/dogs/**", "/api/auth/password").authenticated()
+
                                     // 그 외에는 인증 패스
                                    .anyRequest().permitAll()
 
