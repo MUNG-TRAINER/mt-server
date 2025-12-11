@@ -41,9 +41,9 @@ public class AuthService {
   public AuthDuplicatedCheckResponse userNameDuplicatedCheck(String userName) {
     boolean isValid = !authDAO.existsUsername(userName);
     return AuthDuplicatedCheckResponse.builder()
-                                      .isValid(isValid)
-                                      .message(isValid ? "사용 가능한 아이디입니다." : "사용 중인 아이디입니다.")
-                                      .build();
+        .isValid(isValid)
+        .message(isValid ? "사용 가능한 아이디입니다." : "사용 중인 아이디입니다.")
+        .build();
   }
 
   @Transactional
