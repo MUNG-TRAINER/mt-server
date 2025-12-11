@@ -38,11 +38,10 @@ public class SecurityConfig {
                                    .requestMatchers("/api/auth/**").permitAll()
 
                                     // 인증 절차 받을 api
-                                   .requestMatchers("/api/user/**","/api/trainer/**").authenticated()
-
-                                    // Trainer 인가 검증 받을 api
                                    .requestMatchers("/api/trainer/**").hasAnyRole("TRAINER","ADMIN")
 
+                                    // User 인증만 받을 api
+                                   .requestMatchers("/api/user/**").authenticated()
                                     // 그 외에는 인증 패스
                                    .anyRequest().permitAll()
 
