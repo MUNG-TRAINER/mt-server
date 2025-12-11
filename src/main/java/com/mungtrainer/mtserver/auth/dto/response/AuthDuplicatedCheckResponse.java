@@ -7,6 +7,6 @@ import lombok.Setter;
 @Getter
 @Builder
 public class AuthDuplicatedCheckResponse {
-  boolean isValid;
-  String message;
+  private boolean isValid;
+  private String message;
 }
