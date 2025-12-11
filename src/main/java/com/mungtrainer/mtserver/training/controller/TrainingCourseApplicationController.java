@@ -42,10 +42,10 @@ public class TrainingCourseApplicationController {
     // 훈련과정 신청 취소
     @DeleteMapping("/{applicationId}")
     public ResponseEntity<Void> deleteApplication(@RequestAttribute("user") User user, @PathVariable Long applicationId){
-
         applicationService.cancelApplication(user.getUserId(),applicationId);
         return ResponseEntity.ok().build();
     }
+
 
 
 }

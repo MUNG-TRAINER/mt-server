@@ -39,7 +39,7 @@ public class UserController {
     }
 
     //훈련사 프로필 조회
-    @GetMapping("/trainers/{trainerId}")
+    @GetMapping("/{trainerId}")
     public ResponseEntity<TrainerResponse> getTrainerProfileById(@PathVariable Long trainerId){
         TrainerResponse profile = userService.getTrainerProfileById(trainerId);
         return ResponseEntity.ok(profile);

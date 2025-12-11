@@ -16,9 +16,25 @@ import org.springframework.web.bind.annotation.*;
 public class TrainerController {
     private final TrainerService trainerService;
 
+    @GetMapping("/me/certification-upload-url")
+    public ResponseEntity<String> getCertificationUploadUrl(
+            @RequestParam String contentType,
+            @RequestAttribute("user") User user) {
+        String presignedUrl = trainerService.generateCertificationUploadUrl(user, contentType);
+        return ResponseEntity.ok(presignedUrl);
+    }
+
+//    //프로필 수정
+//    @PatchMapping("/me")
+//    public ResponseEntity<TrainerResponse> updateTrainerProfile(@RequestBody TrainerProfileUpdateRequest request, @RequestAttribute("user")User user){
+//        TrainerResponse profile = trainerService.updateTrainerProfile(request, user);
+//        return ResponseEntity.ok(profile);
+//    }
     //프로필 수정
     @PatchMapping("/me")
-    public ResponseEntity<TrainerResponse> updateTrainerProfile(@RequestBody TrainerProfileUpdateRequest request, @RequestAttribute("user")User user){
+    public ResponseEntity<TrainerResponse> updateTrainerProfile(@RequestBody TrainerProfileUpdateRequest request){
+        User user = new User();
+        user.setUserId(1L); // 테스트용 고정
         TrainerResponse profile = trainerService.updateTrainerProfile(request, user);
         return ResponseEntity.ok(profile);
     }

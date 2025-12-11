@@ -1,5 +1,6 @@
 package com.mungtrainer.mtserver.trainer.service;
 
+import com.mungtrainer.mtserver.common.config.S3Service;
 import com.mungtrainer.mtserver.trainer.dao.TrainerDao;
 import com.mungtrainer.mtserver.trainer.dto.request.TrainerProfileUpdateRequest;
 import com.mungtrainer.mtserver.trainer.dto.response.TrainerResponse;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 public class TrainerService {
 
     private final TrainerDao trainerDao;
+    private final S3Service s3Service;
 
      // 로그인한 훈련사 프로필 수정
     public TrainerResponse updateTrainerProfile(TrainerProfileUpdateRequest request, User user) {
@@ -44,5 +46,11 @@ public class TrainerService {
                 .tag(profile.getTag())
                 .certificationImageUrl(profile.getCertificationImageUrl())
                 .build();
+    }
+
+    // S3 Presigned URL 생성
+    public String generateCertificationUploadUrl(User user, String contentType) {
+        String fileKey = "trainer-certification/" + user.getUserId() + "/cert-" + System.currentTimeMillis();
+        return s3Service.generateUploadPresignedUrl(fileKey, contentType);
     }
 }
