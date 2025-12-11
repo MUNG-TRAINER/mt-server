@@ -101,6 +101,14 @@ public class JwtTokenProvider {
     String type = claims.get("type", String.class);
     return type != null ? TokenType.valueOf(type) : null;
   }
+  /**
+   * 주어진 JWT 토큰의 유효성을 검증합니다.
+   *
+   * @param token      검증할 JWT 토큰 문자열
+   * @param tokenType  토큰 타입(ACCESS 또는 REFRESH)
+   * @return           토큰이 유효하면 true, 만료되었거나 변조 등으로 유효하지 않으면 false
+   *                   (파싱 실패, 만료, 서명 오류 등 모든 예외 상황에서 false 반환)
+   */
   public boolean validateToken(String token, TokenType tokenType) {
     try {
       Jws<Claims> jws = parseClaims(token, tokenType);
