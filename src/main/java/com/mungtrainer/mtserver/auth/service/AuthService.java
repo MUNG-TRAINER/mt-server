@@ -39,7 +39,7 @@ public class AuthService {
     long trainerId = authDAO.findTrainerIdByRegistCode(req.getRegistCode());
 
     // userName 중복 확인
-    if (!authDAO.existsUsername(req.getUserName())) {
+    if (authDAO.existsUsername(req.getUserName())) {
       throw new CustomException(ErrorCode.USER_USERNAME_DUPLICATE);
     }
     // Email 중복 확인
