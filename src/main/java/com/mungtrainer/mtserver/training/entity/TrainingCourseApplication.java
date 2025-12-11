@@ -1,6 +1,8 @@
 package com.mungtrainer.mtserver.training.entity;
 
 import com.mungtrainer.mtserver.common.entity.BaseEntity;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -39,6 +41,9 @@ public class TrainingCourseApplication extends BaseEntity {
     /**
      * 상태 (APPLIED, PAID, CANCELLED, WAITING, REJECTED, NO_SHOW, EXPIRED, REFUNDED, REFUND_REQUESTED)
      */
+    @NotNull
+    @Pattern(regexp = "APPLIED|PAID|CANCELLED|WAITING|REJECTED|NO_SHOW|EXPIRED|REFUNDED|REFUND_REQUESTED",
+            message = "유효하지 않은 상태입니다.")
     private String status;
 
     /**

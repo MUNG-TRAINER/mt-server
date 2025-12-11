@@ -17,6 +17,12 @@ public enum ErrorCode {
   USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다."),
   PROFILE_UPDATE_FAILED(500, "프로필 수정에 실패했습니다."),
 
+    // 신청 관련
+    DUPLICATE_APPLICATION(409, "이미 신청한 세션입니다.(APPLIED 상태)"),
+    APPLICATION_NOT_FOUND(404, "신청 정보를 찾을 수 없습니다."),
+    UNAUTHORIZED_APPLICATION(403, "본인만 신청 가능합니다."),
+    APPLICATION_CREATION_FAILED(500, "신청 생성 실패"),
+
   // 출석 관련
   ATTENDANCE_UPDATE_FAILED(500,"출석 상태 변경에 실패했습니다"),
 
@@ -29,6 +35,8 @@ public enum ErrorCode {
   DOG_DELETE_FAILED(500, "반려견 삭제에 실패했습니다."),
   DOG_IMAGE_DELETE_FAILED(500, "반려견 프로필 이미지 삭제에 실패했습니다."),
   DOG_ID_GENERATION_FAILED(500, "반려견 ID 생성에 실패했습니다.");
+
+
 
   public final int status;
   public final String message;

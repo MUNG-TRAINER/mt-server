@@ -1,5 +1,7 @@
 package com.mungtrainer.mtserver.user.controller;
 
+import com.mungtrainer.mtserver.trainer.dto.response.TrainerResponse;
+import com.mungtrainer.mtserver.trainer.service.TrainerService;
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
 import com.mungtrainer.mtserver.user.dto.request.UserImageUploadRequest;
 import com.mungtrainer.mtserver.user.dto.request.UserProfileUpdateRequest;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final TrainerService trainerService;
 
     /**
      * 사용자 프로필 조회
@@ -53,4 +56,13 @@ public class UserController {
         UserImageUploadResponse response = userService.generateUploadUrl(customUserDetails.getUserId(), request);
         return ResponseEntity.ok(response);
     }
+
+    //훈련사 프로필 조회
+    @GetMapping("/trainer/{trainerId}")
+    public ResponseEntity<TrainerResponse> getTrainerProfileById(@PathVariable Long trainerId){
+        TrainerResponse profile = trainerService.getTrainerProfileById(trainerId);
+        return ResponseEntity.ok(profile);
+    }
+
+
 }
