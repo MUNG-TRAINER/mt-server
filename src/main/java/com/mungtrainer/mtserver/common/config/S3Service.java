@@ -91,6 +91,10 @@ public class S3Service {
             throw new IllegalArgumentException("파일 키는 필수입니다");
         }
 
+        if (contentType == null || contentType.isBlank()) {
+          throw new IllegalArgumentException("Content-Type은 필수입니다");
+        }
+
         try {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(awsS3Config.getBucket())
@@ -104,7 +108,7 @@ public class S3Service {
                 .build();
 
             String presignedUrl = presigner.presignPutObject(presignRequest).url().toString();
-            log.info("업로드용 Presigned URL 생성 완료 - key: {}, url: {}", fileKey, presignedUrl);
+          log.info("업로드용 Presigned URL 생성 완료 - key: {}", fileKey);
 
             return presignedUrl;
         } catch (S3Exception e) {
