@@ -63,7 +63,7 @@ public class AuthController {
     String refreshToken = jwtTokenProvider.generateRefreshToken(authentication);
 
     // 2-A) DB에 저장
-    CustomUserDetails userDetails = (CustomUserDetails) customUserDetailsService.loadUserByUsername(loginRequest.getUserName());
+    CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
     authService.updateRefreshToken(userDetails.getUserId(), refreshToken);
 
     long atMaxAge =  jwtTokenProvider.getAccessTokenValidityInMs() / 1000;
