@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mungtrainer.mtserver.training.dao.CourseDAO">
+    <select id="existsTags" resultType="boolean">
+        select count(*) > 0
+        from training_course
+        where tags = #{tags}
+    </select>
+    <select id="getCourseById">
+        select *
+        from training_course
+        where course_id = #{courseId}
+    </select>
+    <insert id="insertSessions">
+        INSERT INTO training_session (
+        course_id, session_no, session_date, start_time, end_time,
+        location_detail, status, max_students, content, price,
+        created_by, created_at, updated_by, updated_at
+        )
+        VALUES
+        <foreach collection="list" item="s" separator=",">
+            (
+            #{s.courseId},
+            #{s.sessionNo},
+            #{s.sessionDate},
+            #{s.startTime},
+            #{s.endTime},
+            #{s.locationDetail},
+            #{s.status},
+            #{s.maxStudents},
+            #{s.content},
+            #{s.price},
+            #{s.createdBy},
+            NOW(),
+            #{s.updatedBy},
+            NOW()
+            )
+        </foreach>
+    </insert>
+    <insert id="insertCourse" useGeneratedKeys="true" keyProperty="courseId">
+        INSERT INTO training_course (
+            trainer_id,
+            tags,
+            title,
+            description,
+            type,
+            lesson_form,
+            status,
+            is_free,
+            difficulty,
+            location,
+            schedule,
+            refund_policy,
+            main_image,
+            detail_image,
+            items,
+            dog_size,
+            created_by,
+            created_at,
+            updated_by,
+            updated_at
+        )
+        VALUES (
+                   #{trainerId},
+                   #{tags},
+                   #{title},
+                   #{description},
+                   #{type},
+                   #{lessonForm},
+                   #{status},
+                   #{isFree},
+                   #{difficulty},
+                   #{location},
+                   #{schedule},
+                   #{refundPolicy},
+                   #{mainImage},
+                   #{detailImage},
+                   #{items},
+                   #{dogSize},
+                   #{createdBy},
+                   NOW(),
+                   #{updatedBy},
+                   NOW()
+               )
+    </insert>
+</mapper>

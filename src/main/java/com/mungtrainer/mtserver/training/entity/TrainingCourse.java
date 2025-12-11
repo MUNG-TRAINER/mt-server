@@ -40,9 +40,14 @@ public class TrainingCourse extends BaseEntity {
     private String description;
 
     /**
-     * 유형 (산책 / 그룹수업 / 1:1)
+     * 회차 여부
      */
     private String type;
+
+   /**
+   * 수업 유형: WALK, GROUP, PRIVATE
+   */
+    private String lessonForm;
 
     /**
      * 상태 (SCHEDULED, CANCELLED, DONE)

@@ -14,6 +14,7 @@ public enum ErrorCode {
   NOT_FOUND_USERNAME(400, "해당 유저는 존재하지 않습니다."),
   INVALID_OLD_PASSWORD(400, "이전 비밀번호 확인이 실패했습니다."),
   INVALID_CONFIRM_PASSWORD(400, "비밀번호 확인이 실패했습니다."),
+  INVALID_COURSE_ID(400, "유효하지 않은 훈련 과정 ID입니다."),
 
   // 출석 관련
   ATTENDANCE_UPDATE_FAILED(500,"출석 상태 변경에 실패했습니다");
