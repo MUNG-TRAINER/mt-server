@@ -3,9 +3,11 @@ package com.mungtrainer.mtserver.auth.controller;
 import com.mungtrainer.mtserver.auth.dto.request.AuthTrainerJoinRequest;
 import com.mungtrainer.mtserver.auth.dto.request.AuthUserJoinRequest;
 import com.mungtrainer.mtserver.auth.dto.request.LoginRequest;
+import com.mungtrainer.mtserver.auth.dto.request.PasswordChangeRequest;
 import com.mungtrainer.mtserver.auth.dto.response.AuthDuplicatedCheckResponse;
 import com.mungtrainer.mtserver.auth.dto.response.AuthJoinResponse;
 import com.mungtrainer.mtserver.auth.dto.response.LoginResponse;
+import com.mungtrainer.mtserver.auth.dto.response.PasswordChangeResponse;
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
 import com.mungtrainer.mtserver.common.security.JwtTokenProvider;
 import com.mungtrainer.mtserver.auth.service.AuthService;
@@ -82,7 +84,7 @@ public class AuthController {
     return ResponseEntity.ok(new LoginResponse("로그인 성공"));
   }
 
-  @PostMapping("/logout")
+  @GetMapping("/logout")
   public ResponseEntity<LoginResponse> logout(
       @AuthenticationPrincipal CustomUserDetails principal,
       HttpServletResponse response) {
@@ -151,5 +153,12 @@ public class AuthController {
   public ResponseEntity<AuthDuplicatedCheckResponse> userNameDuplicatedCheck(@RequestParam("username") String userName) {
     return ResponseEntity.ok(authService.userNameDuplicatedCheck(userName));
   }
-
+  @PostMapping("/password")
+  public ResponseEntity<PasswordChangeResponse> changePassword(
+      @Valid @RequestBody PasswordChangeRequest request,
+      @AuthenticationPrincipal CustomUserDetails principal) {
+    String userName = principal.getUsername();
+    authService.passwordChange(request,userName);
+    return ResponseEntity.ok(PasswordChangeResponse.builder().message("비밀번호 변경 성공").build());
+  }
 }

@@ -13,6 +13,7 @@ public interface AuthDAO {
   void insertTrainerProfile(TrainerProfile trainerProfile);
   void insertTrainerUser(TrainerUser trainerUser);
   void updateRefreshToken(Long userId, String refreshToken);
+  void updatePassword(Long userId, String password);
 
   // TODO: Trainer DAO로 옮기던가 해야 함.
   long findTrainerIdByRegistCode(String registCode);

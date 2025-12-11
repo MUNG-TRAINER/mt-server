@@ -30,7 +30,12 @@
         from user
         where email = #{email}
     </select>
-
+    <update id="updatePassword">
+        update user
+        set
+            password = #{password}
+        where user_id = #{userId}
+    </update>
     <update id="updateRefreshToken">
         UPDATE user
         SET
