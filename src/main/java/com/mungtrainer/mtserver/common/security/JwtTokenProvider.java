@@ -56,6 +56,14 @@ public class JwtTokenProvider {
     return buildToken(principal, TokenType.REFRESH, refreshTokenValidityInMs);
   }
 
+  /**
+   * 주어진 사용자 정보와 토큰 타입, 유효기간을 기반으로 JWT 토큰을 생성합니다.
+   *
+   * @param principal   토큰에 포함될 사용자 정보(CustomUserDetails)
+   * @param tokenType   생성할 토큰의 타입(ACCESS 또는 REFRESH)
+   * @param validityInMs 토큰의 유효기간(밀리초 단위)
+   * @return 생성된 JWT 토큰 문자열
+   */
   public String buildToken(CustomUserDetails principal, TokenType tokenType, long validityInMs) {
     Date now = new Date();
     Date expiry = new Date(now.getTime() + validityInMs);
