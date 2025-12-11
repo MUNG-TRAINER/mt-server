@@ -1,7 +1,9 @@
 package com.mungtrainer.mtserver.dog.controller;
 
     import com.mungtrainer.mtserver.dog.dto.request.DogCreateRequest;
+    import com.mungtrainer.mtserver.dog.dto.request.DogImageUploadRequest;
     import com.mungtrainer.mtserver.dog.dto.request.DogUpdateRequest;
+    import com.mungtrainer.mtserver.dog.dto.response.DogImageUploadResponse;
     import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
     import com.mungtrainer.mtserver.dog.service.DogService;
     import jakarta.validation.Valid;
@@ -100,5 +102,37 @@ package com.mungtrainer.mtserver.dog.controller;
             log.info("반려견 삭제 API 호출 - userId: {}, dogId: {}", TEMP_USER_ID, dogId);
             dogService.deleteDog(TEMP_USER_ID, dogId);
             return ResponseEntity.noContent().build();
+        }
+
+        /**
+         * 프로필 이미지 업로드용 Presigned URL 발급 (신규 등록용)
+         * @param request 파일 키 및 메타정보
+         * @return 업로드 URL
+         */
+        @PostMapping("/dogs/upload-url")
+        public ResponseEntity<DogImageUploadResponse> generateUploadUrl(
+                @Valid @RequestBody DogImageUploadRequest request) {
+
+            log.info("프로필 이미지 업로드 URL 발급 API 호출 (신규 등록) - userId: {}, fileKey: {}",
+                     TEMP_USER_ID, request.getFileKey());
+            DogImageUploadResponse response = dogService.generateUploadUrl(TEMP_USER_ID, null, request);
+            return ResponseEntity.ok(response);
+        }
+
+        /**
+         * 프로필 이미지 업로드용 Presigned URL 발급 (수정용)
+         * @param dogId 반려견 ID
+         * @param request 파일 키 및 메타정보
+         * @return 업로드 URL
+         */
+        @PostMapping("/dogs/{dogId}/upload-url")
+        public ResponseEntity<DogImageUploadResponse> generateUploadUrlForUpdate(
+                @PathVariable Long dogId,
+                @Valid @RequestBody DogImageUploadRequest request) {
+
+            log.info("프로필 이미지 업로드 URL 발급 API 호출 (수정) - userId: {}, dogId: {}, fileKey: {}",
+                     TEMP_USER_ID, dogId, request.getFileKey());
+            DogImageUploadResponse response = dogService.generateUploadUrl(TEMP_USER_ID, dogId, request);
+            return ResponseEntity.ok(response);
         }
     }
