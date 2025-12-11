@@ -123,12 +123,12 @@ public class AuthController {
 
     // 5. 새 토큰 발급
     var userDetails = customUserDetailsService.loadUserByUsername(username);
-    Authentication fakeAuth = new UsernamePasswordAuthenticationToken(
+    Authentication refreshedAuthentication = new UsernamePasswordAuthenticationToken(
         userDetails, null, userDetails.getAuthorities()
     );
 
-    String newAT = jwtTokenProvider.generateAccessToken(fakeAuth);
-    String newRT = jwtTokenProvider.generateRefreshToken(fakeAuth);
+    String newAT = jwtTokenProvider.generateAccessToken(refreshedAuthentication);
+    String newRT = jwtTokenProvider.generateRefreshToken(refreshedAuthentication);
 
     // 6. DB에 새로운 RT 저장
     authService.updateRefreshToken(user.getUserId(), newRT);
