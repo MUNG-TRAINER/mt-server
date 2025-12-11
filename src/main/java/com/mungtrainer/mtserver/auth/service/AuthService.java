@@ -3,6 +3,7 @@ package com.mungtrainer.mtserver.auth.service;
 import com.mungtrainer.mtserver.auth.dao.AuthDAO;
 import com.mungtrainer.mtserver.auth.dto.request.AuthTrainerJoinRequest;
 import com.mungtrainer.mtserver.auth.dto.request.AuthUserJoinRequest;
+import com.mungtrainer.mtserver.auth.dto.request.PasswordChangeRequest;
 import com.mungtrainer.mtserver.auth.dto.response.AuthDuplicatedCheckResponse;
 import com.mungtrainer.mtserver.auth.dto.response.AuthJoinResponse;
 import com.mungtrainer.mtserver.common.exception.CustomException;
@@ -26,6 +27,29 @@ public class AuthService {
 
   public enum Role {
     USER, TRAINER, ADMIN
+  }
+
+  @Transactional
+  public void passwordChange(PasswordChangeRequest request, String userName){
+    User user = authDAO.findByUserName(userName);
+    // 유저 확인
+    if (user == null) {
+      throw new CustomException(ErrorCode.NOT_FOUND_USERNAME);
+    }
+    // 기존 비밀번호 확인
+    if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+      throw new CustomException(ErrorCode.INVALID_OLD_PASSWORD);
+    }
+
+    // 새로운 비밀번호 확인
+    if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+      throw new CustomException(ErrorCode.INVALID_CONFIRM_PASSWORD);
+    }
+
+    // 새 비밀번호 암호화 후 저장
+    String password = passwordEncoder.encode(request.getNewPassword());
+    authDAO.updatePassword(user.getUserId(), password);
+
   }
 
   @Transactional
