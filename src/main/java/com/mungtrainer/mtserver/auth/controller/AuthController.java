@@ -116,7 +116,7 @@ public class AuthController {
 
     // 4. DB에 저장된 RT와 비교
     if (!refreshToken.equals(user.getRefreshToken())) {
-      return ResponseEntity.status(401).body(new LoginResponse("Refresh token mismatch"));
+      return ResponseEntity.status(401).body(new LoginResponse("리프레시 토큰이 일치하지 않습니다"));
     }
 
     // 여기까지 통과한 RT만 재발급 가능
