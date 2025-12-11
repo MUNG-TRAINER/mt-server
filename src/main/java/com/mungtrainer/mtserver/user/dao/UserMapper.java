@@ -1,4 +1,4 @@
-package com.mungtrainer.mtserver.user.mapper;
+package com.mungtrainer.mtserver.user.dao;
 
 import com.mungtrainer.mtserver.trainer.entity.TrainerProfile;
 import com.mungtrainer.mtserver.user.entity.User;

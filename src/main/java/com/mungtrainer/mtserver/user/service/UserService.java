@@ -8,7 +8,7 @@ import com.mungtrainer.mtserver.user.dto.request.UserProfileUpdateRequest;
 import com.mungtrainer.mtserver.user.dto.response.UserImageUploadResponse;
 import com.mungtrainer.mtserver.user.dto.response.UserProfileResponse;
 import com.mungtrainer.mtserver.user.entity.User;
-import com.mungtrainer.mtserver.user.mapper.UserMapper;
+import com.mungtrainer.mtserver.user.dao.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

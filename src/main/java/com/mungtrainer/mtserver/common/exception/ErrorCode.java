@@ -24,7 +24,17 @@ public enum ErrorCode {
     APPLICATION_CREATION_FAILED(500, "신청 생성 실패"),
 
   // 출석 관련
-  ATTENDANCE_UPDATE_FAILED(500,"출석 상태 변경에 실패했습니다");
+  ATTENDANCE_UPDATE_FAILED(500,"출석 상태 변경에 실패했습니다"),
+
+  // 반려견 관련
+  DOG_NOT_FOUND(404, "존재하지 않는 반려견입니다."),
+  DOG_NO_PERMISSION(403, "해당 반려견에 대한 권한이 없습니다."),
+  DOG_NAME_DUPLICATE(400, "이미 등록된 반려견 이름입니다."),
+  DOG_CREATE_FAILED(500, "반려견 등록에 실패했습니다."),
+  DOG_UPDATE_FAILED(500, "반려견 정보 수정에 실패했습니다."),
+  DOG_DELETE_FAILED(500, "반려견 삭제에 실패했습니다."),
+  DOG_IMAGE_DELETE_FAILED(500, "반려견 프로필 이미지 삭제에 실패했습니다."),
+  DOG_ID_GENERATION_FAILED(500, "반려견 ID 생성에 실패했습니다.");
 
 
 
