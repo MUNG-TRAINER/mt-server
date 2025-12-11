@@ -23,6 +23,10 @@ public class AuthService {
   private final AuthDAO authDAO;
   private final PasswordEncoder passwordEncoder;
 
+  public enum Role {
+    USER, TRAINER, ADMIN
+  }
+
   @Transactional
   public AuthJoinResponse userJoin(AuthUserJoinRequest req) {
     // 비밀번호 암호화
@@ -34,6 +38,15 @@ public class AuthService {
     }
     long trainerId = authDAO.findTrainerIdByRegistCode(req.getRegistCode());
 
+    // userName 중복 확인
+    if (authDAO.existsUsername(req.getUserName())) {
+      throw new CustomException(ErrorCode.USER_USERNAME_DUPLICATE);
+    }
+    // Email 중복 확인
+    if (authDAO.existsEmail(req.getEmail())) {
+      throw new CustomException(ErrorCode.USER_EMAIL_DUPLICATE);
+    }
+
     User user = User.builder()
                     .userName(req.getUserName())
                     .name(req.getName())
@@ -41,7 +54,7 @@ public class AuthService {
                     .email(req.getEmail())
                     .phone(req.getPhone())
                     .password(encodePassword)
-                    .role("USER")
+                    .role(Role.USER.name())
                     .isAgree(req.getIsAgree())
                     .sido(req.getSido())
                     .sigungu(req.getSigungu())
@@ -77,7 +90,7 @@ public class AuthService {
     // 가입 코드 생성
     String registCode;
     do {
-      registCode = generateRegistCode(6);
+      registCode = generateRegistCode(8);
     } while (authDAO.existsRegistCode((registCode)));
 
 
@@ -88,7 +101,7 @@ public class AuthService {
         .email(req.getEmail())
         .phone(req.getPhone())
         .password(encodePassword)
-        .role("TRAINER")
+        .role(Role.TRAINER.name())
         .isAgree(req.getIsAgree())
         .sido(req.getSido())
         .sigungu(req.getSigungu())
@@ -123,6 +136,15 @@ public class AuthService {
         .build();
   }
 
+  public void updateRefreshToken(Long userId, String refreshToken) {
+    authDAO.updateRefreshToken(userId, refreshToken);
+  }
+
+  // TODO: User에 옮겨야 함.
+  public User findByUserName(String userName) {
+    return authDAO.findByUserName(userName);
+  }
+
   private String generateRegistCode(int length) {
     String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     StringBuilder sb = new StringBuilder();
@@ -133,5 +155,5 @@ public class AuthService {
     }
     return sb.toString();
   }
-
 }
+

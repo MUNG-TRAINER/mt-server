@@ -4,7 +4,12 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.mungtrainer.mtserver.auth.dao.AuthDAO">
-
+<!--    TODO: user에 옮겨야 함-->
+    <select id="findByUserName" resultType="User">
+        select *
+        from user
+        where user_name = #{userName}
+    </select>
     <select id="findTrainerIdByRegistCode" resultType="long">
         select trainer_id
         from trainer_profile
@@ -25,6 +30,15 @@
         from user
         where email = #{email}
     </select>
+
+    <update id="updateRefreshToken">
+        UPDATE user
+        SET
+        refresh_token = #{refreshToken},
+        updated_by = #{userId},
+        updated_at = NOW()
+        WHERE user_id = #{userId}
+    </update>
     <insert id="insertTrainerProfile" keyProperty="trainerId">
         insert into trainer_profile(
             trainer_id, career_info, introduce,
@@ -41,7 +55,6 @@
            NOW(), NULL, 0
         )
     </insert>
-
     <insert id="insertUser" useGeneratedKeys="true" keyProperty="userId">
         insert INTO user (
             user_name,
