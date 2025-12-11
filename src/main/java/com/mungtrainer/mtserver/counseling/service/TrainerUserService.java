@@ -4,7 +4,7 @@ import com.mungtrainer.mtserver.common.config.S3Service;
 import com.mungtrainer.mtserver.counseling.dao.TrainerUserDao;
 import com.mungtrainer.mtserver.counseling.dto.response.TrainerUserListResponseDto;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
-import com.mungtrainer.mtserver.dog.mapper.DogMapper;
+import com.mungtrainer.mtserver.dog.dao.DogMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

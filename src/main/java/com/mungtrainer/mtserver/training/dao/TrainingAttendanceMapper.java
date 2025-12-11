@@ -1,4 +1,4 @@
-package com.mungtrainer.mtserver.training.mapper;
+package com.mungtrainer.mtserver.training.dao;
 
 import com.mungtrainer.mtserver.training.dto.response.AttendanceListResponse;
 import com.mungtrainer.mtserver.training.entity.TrainingAttendance;

@@ -1,6 +1,5 @@
-package com.mungtrainer.mtserver.dog.mapper;
+package com.mungtrainer.mtserver.dog.dao;
 
-import com.mungtrainer.mtserver.dog.dto.request.DogCreateRequest;
 import com.mungtrainer.mtserver.dog.dto.request.DogUpdateRequest;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
 import org.apache.ibatis.annotations.Mapper;
