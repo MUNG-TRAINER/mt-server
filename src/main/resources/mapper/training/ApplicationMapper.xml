@@ -2,7 +2,6 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
 <mapper namespace="com.mungtrainer.mtserver.training.dao.ApplicationDao">
 
     <!-- 유저 Id로 신청 리스트 조회 -->
@@ -23,40 +22,47 @@
           AND is_deleted = 0
     </select>
 
+    <!-- 생성 사용자 인증 -->
+  <select id="findOwnerByDogId" parameterType="long" resultType="long">
+      SELECT user_id
+      FROM dog
+      WHERE dog_id = #{dogId}
+  </select>
+
+    <!--  생성 중복 체크 -->
+  <select id="existsByDogAndSession" resultType="boolean" parameterType="map">
+      SELECT COUNT(*) > 0
+      FROM training_course_application
+      WHERE dog_id = #{dogId}
+      AND session_id = #{sessionId}
+      AND status = 'APPLIED'   <!-- 상태가 APPLIED인 경우만 중복 체크 -->
+        AND is_deleted = 0
+    </select>
+
     <!-- 신청 생성 -->
     <insert id="insertApplication" parameterType="com.mungtrainer.mtserver.training.entity.TrainingCourseApplication" useGeneratedKeys="true" keyProperty="applicationId">
         INSERT INTO training_course_application (
-            session_id,
-            dog_id,
-            applied_at,
-            status,
-            reject_reason,
-            created_by,
-            created_at,
-            updated_by,
-            updated_at,
-            is_deleted
+        session_id,
+        dog_id,
+        applied_at,
+        status,
+        reject_reason,
+        created_by,
+        created_at,
+        updated_by,
+        updated_at
         ) VALUES (
-                     #{sessionId},
-                     #{dogId},
-                     #{appliedAt},
-                     #{status},
-                     #{rejectReason},
-                     1,
-                     #{appliedAt},
-                     1,
-                     #{appliedAt},
-                     0
-                 )
+        #{sessionId},
+        #{dogId},
+        #{appliedAt},
+        #{status},
+        #{rejectReason},
+        #{createdBy},
+        #{createdAt},
+        #{updatedBy},
+        #{updatedAt}
+        )
     </insert>
-
-    <select id="existsByDogAndSession" resultType="boolean" parameterType="map">
-        SELECT COUNT(*) > 0
-        FROM training_course_application
-        WHERE dog_id = #{dogId}
-          AND session_id = #{sessionId}
-          AND is_deleted = 0
-    </select>
 
     <!-- 신청 취소 (상태 업데이트) -->
     <update id="updateApplicationStatus" parameterType="map">

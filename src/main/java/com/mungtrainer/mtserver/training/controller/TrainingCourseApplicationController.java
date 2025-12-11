@@ -19,50 +19,33 @@ public class TrainingCourseApplicationController {
     private final TrainingCourseApplicationService applicationService;
 
     // 훈련과정 신청 리스트
-//    @GetMapping
-//    public ResponseEntity<List<ApplicationResponse>> getApplicationList(@RequestAttribute("user") User user){
-//        List<ApplicationResponse> applicationList = applicationService.getApplicationsByUserId(user.getUserId());
-//        return ResponseEntity.ok(applicationList);
-//    }
-    // 임시 테스트용
     @GetMapping
-    public ResponseEntity<List<ApplicationResponse>> getApplicationList() {
-        // 테스트용 하드코딩 유저
-        User testUser = new User();
-        testUser.setUserId(1L); // DB에 존재하는 user_id
-
-        List<ApplicationResponse> applicationList = applicationService.getApplicationsByUserId(testUser.getUserId());
+    public ResponseEntity<List<ApplicationResponse>> getApplicationList(@RequestAttribute("user") User user){
+        List<ApplicationResponse> applicationList = applicationService.getApplicationsByUserId(user.getUserId());
         return ResponseEntity.ok(applicationList);
     }
 
-
     // 훈련과정 신청 상세페이지
     @GetMapping("/{applicationId}")
-    public ResponseEntity<ApplicationResponse> getApplication(@PathVariable Long applicationId){
-        ApplicationResponse application = applicationService.getApplicationById(applicationId);
+    public ResponseEntity<ApplicationResponse> getApplication(@RequestAttribute("user") User user, @PathVariable Long applicationId){
+        ApplicationResponse application = applicationService.getApplicationById( user.getUserId(),applicationId);
         return ResponseEntity.ok(application);
     }
 
     // 훈련과정 신청 생성
     @PostMapping
-    public ResponseEntity<ApplicationResponse> createApplication(@RequestBody ApplicationRequest request){
-        // 테스트용 하드코딩 유저
-        User testUser = new User();
-        testUser.setUserId(1L);
-
-        ApplicationResponse created = applicationService.createApplication(request);
+    public ResponseEntity<ApplicationResponse> createApplication(@RequestAttribute("user") User user, @RequestBody ApplicationRequest request){
+        ApplicationResponse created = applicationService.createApplication(user.getUserId(),request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     // 훈련과정 신청 취소
     @DeleteMapping("/{applicationId}")
-    public ResponseEntity<Void> deleteApplication(@PathVariable Long applicationId){
-        // 테스트용 하드코딩 유저
-        User testUser = new User();
-        testUser.setUserId(1L);
+    public ResponseEntity<Void> deleteApplication(@RequestAttribute("user") User user, @PathVariable Long applicationId){
 
-        applicationService.cancelApplication(applicationId);
+        applicationService.cancelApplication(user.getUserId(),applicationId);
         return ResponseEntity.ok().build();
     }
+
 
 }

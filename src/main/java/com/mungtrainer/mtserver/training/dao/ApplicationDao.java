@@ -15,7 +15,10 @@ public interface ApplicationDao {
     // 훈련신청 상세페이지 조회
     TrainingCourseApplication findById(@Param("applicationId") Long applicationId);
 
-    // Mapper XML 또는 인터페이스
+    // 생성 사용자 인증
+    Long findOwnerByDogId(@Param("dogId") Long dogId);
+
+    // 생성 중복 체크
     boolean existsByDogAndSession(@Param("dogId") Long dogId, @Param("sessionId") Long sessionId);
 
     // 훈련과정 신청 생성
