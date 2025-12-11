@@ -1,4 +1,4 @@
-package com.mungtrainer.mtserver.auth.service;
+package com.mungtrainer.mtserver.common.security.service;
 
 import com.mungtrainer.mtserver.auth.dao.AuthDAO;
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;

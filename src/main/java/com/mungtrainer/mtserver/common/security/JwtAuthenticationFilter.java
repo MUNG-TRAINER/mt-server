@@ -1,6 +1,6 @@
-package com.mungtrainer.mtserver.auth.jwt;
+package com.mungtrainer.mtserver.common.security;
 
-import com.mungtrainer.mtserver.auth.service.CustomUserDetailsService;
+import com.mungtrainer.mtserver.common.security.service.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -23,13 +23,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private final CustomUserDetailsService customUserDetailsService;
 
   private static final String ACCESS_TOKEN = "access_token";
-
-  @Override
-  protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-    String path = request.getRequestURI();
-    return path.startsWith("/api/auth")
-           || path.equals("/");
-  }
 
   @Override
   protected void doFilterInternal(

@@ -1,6 +1,8 @@
-package com.mungtrainer.mtserver.common.config;
+package com.mungtrainer.mtserver.common.security.config;
 
-import com.mungtrainer.mtserver.auth.jwt.JwtAuthenticationFilter;
+import com.mungtrainer.mtserver.common.security.JwtAuthenticationFilter;
+import com.mungtrainer.mtserver.common.security.handler.CustomAccessDeniedHandler;
+import com.mungtrainer.mtserver.common.security.handler.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,24 +18,33 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
-
+  private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+  private final CustomAccessDeniedHandler customAccessDeniedHandler;
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
         .csrf(csrf -> csrf.disable())  // CSRF 비활성화
+        // 권한(인가) 예외 처리
+        .exceptionHandling(ex -> ex
+                               .authenticationEntryPoint(customAuthenticationEntryPoint)  // 401 처리
+                               .accessDeniedHandler(customAccessDeniedHandler)            // 403 처리
+                          )
         .sessionManagement(session ->
             session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
                                     // 인증 없이 허용할 api
                                    .requestMatchers("/api/auth/**").permitAll()
 
-                                    // Trainer 인가 검증
+                                    // 인증 절차 받을 api
+                                   .requestMatchers("/api/user/**","/api/trainer/**").authenticated()
+
+                                    // Trainer 인가 검증 받을 api
                                    .requestMatchers("/api/trainer/**").hasAnyRole("TRAINER","ADMIN")
 
-                                    // 그 외에는 인증 절차
-                                   .anyRequest().authenticated()
+                                    // 그 외에는 인증 패스
+                                   .anyRequest().permitAll()
 
                               )
         .formLogin(form -> form.disable())  // 기본 로그인 폼 비활성화

@@ -1,4 +1,4 @@
-package com.mungtrainer.mtserver.auth.jwt;
+package com.mungtrainer.mtserver.common.security;
 
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
 import jakarta.annotation.PostConstruct;

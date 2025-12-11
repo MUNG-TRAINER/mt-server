@@ -6,9 +6,9 @@ import com.mungtrainer.mtserver.auth.dto.request.LoginRequest;
 import com.mungtrainer.mtserver.auth.dto.response.AuthJoinResponse;
 import com.mungtrainer.mtserver.auth.dto.response.LoginResponse;
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
-import com.mungtrainer.mtserver.auth.jwt.JwtTokenProvider;
+import com.mungtrainer.mtserver.common.security.JwtTokenProvider;
 import com.mungtrainer.mtserver.auth.service.AuthService;
-import com.mungtrainer.mtserver.auth.service.CustomUserDetailsService;
+import com.mungtrainer.mtserver.common.security.service.CustomUserDetailsService;
 import com.mungtrainer.mtserver.common.util.CookieUtil;
 import com.mungtrainer.mtserver.user.entity.User;
 import jakarta.servlet.http.Cookie;
@@ -97,7 +97,7 @@ public class AuthController {
     return ResponseEntity.ok(new LoginResponse("로그아웃 완료"));
   }
 
-  @PostMapping("/refresh")
+  @PostMapping("/refresh-token")
   public ResponseEntity<LoginResponse> refresh(
       HttpServletResponse response,
       @CookieValue(value = "refresh_token", required = false) String refreshToken
