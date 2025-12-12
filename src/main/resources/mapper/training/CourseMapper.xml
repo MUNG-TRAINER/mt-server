@@ -124,187 +124,125 @@
         AND is_deleted = 0
     </update>
 
-
-    <!-- 삭제 부분 -->
-    <!-- 1) training_session 소프트 삭제 -->
-    <update id="softDeleteSessions">
-        UPDATE training_session
+    <!-- 삭제 -->
+    <!-- 상태: 캔슬 변경 -->
+    <!-- session, application 상태 CANCELLED -->
+    <update id="cancelSessionsAndApplications">
+        UPDATE training_session s
+            LEFT JOIN training_course_application a
+            ON a.session_id = s.session_id
+                AND a.is_deleted = 0
         SET
-            is_deleted = 1,
-            deleted_at = NOW(),
-            updated_by = #{userId},
-            updated_at = NOW()
-        WHERE course_id = #{courseId}
-          AND is_deleted = 0
+            s.status = 'CANCELLED',
+            s.updated_by = #{userId},
+            s.updated_at = NOW(),
+
+            a.status = 'CANCELLED',
+            a.updated_by = #{userId},
+            a.updated_at = NOW()
+        WHERE s.course_id = #{courseId}
+          AND s.is_deleted = 0
     </update>
 
-
-    <!-- 2) training_course_application 소프트 삭제 -->
-    <update id="softDeleteApplications">
-        UPDATE training_course_application
-        SET
-            is_deleted = 1,
-            deleted_at = NOW(),
-            updated_by = #{userId},
-            updated_at = NOW()
-        WHERE session_id IN (
-            SELECT session_id FROM training_session
-            WHERE course_id = #{courseId}
-        )
-          AND is_deleted = 0
-    </update>
-
-
-    <!-- 3) waiting -->
-    <update id="softDeleteWaiting">
-        UPDATE waiting
-        SET
-            is_deleted = 1,
-            deleted_at = NOW(),
-            updated_by = #{userId},
-            updated_at = NOW()
-        WHERE application_id IN (
-            SELECT application_id FROM training_course_application
-            WHERE session_id IN (
-                SELECT session_id FROM training_session
-                WHERE course_id = #{courseId}
-            )
-        )
-          AND is_deleted = 0
-    </update>
-
-
-    <!-- 4) training_attendance -->
-    <update id="softDeleteAttendance">
-        UPDATE training_attendance
-        SET
-            is_deleted = 1,
-            deleted_at = NOW(),
-            updated_by = #{userId},
-            updated_at = NOW()
-        WHERE application_id IN (
-            SELECT application_id FROM training_course_application
-            WHERE session_id IN (
-                SELECT session_id FROM training_session
-                WHERE course_id = #{courseId}
-            )
-        )
-          AND is_deleted = 0
-    </update>
-
-
-    <!-- 5) training_session_change -->
-    <update id="softDeleteSessionChange">
-        UPDATE training_session_change
-        SET
-            is_deleted = 1,
-            deleted_at = NOW(),
-            updated_by = #{userId},
-            updated_at = NOW()
-        WHERE session_id IN (
-            SELECT session_id FROM training_session
-            WHERE course_id = #{courseId}
-        )
-          AND is_deleted = 0
-    </update>
-
-
-    <!-- 6) training_course_notice -->
-    <update id="softDeleteNotices">
-        UPDATE training_course_notice
-        SET
-            is_deleted = 1,
-            deleted_at = NOW(),
-            updated_by = #{userId},
-            updated_at = NOW()
-        WHERE session_id IN (
-            SELECT session_id FROM training_session
-            WHERE course_id = #{courseId}
-        )
-          AND is_deleted = 0
-    </update>
-
-
-    <!-- 7) wishlist_detail -->
-    <update id="softDeleteWishlistDetail">
-        UPDATE wishlist_detail
-        SET
-            is_deleted = 1,
-            deleted_at = NOW(),
-            updated_by = #{userId},
-            updated_at = NOW()
-        WHERE course_id = #{courseId}
-          AND is_deleted = 0
-    </update>
-
-
-    <!-- 8) wishlist_detail_dog -->
-    <update id="softDeleteWishlistDetailDog">
-        UPDATE wishlist_detail_dog
-        SET
-            is_deleted = 1,
-            deleted_at = NOW(),
-            updated_by = #{userId},
-            updated_at = NOW()
-        WHERE wishlist_item_id IN (
-            SELECT wishlist_item_id
-            FROM wishlist_detail
-            WHERE course_id = #{courseId}
-        )
-          AND is_deleted = 0
-    </update>
-
-
-    <!-- 9) feedback -->
-    <update id="softDeleteFeedback">
-        UPDATE feedback
-        SET
-            is_deleted = 1,
-            deleted_at = NOW(),
-            updated_by = #{userId},
-            updated_at = NOW()
-        WHERE application_id IN (
-            SELECT application_id FROM training_course_application
-            WHERE session_id IN (
-                SELECT session_id FROM training_session
-                WHERE course_id = #{courseId}
-            )
-        )
-          AND is_deleted = 0
-    </update>
-
-
-    <!-- 10) feedback_attachment -->
-    <update id="softDeleteFeedbackAttachment">
-        UPDATE feedback_attachment
-        SET
-            is_deleted = 1,
-            deleted_at = NOW(),
-            updated_by = #{userId},
-            updated_at = NOW()
-        WHERE feedback_id IN (
-            SELECT feedback_id FROM feedback
-            WHERE application_id IN (
-                SELECT application_id FROM training_course_application
-                WHERE session_id IN (
-                    SELECT session_id FROM training_session
-                    WHERE course_id = #{courseId}
-                )
-            )
-        )
-          AND is_deleted = 0
-    </update>
-
-
-    <!-- 11) 마지막: training_course 소프트 삭제 -->
-    <update id="softDeleteCourse">
+    <!-- course 상태 CANCELLED -->
+    <update id="cancelCourse">
         UPDATE training_course
         SET
-            is_deleted = 1,
-            deleted_at = NOW(),
+            status = 'CANCELLED',
             updated_by = #{userId},
             updated_at = NOW()
         WHERE course_id = #{courseId}
           AND is_deleted = 0
     </update>
+
+    <!--  소프트 딜리트  -->
+    <!-- application 하위 엔티티 (waiting / attendance / feedback) -->
+    <update id="softDeleteByApplication">
+        UPDATE training_course_application a
+            JOIN training_session s
+            ON a.session_id = s.session_id
+            LEFT JOIN waiting w
+            ON w.application_id = a.application_id
+                AND w.is_deleted = 0
+            LEFT JOIN training_attendance ta
+            ON ta.application_id = a.application_id
+                AND ta.is_deleted = 0
+            LEFT JOIN feedback f
+            ON f.application_id = a.application_id
+                AND f.is_deleted = 0
+        SET
+            w.is_deleted = 1,
+            w.deleted_at = NOW(),
+            w.updated_by = #{userId},
+            w.updated_at = NOW(),
+
+            ta.is_deleted = 1,
+            ta.deleted_at = NOW(),
+            ta.updated_by = #{userId},
+            ta.updated_at = NOW(),
+
+            f.is_deleted = 1,
+            f.deleted_at = NOW(),
+            f.updated_by = #{userId},
+            f.updated_at = NOW()
+        WHERE s.course_id = #{courseId}
+          AND a.is_deleted = 0
+    </update>
+
+    <!-- feedback_attachment -->
+    <update id="softDeleteFeedbackAttachments">
+        UPDATE feedback_attachment fa
+            JOIN feedback f
+            ON fa.feedback_id = f.feedback_id
+            JOIN training_course_application a
+            ON f.application_id = a.application_id
+            JOIN training_session s
+            ON a.session_id = s.session_id
+        SET
+            fa.is_deleted = 1,
+            fa.deleted_at = NOW(),
+            fa.updated_by = #{userId},
+            fa.updated_at = NOW()
+        WHERE s.course_id = #{courseId}
+          AND fa.is_deleted = 0
+    </update>
+
+    <!-- session 하위 엔티티 (session_change / notice) -->
+    <update id="softDeleteBySession">
+        UPDATE training_session s
+            LEFT JOIN training_session_change sc
+            ON sc.session_id = s.session_id
+                AND sc.is_deleted = 0
+            LEFT JOIN training_course_notice n
+            ON n.session_id = s.session_id
+                AND n.is_deleted = 0
+        SET
+            sc.is_deleted = 1,
+            sc.deleted_at = NOW(),
+            sc.updated_by = #{userId},
+            sc.updated_at = NOW(),
+
+            n.is_deleted = 1,
+            n.deleted_at = NOW(),
+            n.updated_by = #{userId},
+            n.updated_at = NOW()
+        WHERE s.course_id = #{courseId}
+          AND s.is_deleted = 0
+    </update>
+
+    <!-- 물리 딜리트 -->
+    <!-- wishlist_detail_dog -->
+    <delete id="deleteWishlistDetailDog">
+        DELETE wdd
+        FROM wishlist_detail_dog wdd
+                 JOIN wishlist_detail wd
+                      ON wdd.wishlist_item_id = wd.wishlist_item_id
+        WHERE wd.course_id = #{courseId}
+    </delete>
+
+    <!-- wishlist_detail -->
+    <delete id="deleteWishlistDetail">
+        DELETE FROM wishlist_detail
+        WHERE course_id = #{courseId}
+    </delete>
 </mapper>

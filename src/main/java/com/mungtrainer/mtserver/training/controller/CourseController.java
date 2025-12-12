@@ -30,7 +30,6 @@ public class CourseController {
   @PostMapping("/{courseId}")
   public ResponseEntity<CourseResponse> reuploadCourse(
       @Valid @RequestBody CourseReuploadRequest request,
-      @PathVariable("courseId") Long courseId,
       @AuthenticationPrincipal CustomUserDetails principal) {
     Long userId = principal.getUserId();
     return ResponseEntity.status(HttpStatus.CREATED).body(courseService.courseReupload(request, userId));
@@ -47,11 +46,10 @@ public class CourseController {
 
   @DeleteMapping("/{courseId}")
   public ResponseEntity<Void> deleteCourse(
-      @Valid @RequestBody CourseUpdateRequest request,
       @PathVariable("courseId") Long courseId,
       @AuthenticationPrincipal CustomUserDetails principal) {
     Long userId = principal.getUserId();
-    courseService.deleteCourse(courseId,userId);
+    courseService.deleteCourse(courseId, userId);
     // 204 응답
     return ResponseEntity.noContent().build();
   }

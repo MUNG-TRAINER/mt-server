@@ -29,6 +29,24 @@
         WHERE user_id = #{userId}
     </select>
 
+    <!-- 사용자명으로 조회 -->
+    <select id="findByUserName" resultMap="userResultMap">
+        SELECT user_id, user_name, name, birth, email, phone,
+               profile_image, is_public, role, sido, sigungu,
+               roadname, rest_address, postcode
+        FROM user
+        WHERE user_name = #{userName}
+    </select>
+
+    <!-- 트레이너-회원 연결 여부 확인 -->
+    <select id="isConnectedToTrainer" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1 FROM trainer_user
+            WHERE user_id = #{userId}
+              AND trainer_id = #{trainerId}
+              AND deleted_at IS NULL
+        )
+    </select>
 
     <update id="updateUserProfile">
         UPDATE user

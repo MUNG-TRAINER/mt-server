@@ -18,16 +18,13 @@ public interface CourseDAO {
 
   boolean existsTags(String tags);
 
-//  삭제 부분
-  void softDeleteSessions(Long courseId, Long userId);
-  void softDeleteApplications(Long courseId, Long userId);
-  void softDeleteWaiting(Long courseId, Long userId);
-  void softDeleteAttendance(Long courseId, Long userId);
-  void softDeleteSessionChange(Long courseId, Long userId);
-  void softDeleteNotices(Long courseId, Long userId);
-  void softDeleteWishlistDetail(Long courseId, Long userId);
-  void softDeleteWishlistDetailDog(Long courseId, Long userId);
-  void softDeleteFeedback(Long courseId, Long userId);
-  void softDeleteFeedbackAttachment(Long courseId, Long userId);
-  void softDeleteCourse(Long courseId, Long userId);
+  // 삭제 부분
+  void cancelSessionsAndApplications(Long courseId, Long userId);
+  void cancelCourse(Long courseId, Long userId);
+  void softDeleteByApplication(Long courseId, Long userId);
+  void softDeleteFeedbackAttachments(Long courseId, Long userId);
+  void softDeleteBySession(Long courseId, Long userId);
+  void deleteWishlistDetailDog(Long courseId);
+  void deleteWishlistDetail(Long courseId);
+
 }

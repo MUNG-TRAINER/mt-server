@@ -23,14 +23,30 @@ public class UserController {
     private final TrainerService trainerService;
 
     /**
-     * 사용자 프로필 조회
-     * GET /api/users
+     * 내 프로필 조회 (전체 정보)
+     * GET /api/users/me
      */
-    @GetMapping
-    public ResponseEntity<UserProfileResponse> getUserProfile(
-            @AuthenticationPrincipal CustomUserDetails customUserDetails) {
-        UserProfileResponse response = userService.getUserProfile(customUserDetails.getUserId());
-        return ResponseEntity.ok(response);
+    @GetMapping("/me")
+    public ResponseEntity<UserProfileResponse> getMyProfile(
+        @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+      UserProfileResponse response = userService.getUserProfile(customUserDetails.getUserId());
+      return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 사용자명으로 프로필 조회 (권한에 따라 다른 정보 반환)
+     * GET /api/users/{userName}
+     */
+    @GetMapping("/{userName}")
+    public ResponseEntity<UserProfileResponse> getUserProfileByUserName(
+        @PathVariable String userName,
+        @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+      UserProfileResponse response = userService.getUserProfileByUserName(
+          userName,
+          customUserDetails.getUserId(),
+          customUserDetails.getRole()
+      );
+      return ResponseEntity.ok(response);
     }
 
     /**

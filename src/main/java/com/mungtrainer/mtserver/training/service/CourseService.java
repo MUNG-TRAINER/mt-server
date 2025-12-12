@@ -11,6 +11,8 @@ import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -33,7 +35,7 @@ public class CourseService {
     courseDAO.insertCourse(course);
 
     Long courseId = course.getCourseId();
-    List<TrainingSession> sessions = buildSessions(req.getSessionUploadRequests(),courseId, userId);
+    List<TrainingSession> sessions = buildSessions(req.getSessionUploadRequests(), courseId, userId);
 
     courseDAO.insertSessions(sessions);
 
@@ -83,6 +85,7 @@ public class CourseService {
 
 
     course = TrainingCourse.builder()
+                           .courseId(courseId)
                            .trainerId(userId)
                            .tags(req.getTags())
                            .type(req.getType())
@@ -116,26 +119,29 @@ public class CourseService {
   public void deleteCourse(Long courseId, Long userId) {
 
     validateOwner(userId, courseId);
-    TrainingCourse course = courseDAO.getCourseById(courseId);
 
     if (courseDAO.hasPaidApplications(courseId)) {
       throw new CustomException(ErrorCode.COURSE_HAS_PAID_APPLICATIONS);
     }
 
-    courseDAO.softDeleteSessions(courseId, userId);
-    courseDAO.softDeleteApplications(courseId, userId);
-    courseDAO.softDeleteWaiting(courseId, userId);
-    courseDAO.softDeleteAttendance(courseId, userId);
-    courseDAO.softDeleteSessionChange(courseId, userId);
-    courseDAO.softDeleteNotices(courseId, userId);
-    courseDAO.softDeleteWishlistDetail(courseId, userId);
-    courseDAO.softDeleteWishlistDetailDog(courseId, userId);
-    courseDAO.softDeleteFeedback(courseId, userId);
-    courseDAO.softDeleteFeedbackAttachment(courseId, userId);
-    courseDAO.softDeleteCourse(courseId, userId);
+    courseDAO.cancelSessionsAndApplications(courseId, userId);
+    courseDAO.cancelCourse(courseId, userId);
+    courseDAO.softDeleteByApplication(courseId, userId);
+    courseDAO.softDeleteFeedbackAttachments(courseId, userId);
+    courseDAO.softDeleteBySession(courseId, userId);
+    courseDAO.deleteWishlistDetailDog(courseId);
+    courseDAO.deleteWishlistDetail(courseId);
 
-    s3Service.deleteFile(course.getMainImage());
-    s3Service.deleteFile(course.getDetailImage());
+    TransactionSynchronizationManager.registerSynchronization(
+        new TransactionSynchronization() {
+          @Override
+          public void afterCommit() {
+            TrainingCourse course = courseDAO.getCourseById(courseId);
+//            s3Service.deleteFile(course.getMainImage());
+//            s3Service.deleteFile(course.getDetailImage());
+          }
+        }
+                                                             );
   }
 
   private void validateOwner(Long userId, Long courseId) {
