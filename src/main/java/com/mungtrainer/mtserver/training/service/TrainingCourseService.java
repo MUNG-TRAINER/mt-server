@@ -3,7 +3,6 @@ package com.mungtrainer.mtserver.training.service;
 import com.mungtrainer.mtserver.common.config.S3Service;
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
-import com.mungtrainer.mtserver.trainer.dto.response.TrainerResponse;
 import com.mungtrainer.mtserver.training.dao.TrainingCourseDao;
 import com.mungtrainer.mtserver.training.dto.response.TrainingCourseResponse;
 import com.mungtrainer.mtserver.training.entity.TrainingCourse;

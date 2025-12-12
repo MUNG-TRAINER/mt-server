@@ -57,7 +57,7 @@
 
     <!--  대기테이블에 추가  -->
     <insert id="insertWaiting" parameterType="map">
-        INSERT INTO waiting (application_id, status,created_by,updated_by, created_at, updated_at)
+        INSERT INTO waiting (application_id, status, created_by, updated_by, created_at, updated_at)
         VALUES (#{applicationId}, 'WAITING',#{userId},#{userId}, NOW(), NOW())
     </insert>
 

@@ -59,11 +59,11 @@ public class TrainingCourseApplicationService {
             throw new CustomException(ErrorCode.UNAUTHORIZED_APPLICATION);
         }
 
-//        //  중복 신청 체크
-//        boolean exists = applicationDao.existsByDogAndSession(request.getDogId(), request.getSessionId());
-//        if (exists) {
-//            throw new CustomException(ErrorCode.DUPLICATE_APPLICATION);
-//        }
+        //  중복 신청 체크
+        boolean exists = applicationDao.existsByDogAndSession(request.getDogId(), request.getSessionId());
+        if (exists) {
+            throw new CustomException(ErrorCode.DUPLICATE_APPLICATION);
+        }
 
         // 세션 정원조회 및 상태 변경
         int maxStudent = applicationDao.getMaxStudentsBySessionId(request.getSessionId());
@@ -103,18 +103,26 @@ public class TrainingCourseApplicationService {
         if (application == null) {
             throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
         }
-        // 본인만 취소 가능
+        // 본인만 취소 가능 에러
         if (!application.getCreatedBy().equals(userId)) {
             throw new CustomException(ErrorCode.UNAUTHORIZED_APPLICATION);
         }
+        // 현재 해당 신청 status 확인
+        String currentStatus = application.getStatus();
+        // 만약 상태가 웨이팅인 경우 웨이팅 신청 취소로 상태 변경
+        if ("WAITING".equals(currentStatus)) {
+            applicationDao.updateWaitingStatus(applicationId, "CANCELLED");
+            return;
+        }
+
         // 신청 취소
         applicationDao.updateApplicationStatus(applicationId, "CANCELLED");
 
-        // 4) 대기자 목록 조회
+        // 대기자 목록 조회
         Long sessionId = application.getSessionId();
         List<Long> waitingList = applicationDao.findWaitingBySessionId(sessionId);
 
-        // 5) 대기자 승격
+        // 대기자 신청으로 승격
         if (waitingList != null && !waitingList.isEmpty()) {
             Long nextApplicationId = waitingList.get(0); // 첫번째 대기자 applicationId
 
@@ -124,7 +132,5 @@ public class TrainingCourseApplicationService {
             // waiting 테이블 상태 변경 (WAITING → ENTERED)
             applicationDao.updateWaitingStatus(nextApplicationId, "ENTERED");
         }
-
         }
-
     }
