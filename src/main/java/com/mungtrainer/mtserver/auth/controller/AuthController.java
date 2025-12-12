@@ -78,7 +78,7 @@ public class AuthController {
     response.addCookie(rtCookie);
 
     // 5) 바디 응답
-    return ResponseEntity.ok(new LoginResponse("success",200,"로그인 성공"));
+    return ResponseEntity.ok(new LoginResponse("success",200,"로그인에 성공했습니다."));
   }
 
   @GetMapping("/logout")
@@ -94,7 +94,7 @@ public class AuthController {
     authService.updateRefreshToken(principal.getUserId(), null);
 
 
-    return ResponseEntity.ok(new LoginResponse("success",200,"로그인 성공"));
+    return ResponseEntity.ok(new LoginResponse("success",200,"로그아웃에 성공했습니다."));
   }
 
   @PostMapping("/refresh-token")
@@ -105,7 +105,7 @@ public class AuthController {
     // 1. 쿠키에 RT 없거나 무효한 JWT
     if (refreshToken == null ||
         !jwtTokenProvider.validateToken(refreshToken, JwtTokenProvider.TokenType.REFRESH)) {
-      return ResponseEntity.status(401).body(new LoginResponse("failure",400,"유효하지 않은 토큰입니다."));
+      return ResponseEntity.status(401).body(new LoginResponse("failure",401,"유효하지 않은 토큰입니다."));
     }
 
     // 2. username 추출
@@ -116,7 +116,7 @@ public class AuthController {
 
     // 4. DB에 저장된 RT와 비교
     if (!refreshToken.equals(user.getRefreshToken())) {
-      return ResponseEntity.status(401).body(new LoginResponse("failure",400,"유효하지 않은 토큰입니다."));
+      return ResponseEntity.status(401).body(new LoginResponse("failure",401,"유효하지 않은 토큰입니다."));
     }
 
     // 여기까지 통과한 RT만 재발급 가능
@@ -139,7 +139,7 @@ public class AuthController {
     response.addCookie(CookieUtil.createCookie("refresh_token", newRT,
                                                jwtTokenProvider.getRefreshTokenValidityInMs() / 1000));
 
-    return ResponseEntity.ok(new LoginResponse("success",200,"로그인에 성공했습니다."));
+    return ResponseEntity.ok(new LoginResponse("success",200,"토큰 재발급에 성공했습니다."));
   }
 
   @GetMapping("/check-email")
@@ -160,7 +160,7 @@ public class AuthController {
   }
 
   @GetMapping("/check")
-  public ResponseEntity<CheckResponse> changePassword(
+  public ResponseEntity<CheckResponse> checkAuthentication(
       @AuthenticationPrincipal CustomUserDetails principal) {
     return ResponseEntity.ok(CheckResponse.builder()
                                           .userId(principal.getUserId())

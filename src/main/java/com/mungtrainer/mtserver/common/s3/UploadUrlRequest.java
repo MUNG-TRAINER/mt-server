@@ -15,11 +15,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UploadUrlRequest {
 
-//  @NotBlank(message = "파일 키는 필수입니다")
-//  @Size(max = 500, message = "파일 키는 500자 이내로 입력해주세요")
-//  @Pattern(regexp = "^[a-zA-Z0-9/_.-]+$",
-//           message = "파일 키는 영문, 숫자, /, _, ., - 만 사용 가능합니다")
-//  private String fileKey; // 프론트가 결정한 S3 키 (예: "dog-profiles/2/temp-1704067200000.jpg")
   @NotBlank(message = "category는 필수입니다.")
   @Pattern(
       regexp = "^[a-z0-9-]+$",
@@ -30,14 +25,14 @@ public class UploadUrlRequest {
   @NotBlank(message = "fileName은 필수입니다.")
   @Size(max = 150, message = "파일 제목은 150자 이하이어야 합니다.")
   @Pattern(
-      regexp = "^[A-Za-z0-9._-]+$",
-      message = "fileName에는 영문, 숫자, 점(.), 하이픈(-), 밑줄(_)만 사용할 수 있습니다."
+      regexp = "^[A-Za-z0-9._-]+\\.(jpg|jpeg|png|gif|webp|svg)$",
+      message = "jpg, jpeg, png, gif, webp, svg 확장자만 허용됩니다."
   )
   private String fileName; // 예: mybestphoto.jpg
 
 
   @NotBlank(message = "콘텐츠 타입은 필수입니다")
-  @Pattern(regexp = "^image/(jpeg|png|gif|webp)$",
-           message = "지원하는 이미지 형식은 image/jpeg, image/png, image/gif, image/webp입니다")
+  @Pattern(regexp = "^image/(jpg|jpeg|png|gif|webp|svg)$",
+           message = "지원하는 이미지 형식은 image/jpeg, image/jpg, image/png, image/gif, image/webp, image/svg 입니다")
   private String contentType; // "image/jpeg", "image/png" 등
 }
