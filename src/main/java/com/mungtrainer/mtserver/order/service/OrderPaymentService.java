@@ -1,6 +1,9 @@
 package com.mungtrainer.mtserver.order.service;
 
 
+import com.mungtrainer.mtserver.dog.dao.DogMapper;
+import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
+import com.mungtrainer.mtserver.dog.entity.Dog;
 import com.mungtrainer.mtserver.order.dto.response.PaymentResponse;
 import com.mungtrainer.mtserver.order.dto.request.PaymentRequest;
 import com.mungtrainer.mtserver.order.entity.OrderMaster;
@@ -39,6 +42,7 @@ public class OrderPaymentService {
     private final TrainingSessionDAO sessionMapper;
     private final OrderDAO orderMapper;
     private final PaymentDAO paymentMapper;
+    private final DogMapper dogMapper;
 
     /**
      * 결제 처리 메인 메서드
@@ -110,11 +114,12 @@ public class OrderPaymentService {
             );
         }
 
-        // TODO: Dog 엔티티 조회하여 userId 검증
-        // Dog dog = dogMapper.findById(application.getDogId());
-        // if (!dog.getUserId().equals(request.getUserId())) {
-        //     throw new IllegalArgumentException("해당 신청서에 대한 권한이 없습니다.");
-        // }
+        // 반려견 소유자 검증 (한 번에 처리)
+        DogResponse dog = dogMapper.selectDogByIdAndUserId(application.getDogId(), request.getUserId());
+
+        if (dog == null) {
+          throw new IllegalArgumentException("존재하지 않는 반려견이거나 해당 신청서에 대한 권한이 없습니다.");
+        }
 
         return application;
     }
@@ -250,11 +255,24 @@ public class OrderPaymentService {
      * 형식: ORD_yyyyMMddHHmmss_UUID
      */
     private String generateMerchantUid() {
+      String merchantUid;
+      int maxRetries = 3;
+      int retry = 0;
+
+      do {
         String timestamp = LocalDateTime.now()
-                .toString()
-                .replaceAll("[-:T.]", "");
+            .toString()
+            .replaceAll("[-:T.]", "");
         String uuid = UUID.randomUUID().toString().substring(0, 8);
-        return String.format("ORD_%s_%s", timestamp, uuid);
+        merchantUid = String.format("ORD_%s_%s", timestamp, uuid);
+
+        // TODO: DB에 중복 체크 (옵션)
+        // if (paymentMapper.existsByMerchantUid(merchantUid)) continue;
+
+        break;
+      } while (retry++ < maxRetries);
+
+      return merchantUid;
     }
 
     /**
