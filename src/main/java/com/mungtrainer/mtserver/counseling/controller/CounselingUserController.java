@@ -1,11 +1,13 @@
 package com.mungtrainer.mtserver.counseling.controller;
 
-import com.mungtrainer.mtserver.counseling.dto.request.CreateCounselingRequestDto;
-import com.mungtrainer.mtserver.counseling.dto.response.CancelCounselingResponseDto;
-import com.mungtrainer.mtserver.counseling.dto.response.CreateCounselingResponseDto;
+import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
+import com.mungtrainer.mtserver.counseling.dto.request.CreateCounselingRequest;
+import com.mungtrainer.mtserver.counseling.dto.response.CancelCounselingResponse;
+import com.mungtrainer.mtserver.counseling.dto.response.CreateCounselingResponse;
 import com.mungtrainer.mtserver.counseling.service.CounselingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,27 +19,21 @@ public class CounselingUserController {
     // 상담 신청
     @PostMapping
 //    @PreAuthorize("#userId == #userDetails.userId")
-    public CreateCounselingResponseDto createCounseling(@Valid @RequestBody CreateCounselingRequestDto requestDto
-//                                                        @AuthenticationPrincipal
-//                                                        CustomUserDetail userDetails
+    public CreateCounselingResponse createCounseling(@Valid @RequestBody CreateCounselingRequest requestDto,
+                                                     @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-//        Long userId = userDetails.getUserId();
-
-        // 테스트용 하드코딩 userId
-        Long userId = 1L;
+        Long userId = userDetails.getUserId();
         return counselingService.createCounseling(requestDto, userId);
     }
 
 
     // 상담 신청 취소
     @DeleteMapping("/{counselingId}")
-    public CancelCounselingResponseDto cancelCounseling(
-            @PathVariable("counselingId") Long counselingId
-//            @AuthenticationPrincipal CustomUserDetail userDetails
+    public CancelCounselingResponse cancelCounseling(
+            @PathVariable("counselingId") Long counselingId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-//        return counselingService.cancelCounseling(counselingId, userDetails.getUserId());
-        // 테스트용 하드코딩 userId
-        Long userId = 1L;
+        Long userId = userDetails.getUserId();
         return counselingService.cancelCounseling(counselingId, userId);
 
     }

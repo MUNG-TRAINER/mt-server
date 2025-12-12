@@ -1,6 +1,5 @@
 package com.mungtrainer.mtserver.training.dto.request;
 
-import com.mungtrainer.mtserver.training.entity.TrainingCourse;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
