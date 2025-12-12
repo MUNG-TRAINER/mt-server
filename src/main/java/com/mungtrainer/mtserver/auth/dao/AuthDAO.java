@@ -12,8 +12,13 @@ public interface AuthDAO {
   void insertUser(User user);
   void insertTrainerProfile(TrainerProfile trainerProfile);
   void insertTrainerUser(TrainerUser trainerUser);
+  void updateRefreshToken(Long userId, String refreshToken);
+  void updatePassword(Long userId, String password);
 
   // TODO: Trainer DAO로 옮기던가 해야 함.
   long findTrainerIdByRegistCode(String registCode);
   boolean existsRegistCode(String registCode);
+
+  // TODO: User DAO로 옮기던가 해야 함.
+  User findByUserName(String userName);
 }

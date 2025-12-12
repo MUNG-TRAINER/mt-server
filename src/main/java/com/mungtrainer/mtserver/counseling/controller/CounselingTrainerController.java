@@ -1,5 +1,6 @@
 package com.mungtrainer.mtserver.counseling.controller;
 
+import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
 import com.mungtrainer.mtserver.counseling.dto.request.ApplicationStatusUpdateRequestDTO;
 import com.mungtrainer.mtserver.counseling.dto.request.CounselingPostRequestDTO;
 import com.mungtrainer.mtserver.counseling.dto.response.*;
@@ -8,6 +9,7 @@ import com.mungtrainer.mtserver.counseling.service.TrainerUserService;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,13 +35,10 @@ public class CounselingTrainerController {
     public ResponseEntity<CounselingPostResponseDTO> addCounselingContent(
             @PathVariable("counselingId") Long counselingId,
             @RequestBody CounselingPostRequestDTO requestDto
+            ,@AuthenticationPrincipal CustomUserDetails userDetails
     ) {  // 로그인한 훈련사 정보
 
-//        CounselingResponseDto response = counselingService.addCounselingContent(
-//                counselingId, requestDto, userDetails.getUserId());
-
-        // 테스트용 하드코딩 userId
-        Long userId = 2L;
+        Long userId = userDetails.getUserId();
         CounselingPostResponseDTO response = counselingService.addCounselingContent(
                 counselingId, requestDto, userId);
 
@@ -50,10 +49,9 @@ public class CounselingTrainerController {
     // 훈련사가 관리하는 회원 목록 조회
     @GetMapping("/users/{trainerId}")
     public List<TrainerUserListResponseDTO> getTrainerUsers(
-//            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long trainerId
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-//        Long trainerId = userDetails.getUserId();
+        Long trainerId = userDetails.getUserId();
         return trainerService.getUsersByTrainer(trainerId);
     }
 
@@ -69,12 +67,10 @@ public class CounselingTrainerController {
     // 목록 조회 → 반려견이 신청했던 모든 훈련 정보를 요약해서 보여주는 가벼운 쿼리
     @GetMapping("/user/dogs/{dogId}")
     public ResponseEntity<DogStatsResponseDTO> getDogStats(
-//            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable("dogId") Long dogId
     ) {
-//        Long trainerId = userDetails.getUserId();
-        // 테스트용 하드코딩 trainerId
-        Long trainerId = 1L;
+        Long trainerId = userDetails.getUserId();
         DogStatsResponseDTO dogStats = trainerService.getDogStats(dogId, trainerId);
         return ResponseEntity.ok(dogStats);
     }
@@ -90,12 +86,10 @@ public class CounselingTrainerController {
     public String applicationUpdateStatus(
             @PathVariable Long application_id,
             @RequestBody ApplicationStatusUpdateRequestDTO request
-//            ,@AuthenticationPrincipal CustomUserDetails userDetails,
+            ,@AuthenticationPrincipal CustomUserDetails userDetails
             )
     {
-//        Long trainerId = userDetails.getUserId();
-        // 테스트용 하드코딩 trainerId
-        Long trainerId = 1L;
+        Long trainerId = userDetails.getUserId();
         trainerService.updateApplicationStatus(application_id,request,trainerId);
         return "훈련 신청 상태가 변경되었습니다.";
     }

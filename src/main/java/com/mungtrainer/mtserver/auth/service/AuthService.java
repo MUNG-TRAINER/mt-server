@@ -3,6 +3,8 @@ package com.mungtrainer.mtserver.auth.service;
 import com.mungtrainer.mtserver.auth.dao.AuthDAO;
 import com.mungtrainer.mtserver.auth.dto.request.AuthTrainerJoinRequest;
 import com.mungtrainer.mtserver.auth.dto.request.AuthUserJoinRequest;
+import com.mungtrainer.mtserver.auth.dto.request.PasswordChangeRequest;
+import com.mungtrainer.mtserver.auth.dto.response.AuthDuplicatedCheckResponse;
 import com.mungtrainer.mtserver.auth.dto.response.AuthJoinResponse;
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
@@ -23,6 +25,51 @@ public class AuthService {
   private final AuthDAO authDAO;
   private final PasswordEncoder passwordEncoder;
 
+  public enum Role {
+    USER, TRAINER, ADMIN
+  }
+
+  @Transactional
+  public void passwordChange(PasswordChangeRequest request, String userName){
+    User user = authDAO.findByUserName(userName);
+    // 유저 확인
+    if (user == null) {
+      throw new CustomException(ErrorCode.NOT_FOUND_USERNAME);
+    }
+    // 기존 비밀번호 확인
+    if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+      throw new CustomException(ErrorCode.INVALID_OLD_PASSWORD);
+    }
+
+    // 새로운 비밀번호 확인
+    if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+      throw new CustomException(ErrorCode.INVALID_CONFIRM_PASSWORD);
+    }
+
+    // 새 비밀번호 암호화 후 저장
+    String password = passwordEncoder.encode(request.getNewPassword());
+    authDAO.updatePassword(user.getUserId(), password);
+
+  }
+
+  @Transactional
+  public AuthDuplicatedCheckResponse emailDuplicatedCheck(String email) {
+    boolean isValid = !authDAO.existsEmail(email);
+    return AuthDuplicatedCheckResponse.builder()
+        .isValid(isValid)
+        .message(isValid ? "사용 가능 이메일입니다." : "사용 중인 이메일입니다.")
+        .build();
+  }
+
+  @Transactional(readOnly = true)
+  public AuthDuplicatedCheckResponse userNameDuplicatedCheck(String userName) {
+    boolean isValid = !authDAO.existsUsername(userName);
+    return AuthDuplicatedCheckResponse.builder()
+        .isValid(isValid)
+        .message(isValid ? "사용 가능한 아이디입니다." : "사용 중인 아이디입니다.")
+        .build();
+  }
+
   @Transactional
   public AuthJoinResponse userJoin(AuthUserJoinRequest req) {
     // 비밀번호 암호화
@@ -34,6 +81,15 @@ public class AuthService {
     }
     long trainerId = authDAO.findTrainerIdByRegistCode(req.getRegistCode());
 
+    // userName 중복 확인
+    if (authDAO.existsUsername(req.getUserName())) {
+      throw new CustomException(ErrorCode.USER_USERNAME_DUPLICATE);
+    }
+    // Email 중복 확인
+    if (authDAO.existsEmail(req.getEmail())) {
+      throw new CustomException(ErrorCode.USER_EMAIL_DUPLICATE);
+    }
+
     User user = User.builder()
                     .userName(req.getUserName())
                     .name(req.getName())
@@ -41,7 +97,7 @@ public class AuthService {
                     .email(req.getEmail())
                     .phone(req.getPhone())
                     .password(encodePassword)
-                    .role("USER")
+                    .role(Role.USER.name())
                     .isAgree(req.getIsAgree())
                     .sido(req.getSido())
                     .sigungu(req.getSigungu())
@@ -77,7 +133,7 @@ public class AuthService {
     // 가입 코드 생성
     String registCode;
     do {
-      registCode = generateRegistCode(6);
+      registCode = generateRegistCode(8);
     } while (authDAO.existsRegistCode((registCode)));
 
 
@@ -88,7 +144,7 @@ public class AuthService {
         .email(req.getEmail())
         .phone(req.getPhone())
         .password(encodePassword)
-        .role("TRAINER")
+        .role(Role.TRAINER.name())
         .isAgree(req.getIsAgree())
         .sido(req.getSido())
         .sigungu(req.getSigungu())
@@ -123,6 +179,15 @@ public class AuthService {
         .build();
   }
 
+  public void updateRefreshToken(Long userId, String refreshToken) {
+    authDAO.updateRefreshToken(userId, refreshToken);
+  }
+
+  // TODO: User에 옮겨야 함.
+  public User findByUserName(String userName) {
+    return authDAO.findByUserName(userName);
+  }
+
   private String generateRegistCode(int length) {
     String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     StringBuilder sb = new StringBuilder();
@@ -133,5 +198,5 @@ public class AuthService {
     }
     return sb.toString();
   }
-
 }
+
