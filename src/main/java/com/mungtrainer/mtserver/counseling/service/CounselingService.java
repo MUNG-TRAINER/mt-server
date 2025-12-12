@@ -1,13 +1,13 @@
 package com.mungtrainer.mtserver.counseling.service;
 
 import com.mungtrainer.mtserver.common.exception.InvalidInputException;
-import com.mungtrainer.mtserver.counseling.dao.CounselingDao;
-import com.mungtrainer.mtserver.counseling.dto.request.CounselingPostRequestDto;
-import com.mungtrainer.mtserver.counseling.dto.request.CreateCounselingRequestDto;
-import com.mungtrainer.mtserver.counseling.dto.response.CancelCounselingResponseDto;
-import com.mungtrainer.mtserver.counseling.dto.response.CounselingDogResponseDto;
-import com.mungtrainer.mtserver.counseling.dto.response.CounselingPostResponseDto;
-import com.mungtrainer.mtserver.counseling.dto.response.CreateCounselingResponseDto;
+import com.mungtrainer.mtserver.counseling.dao.CounselingDAO;
+import com.mungtrainer.mtserver.counseling.dto.request.CounselingPostRequest;
+import com.mungtrainer.mtserver.counseling.dto.request.CreateCounselingRequest;
+import com.mungtrainer.mtserver.counseling.dto.response.CancelCounselingResponse;
+import com.mungtrainer.mtserver.counseling.dto.response.CounselingDogResponse;
+import com.mungtrainer.mtserver.counseling.dto.response.CounselingPostResponse;
+import com.mungtrainer.mtserver.counseling.dto.response.CreateCounselingResponse;
 import com.mungtrainer.mtserver.counseling.entity.Counseling;
 import com.mungtrainer.mtserver.common.exception.CounselingCreateException;
 import lombok.RequiredArgsConstructor;
@@ -19,10 +19,10 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class CounselingService {
-    private final CounselingDao counselingDao;
+    private final CounselingDAO counselingDao;
 //    private final DogDao dogDao; // 반려견 DAO 주입
 
-    public CreateCounselingResponseDto createCounseling(CreateCounselingRequestDto requestDto, Long userId){
+    public CreateCounselingResponse createCounseling(CreateCounselingRequest requestDto, Long userId){
 
         // DogId 존재여부 확인
 //     if (!dogDao.existsById(requestDto.getDogId())) {
@@ -58,7 +58,7 @@ public class CounselingService {
             throw new CounselingCreateException("상담 신청에 실패했습니다.");
         }
 
-        return new CreateCounselingResponseDto(counseling.getCounselingId(), "상담 신청이 완료되었습니다");
+        return new CreateCounselingResponse(counseling.getCounselingId(), "상담 신청이 완료되었습니다");
     }
 
 
@@ -67,59 +67,59 @@ public class CounselingService {
      * @param counselingId 취소할 상담 ID
      * @return 취소 성공 여부 메시지
      */
-    public CancelCounselingResponseDto cancelCounseling(Long counselingId, Long userId) {
+    public CancelCounselingResponse cancelCounseling(Long counselingId, Long userId) {
         // 1. 상담 조회
         Counseling counseling = counselingDao.findById(counselingId);
 
         if (counseling == null) {
-            return new CancelCounselingResponseDto(false, "이미 취소된 상담이거나 존재하지 않는 상담입니다.");
+            return new CancelCounselingResponse(false, "이미 취소된 상담이거나 존재하지 않는 상담입니다.");
         }
 
         // 2. 권한 체크
         if (!counseling.getCreatedBy().equals(userId)) {
-            return new CancelCounselingResponseDto(false, "해당 상담을 취소할 권한이 없습니다.");
+            return new CancelCounselingResponse(false, "해당 상담을 취소할 권한이 없습니다.");
         }
 
         // 3. 취소 처리
         int result = counselingDao.cancelCounseling(counselingId);
 
         if (result == 0) {
-            return new CancelCounselingResponseDto(false, "상담 취소에 실패했습니다.");
+            return new CancelCounselingResponse(false, "상담 취소에 실패했습니다.");
         } else {
-            return new CancelCounselingResponseDto(true, "상담이 성공적으로 취소되었습니다.");
+            return new CancelCounselingResponse(true, "상담이 성공적으로 취소되었습니다.");
         }
     }
 
     // <============ (훈련사) 상담 완료 전 후 반려견 리스트 조회 ==============>
-    public List<CounselingDogResponseDto> getDogsByCompleted(boolean completed){
+    public List<CounselingDogResponse> getDogsByCompleted(boolean completed){
         return counselingDao.findDogsByCompleted(completed);
     }
 
 
     // <============ (훈련사) 상담 내용 작성 ==============>
-    public CounselingPostResponseDto addCounselingContent(
+    public CounselingPostResponse addCounselingContent(
             Long counselingId,
-            CounselingPostRequestDto requestDto,
+            CounselingPostRequest requestDto,
             Long trainerId
     ) {
 
         // 1. 상담 존재 여부 & 완료 여부 확인
         Counseling counseling = counselingDao.findById(counselingId);
         if (counseling == null) {
-            return new CounselingPostResponseDto(false, "존재하지 않는 상담입니다.");
+            return new CounselingPostResponse(false, "존재하지 않는 상담입니다.");
         }
 
         if (Boolean.TRUE.equals(counseling.getIsCompleted())) {
-            return new CounselingPostResponseDto(false, "이미 완료된 상담입니다.");
+            return new CounselingPostResponse(false, "이미 완료된 상담입니다.");
         }
 
         // 2. 상담 내용 업데이트 + 완료 처리
         int updatedRows = counselingDao.updateContentAndComplete(counselingId, requestDto.getContent(), trainerId);
         if (updatedRows == 0) {
-            return new CounselingPostResponseDto(false, "상담 내용 저장에 실패했습니다.");
+            return new CounselingPostResponse(false, "상담 내용 저장에 실패했습니다.");
         }
 
-        return new CounselingPostResponseDto(true, "상담 내용이 저장되었습니다.");
+        return new CounselingPostResponse(true, "상담 내용이 저장되었습니다.");
     }
 
 

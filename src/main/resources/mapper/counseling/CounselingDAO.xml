@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.mungtrainer.mtserver.counseling.dao.CounselingDao">
+<mapper namespace="com.mungtrainer.mtserver.counseling.dao.CounselingDAO">
 
     <insert id="insertCounseling" parameterType="com.mungtrainer.mtserver.counseling.entity.Counseling" useGeneratedKeys="true" keyProperty="counselingId">
         INSERT INTO counseling
@@ -29,8 +29,15 @@
         AND is_deleted = 0
     </select>
 
+    <select id="selectCounselingsByDogAndTrainer" resultType="com.mungtrainer.mtserver.counseling.dto.response.CounselingResponse">
+        SELECT *
+        FROM counseling
+        WHERE dog_id = #{dogId}
+        AND is_deleted = 0
+    </select>
+
     <!-- 훈련사 상담 완료 전후 반려견 리스트 조회 -->
-    <select id="findDogsByCompleted" resultType="com.mungtrainer.mtserver.counseling.dto.response.CounselingDogResponseDto">
+    <select id="findDogsByCompleted" resultType="com.mungtrainer.mtserver.counseling.dto.response.CounselingDogResponse">
         SELECT
         c.counseling_id AS counselingId,
         d.name AS dogName,

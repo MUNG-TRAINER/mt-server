@@ -9,11 +9,9 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class TrainerDogListResponseDto {
-    private Long dogId;
+public class TrainerUserListResponse {
+    private Long userId;
     private String name;
-    private String breed;
-    private Integer age;
-    private String gender;
-    private String profileImage;
+    private String phone;
+    private String email;
 }
