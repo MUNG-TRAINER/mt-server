@@ -11,17 +11,21 @@ public enum ErrorCode {
   USER_USERNAME_DUPLICATE(400, "이미 사용 중인 아이디입니다."),
   USER_EMAIL_DUPLICATE(400, "이미 사용 중인 이메일입니다."),
   LOGIN_FAILED(401, "아이디 또는 비밀번호가 올바르지 않습니다."),
-  NOT_FOUND_USERNAME(500, "해당 유저는 존재하지 않습니다."),
-  INVALID_OLD_PASSWORD(400, "비밀번호 변경에 실패했습니다."),
-  INVALID_CONFIRM_PASSWORD(400, "새 비밀번호와 확인 비밀번호가 일치하지 않습니다."),
+  NOT_FOUND_USERNAME(400, "해당 유저는 존재하지 않습니다."),
+  INVALID_OLD_PASSWORD(400, "이전 비밀번호 확인이 실패했습니다."),
+  INVALID_CONFIRM_PASSWORD(400, "비밀번호 확인이 실패했습니다."),
   USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다."),
   PROFILE_UPDATE_FAILED(500, "프로필 수정에 실패했습니다."),
+  INVALID_COURSE_ID(400, "유효하지 않은 훈련 과정 ID입니다."),
 
-    // 신청 관련
-    DUPLICATE_APPLICATION(409, "이미 신청한 세션입니다.(APPLIED 상태)"),
-    APPLICATION_NOT_FOUND(404, "신청 정보를 찾을 수 없습니다."),
-    UNAUTHORIZED_APPLICATION(403, "본인만 신청 가능합니다."),
-    APPLICATION_CREATION_FAILED(500, "신청 생성 실패"),
+  // 훈련 과정
+  INTERNAL_SERVER_ERROR(500, "고유 tags 생성에 실패했습니다."),
+
+  // 신청 관련
+  DUPLICATE_APPLICATION(409, "이미 신청한 세션입니다.(APPLIED 상태)"),
+  APPLICATION_NOT_FOUND(404, "신청 정보를 찾을 수 없습니다."),
+  UNAUTHORIZED_APPLICATION(403, "본인만 신청 가능합니다."),
+  APPLICATION_CREATION_FAILED(500, "신청 생성 실패"),
 
   // 출석 관련
   ATTENDANCE_UPDATE_FAILED(500,"출석 상태 변경에 실패했습니다"),
