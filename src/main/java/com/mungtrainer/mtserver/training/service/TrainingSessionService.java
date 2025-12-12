@@ -50,7 +50,10 @@ public class TrainingSessionService {
         }
 
         try {
-            trainingSessionMapper.updateSession(request, sessionId);
+          int deletedCount = trainingSessionMapper.deleteSession(sessionId);
+          if (deletedCount == 0) {
+            throw new CustomException(ErrorCode.SESSION_NOT_FOUND);
+          }
         } catch (Exception e) {
             throw new CustomException(ErrorCode.SESSION_UPDATE_FAILED);
         }

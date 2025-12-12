@@ -30,13 +30,13 @@ public interface TrainingSessionMapper {
     /**
      * 세션 정보 수정
      */
-    void updateSession(@Param("request") UpdateSessionRequest request,
+    int updateSession(@Param("request") UpdateSessionRequest request,
                        @Param("sessionId") Long sessionId);
 
     /**
      * 세션 삭제 (Soft Delete)
      */
-    void deleteSession(@Param("sessionId") Long sessionId);
+    int deleteSession(@Param("sessionId") Long sessionId);
 
     /**
      * 세션에 신청자가 있는지 확인
