@@ -1,5 +1,6 @@
-package com.mungtrainer.mtserver.common.config;
+package com.mungtrainer.mtserver.common.s3;
 
+import com.mungtrainer.mtserver.common.config.AwsS3Config;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

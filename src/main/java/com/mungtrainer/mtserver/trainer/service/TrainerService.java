@@ -1,11 +1,10 @@
 package com.mungtrainer.mtserver.trainer.service;
 
-import com.mungtrainer.mtserver.common.config.S3Service;
+import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.trainer.dao.TrainerDao;
 import com.mungtrainer.mtserver.trainer.dto.request.TrainerProfileUpdateRequest;
 import com.mungtrainer.mtserver.trainer.dto.response.TrainerResponse;
 import com.mungtrainer.mtserver.trainer.entity.TrainerProfile;
-import com.mungtrainer.mtserver.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

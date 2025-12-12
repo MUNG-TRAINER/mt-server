@@ -1,6 +1,6 @@
 package com.mungtrainer.mtserver.dog.service;
 
-import com.mungtrainer.mtserver.common.config.S3Service;
+import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.dog.dto.request.DogCreateRequest;

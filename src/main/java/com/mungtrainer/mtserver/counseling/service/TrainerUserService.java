@@ -1,6 +1,6 @@
 package com.mungtrainer.mtserver.counseling.service;
 
-import com.mungtrainer.mtserver.common.config.S3Service;
+import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.counseling.dao.TrainerUserDao;
 import com.mungtrainer.mtserver.counseling.dto.response.TrainerUserListResponseDto;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
