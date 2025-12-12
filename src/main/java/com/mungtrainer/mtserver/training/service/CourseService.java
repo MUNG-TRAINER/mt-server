@@ -23,7 +23,7 @@ public class CourseService {
   public CourseUploadResponse createCourse(CourseUploadRequest req, Long userId) {
     String tags;
     do{
-      tags = UUID.randomUUID().toString().replace("-", "").substring(0, 50);
+      tags = UUID.randomUUID().toString().replace("-", "").substring(0, 30);
     }while (courseDAO.existsTags(tags));
     TrainingCourse course = TrainingCourse.builder()
                                           .trainerId(userId)
@@ -66,8 +66,8 @@ public class CourseService {
                                                .createdBy(userId)
                                                .updatedBy(userId)
                                                .build());
-      courseDAO.insertSessions(sessions);
     }
+    courseDAO.insertSessions(sessions);
 
     return CourseUploadResponse.builder()
                                .status("Success")
