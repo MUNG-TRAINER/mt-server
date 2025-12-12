@@ -4,7 +4,7 @@ package com.mungtrainer.mtserver.training.service;
      import com.mungtrainer.mtserver.common.exception.ErrorCode;
      import com.mungtrainer.mtserver.training.dto.request.AttendanceUpdateRequest;
      import com.mungtrainer.mtserver.training.dto.response.AttendanceListResponse;
-     import com.mungtrainer.mtserver.training.dao.TrainingAttendanceMapper;
+     import com.mungtrainer.mtserver.training.dao.TrainingAttendanceDAO;
      import lombok.RequiredArgsConstructor;
      import lombok.extern.slf4j.Slf4j;
      import org.springframework.stereotype.Service;
@@ -18,7 +18,7 @@ package com.mungtrainer.mtserver.training.service;
      @Transactional(readOnly = true)
      public class TrainingAttendanceService {
 
-         private final TrainingAttendanceMapper trainingAttendanceMapper;
+         private final TrainingAttendanceDAO trainingAttendanceMapper;
 
          /**
           * 특정 세션의 모든 출석 목록 조회

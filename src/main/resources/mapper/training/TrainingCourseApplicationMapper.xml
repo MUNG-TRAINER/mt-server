@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+     <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+             "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+     <mapper namespace="com.mungtrainer.mtserver.training.dao.TrainingCourseApplicationDAO">
+
+         <!-- Result Map -->
+         <resultMap id="trainingCourseApplicationResultMap" type="com.mungtrainer.mtserver.training.entity.TrainingCourseApplication">
+             <id property="applicationId" column="application_id"/>
+             <result property="sessionId" column="session_id"/>
+             <result property="dogId" column="dog_id"/>
+             <result property="appliedAt" column="applied_at"/>
+             <result property="status" column="status"/>
+             <result property="rejectReason" column="reject_reason"/>
+             <result property="createdAt" column="created_at"/>
+             <result property="updatedAt" column="updated_at"/>
+         </resultMap>
+
+         <!-- 신청서 ID로 조회 -->
+         <select id="findById" parameterType="long" resultMap="trainingCourseApplicationResultMap">
+             SELECT application_id,
+                    session_id,
+                    dog_id,
+                    applied_at,
+                    status,
+                    reject_reason,
+                    created_at,
+                    updated_at
+             FROM training_course_application
+             WHERE application_id = #{applicationId}
+         </select>
+
+         <!-- 신청서 상태 업데이트 -->
+         <update id="updateStatus" parameterType="com.mungtrainer.mtserver.training.entity.TrainingCourseApplication">
+             UPDATE training_course_application
+             SET status = #{status},
+                 updated_at = NOW()
+             WHERE application_id = #{applicationId}
+         </update>
+
+     </mapper>

@@ -1,6 +1,5 @@
 package com.mungtrainer.mtserver.user.service;
 
-import com.mungtrainer.mtserver.auth.service.AuthService;
 import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
@@ -9,7 +8,7 @@ import com.mungtrainer.mtserver.user.dto.request.UserProfileUpdateRequest;
 import com.mungtrainer.mtserver.user.dto.response.UserImageUploadResponse;
 import com.mungtrainer.mtserver.user.dto.response.UserProfileResponse;
 import com.mungtrainer.mtserver.user.entity.User;
-import com.mungtrainer.mtserver.user.dao.UserMapper;
+import com.mungtrainer.mtserver.user.dao.UserDAO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +20,7 @@ import static com.mungtrainer.mtserver.auth.service.AuthService.*;
 @Transactional(readOnly = true)
 public class UserService {
 
-    private final UserMapper userMapper;
+    private final UserDAO userMapper;
     private final S3Service s3Service;
 
     /**

@@ -2,13 +2,14 @@ package com.mungtrainer.mtserver.training.dao;
 
 import com.mungtrainer.mtserver.training.dto.request.UpdateSessionRequest;
 import com.mungtrainer.mtserver.training.dto.response.TrainingSessionResponse;
+import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
 @Mapper
-public interface TrainingSessionMapper {
+public interface TrainingSessionDAO {
 
     /**
      * 특정 코스의 세션 목록 조회
@@ -42,4 +43,11 @@ public interface TrainingSessionMapper {
      * 세션에 신청자가 있는지 확인
      */
     Boolean hasActiveApplications(@Param("sessionId") Long sessionId);
+
+    /**
+     * 세션 ID로 조회
+     */
+    TrainingSession findById(Long sessionId);
+
+
 }

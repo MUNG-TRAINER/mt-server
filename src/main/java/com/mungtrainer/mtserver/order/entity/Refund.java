@@ -1,4 +1,4 @@
-package com.mungtrainer.mtserver.payment.entity;
+package com.mungtrainer.mtserver.order.entity;
 
 import com.mungtrainer.mtserver.common.entity.BaseEntity;
 import lombok.*;
