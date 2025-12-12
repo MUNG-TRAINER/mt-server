@@ -17,11 +17,11 @@ public enum ErrorCode {
   USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다."),
   PROFILE_UPDATE_FAILED(500, "프로필 수정에 실패했습니다."),
 
-    // 신청 관련
-    DUPLICATE_APPLICATION(409, "이미 신청한 세션입니다.(APPLIED 상태)"),
-    APPLICATION_NOT_FOUND(404, "신청 정보를 찾을 수 없습니다."),
-    UNAUTHORIZED_APPLICATION(403, "본인만 신청 가능합니다."),
-    APPLICATION_CREATION_FAILED(500, "신청 생성 실패"),
+  // 신청 관련
+  DUPLICATE_APPLICATION(409, "이미 신청한 세션입니다.(APPLIED 상태)"),
+  APPLICATION_NOT_FOUND(404, "신청 정보를 찾을 수 없습니다."),
+  UNAUTHORIZED_APPLICATION(403, "본인만 신청 가능합니다."),
+  APPLICATION_CREATION_FAILED(500, "신청 생성 실패"),
 
   // 출석 관련
   ATTENDANCE_UPDATE_FAILED(500,"출석 상태 변경에 실패했습니다"),
@@ -34,7 +34,15 @@ public enum ErrorCode {
   DOG_UPDATE_FAILED(500, "반려견 정보 수정에 실패했습니다."),
   DOG_DELETE_FAILED(500, "반려견 삭제에 실패했습니다."),
   DOG_IMAGE_DELETE_FAILED(500, "반려견 프로필 이미지 삭제에 실패했습니다."),
-  DOG_ID_GENERATION_FAILED(500, "반려견 ID 생성에 실패했습니다.");
+  DOG_ID_GENERATION_FAILED(500, "반려견 ID 생성에 실패했습니다."),
+
+  // 훈련 세션 관련
+  SESSION_NOT_FOUND(404, "해당 세션을 찾을 수 없습니다."),
+  SESSION_NO_PERMISSION(403, "해당 세션에 대한 권한이 없습니다."),
+  SESSION_EMPTY_UPDATE(400, "수정할 내용이 없습니다."),
+  SESSION_HAS_APPLICATIONS(400, "신청자가 있는 세션은 삭제할 수 없습니다."),
+  SESSION_DELETE_FAILED(500, "세션 삭제에 실패했습니다."),
+  SESSION_UPDATE_FAILED(500, "세션 수정에 실패했습니다.");
 
 
 
