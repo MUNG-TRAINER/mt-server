@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class CounselingPostResponseDto {
+public class CounselingPostResponseDTO {
     private boolean success;
     private String message;
 }

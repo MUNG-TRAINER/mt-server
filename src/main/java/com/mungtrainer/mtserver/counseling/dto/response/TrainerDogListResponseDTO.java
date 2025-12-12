@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class TrainerDogListResponseDto {
+public class TrainerDogListResponseDTO {
     private Long dogId;
     private String name;
     private String breed;

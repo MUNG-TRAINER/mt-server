@@ -1,9 +1,6 @@
 package com.mungtrainer.mtserver.counseling.dao;
 
-import com.mungtrainer.mtserver.counseling.dto.response.MultiCourseGroupDto;
-import com.mungtrainer.mtserver.counseling.dto.response.MultiSessionDto;
-import com.mungtrainer.mtserver.counseling.dto.response.TrainerUserListResponseDto;
-import com.mungtrainer.mtserver.counseling.dto.response.TrainingApplicationResponseDto;
+import com.mungtrainer.mtserver.counseling.dto.response.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -13,13 +10,13 @@ import java.util.List;
 public interface TrainerUserDao {
 
     // 회원 목록 조회
-    List<TrainerUserListResponseDto> findUsersByTrainerId(@Param("trainerId") Long trainerId);
+    List<TrainerUserListResponseDTO> findUsersByTrainerId(@Param("trainerId") Long trainerId);
     // 반려견 신청 과정 조회 (출석 미포함, tags 기준 회차 계산)
-    List<TrainingApplicationResponseDto> findTrainingApplicationsByDogId(@Param("dogId") Long dogId);
+    List<TrainingApplicationResponseDTO> findTrainingApplicationsByDogId(@Param("dogId") Long dogId);
 
-    List<MultiCourseGroupDto> findMultiCoursesByDogId(Long dogId);
+    List<MultiCourseGroupDTO> findMultiCoursesByDogId(Long dogId);
 
-    List<MultiSessionDto> findSessionsWithAttendance(
+    List<MultiSessionDTO> findSessionsWithAttendance(
             @Param("dogId") Long dogId,
             @Param("courseId") Long courseId
     );
@@ -31,4 +28,13 @@ public interface TrainerUserDao {
             @Param("dogId") Long dogId,
             @Param("courseId") Long courseId
     );
+
+    List<appliedWatingDTO> selectWaitingApplications();
+
+    int updateStatusApproved(@Param("applicationId") Long applicationId,
+                             @Param("trainerId") Long trainerId);
+
+    int updateStatusRejected(@Param("applicationId") Long applicationId,
+                             @Param("trainerId") Long trainerId,
+                             @Param("rejectReason") String rejectReason);
 }

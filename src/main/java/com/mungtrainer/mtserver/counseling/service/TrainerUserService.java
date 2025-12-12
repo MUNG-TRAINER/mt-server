@@ -3,6 +3,7 @@ package com.mungtrainer.mtserver.counseling.service;
 import com.mungtrainer.mtserver.common.config.S3Service;
 import com.mungtrainer.mtserver.counseling.dao.CounselingDao;
 import com.mungtrainer.mtserver.counseling.dao.TrainerUserDao;
+import com.mungtrainer.mtserver.counseling.dto.request.ApplicationStatusUpdateRequestDTO;
 import com.mungtrainer.mtserver.counseling.dto.response.*;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
 import com.mungtrainer.mtserver.dog.mapper.DogMapper;
@@ -23,7 +24,7 @@ public class TrainerUserService {
     private final S3Service s3Service;
     private final CounselingDao counselingDao;
 
-    public List<TrainerUserListResponseDto> getUsersByTrainer(Long trainerId) {
+    public List<TrainerUserListResponseDTO> getUsersByTrainer(Long trainerId) {
         return trainerUserDao.findUsersByTrainerId(trainerId);
     }
 
@@ -55,7 +56,7 @@ public class TrainerUserService {
     }
 
     @Transactional(readOnly = true)
-    public DogStatsResponseDto getDogStats(Long dogId, Long trainerId) {
+    public DogStatsResponseDTO getDogStats(Long dogId, Long trainerId) {
 
         // 1. 반려견 조회 + Presigned URL 변환
         DogResponse dog = dogMapper.selectDogById(dogId);
@@ -68,11 +69,11 @@ public class TrainerUserService {
         }
 
         // 2. 해당 훈련사가 작성한 상담 내역 조회
-        List<CounselingResponseDto> counselings =
+        List<CounselingResponseDTO> counselings =
                 counselingDao.selectCounselingsByDogAndTrainer(dogId);
 
         // 2. 단회차(일회차) 신청 내역 조회
-        List<TrainingApplicationResponseDto> list =
+        List<TrainingApplicationResponseDTO> list =
                 trainerUserDao.findTrainingApplicationsByDogId(dogId);
 
         // timesApplied / attendedCount는 첫 row에서만 가져오기
@@ -80,9 +81,9 @@ public class TrainerUserService {
         Integer attendedCount = list.isEmpty() ? 0 : list.get(0).getAttendedCount();
 
         // 응답용 세션 리스트 변환 — 통계 정보 제거
-        List<DogStatsResponseDto.TrainingSessionDto> simplified =
+        List<DogStatsResponseDTO.TrainingSessionDto> simplified =
                 list.stream()
-                        .map(item -> DogStatsResponseDto.TrainingSessionDto.builder()
+                        .map(item -> DogStatsResponseDTO.TrainingSessionDto.builder()
                                 .courseId(item.getCourseId())
                                 .courseTitle(item.getCourseTitle())
                                 .courseDescription(item.getCourseDescription())
@@ -96,16 +97,16 @@ public class TrainerUserService {
                         ).toList();
 
         // 3. 다회차 과정 목록 조회
-        List<MultiCourseGroupDto> rawMultiCourses = trainerUserDao.findMultiCoursesByDogId(dogId);
+        List<MultiCourseGroupDTO> rawMultiCourses = trainerUserDao.findMultiCoursesByDogId(dogId);
 
 
         // 3-1. 세션 + 출석률 계산
-        for (MultiCourseGroupDto mc : rawMultiCourses) {
+        for (MultiCourseGroupDTO mc : rawMultiCourses) {
 
             int totalSessions = trainerUserDao.countSessionsByCourseId(mc.getCourseId());
             mc.setTotalSessions(totalSessions);
 
-            List<MultiSessionDto> sessions =
+            List<MultiSessionDTO> sessions =
                     trainerUserDao.findSessionsWithAttendance(dogId, mc.getCourseId());
             mc.setSessions(sessions);
 
@@ -117,23 +118,58 @@ public class TrainerUserService {
         }
 
         // 3-2. tags 기준으로 그룹화
-        Map<String, List<MultiCourseGroupDto>> grouped =
+        Map<String, List<MultiCourseGroupDTO>> grouped =
                 rawMultiCourses.stream()
-                        .collect(Collectors.groupingBy(MultiCourseGroupDto::getTags));
+                        .collect(Collectors.groupingBy(MultiCourseGroupDTO::getTags));
 
         // 3-3. 응답용 구조로 변환
-        List<MultiCourseCategory> finalGroups = grouped.entrySet().stream()
-                .map(e -> new MultiCourseCategory(e.getKey(), e.getValue()))
+        List<MultiCourseCategoryDTO> finalGroups = grouped.entrySet().stream()
+                .map(e -> new MultiCourseCategoryDTO(e.getKey(), e.getValue()))
                 .toList();
 
-        return DogStatsResponseDto.builder()
+        return DogStatsResponseDTO.builder()
                 .dog(dog)
                 .counselings(counselings)
-                .stats(new DogStatsResponseDto.Stats(timesApplied, attendedCount))
+                .stats(new DogStatsResponseDTO.Stats(timesApplied, attendedCount))
                 .trainingApplications(simplified)
                 .multiCourses(finalGroups)
                 .build();
 
+    }
+
+    public List<appliedWatingDTO> getWatingApplications() {
+        return trainerUserDao.selectWaitingApplications();
+    }
+
+
+    public void updateApplicationStatus(Long applicationId,
+                                        ApplicationStatusUpdateRequestDTO req,
+                                        Long trainerId) {
+
+        String status = req.getStatus();
+
+        int updated;
+
+        switch (status) {
+            case "ACCEPT":
+                updated = trainerUserDao.updateStatusApproved(applicationId, trainerId);
+                break;
+
+            case "REJECTED":
+                updated = trainerUserDao.updateStatusRejected(
+                        applicationId,
+                        trainerId,
+                        req.getRejectReason()
+                );
+                break;
+
+            default:
+                throw new IllegalArgumentException("잘못된 status 값입니다.");
+        }
+
+        if (updated == 0) {
+            throw new IllegalStateException("APPLIED 상태일 때만 승인/거절이 가능합니다.");
+        }
     }
 
 }

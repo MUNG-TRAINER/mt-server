@@ -29,7 +29,7 @@
         AND is_deleted = 0
     </select>
 
-    <select id="selectCounselingsByDogAndTrainer" resultType="com.mungtrainer.mtserver.counseling.dto.response.CounselingResponseDto">
+    <select id="selectCounselingsByDogAndTrainer" resultType="com.mungtrainer.mtserver.counseling.dto.response.CounselingResponseDTO">
         SELECT *
         FROM counseling
         WHERE dog_id = #{dogId}
@@ -37,7 +37,7 @@
     </select>
 
     <!-- 훈련사 상담 완료 전후 반려견 리스트 조회 -->
-    <select id="findDogsByCompleted" resultType="com.mungtrainer.mtserver.counseling.dto.response.CounselingDogResponseDto">
+    <select id="findDogsByCompleted" resultType="com.mungtrainer.mtserver.counseling.dto.response.CounselingDogResponseDTO">
         SELECT
         c.counseling_id AS counselingId,
         d.name AS dogName,

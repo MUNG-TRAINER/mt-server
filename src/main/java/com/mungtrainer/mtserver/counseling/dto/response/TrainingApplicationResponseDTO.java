@@ -10,7 +10,7 @@ import java.time.LocalTime;
 @Getter
 @Setter
 @Builder
-public class TrainingApplicationResponseDto {
+public class TrainingApplicationResponseDTO {
     // 과정 정보
     private Long courseId;
     private String courseTitle;

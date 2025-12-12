@@ -9,8 +9,8 @@ import java.util.List;
 @Getter
 @Setter
 @AllArgsConstructor
-public class MultiCourseCategory {
+public class MultiCourseCategoryDTO {
     private String tags;
-    private List<MultiCourseGroupDto> courses;
+    private List<MultiCourseGroupDTO> courses;
 }
 
