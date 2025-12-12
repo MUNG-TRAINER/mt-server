@@ -116,7 +116,7 @@ public class TrainingCourseApplicationService {
 
         // 5) 대기자 승격
         if (waitingList != null && !waitingList.isEmpty()) {
-            Long nextApplicationId = waitingList.get(0); // 가장 오래 대기한 applicationId
+            Long nextApplicationId = waitingList.get(0); // 첫번째 대기자 applicationId
 
             // application 테이블 상태 변경 (대기 → 신청됨)
             applicationDao.updateApplicationStatus(nextApplicationId, "APPLIED");
