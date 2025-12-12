@@ -11,6 +11,11 @@ import java.util.List;
 
 @Getter
 @Setter
-public class CourseUploadRequest extends CourseBaseRequest{
+public class CourseReuploadRequest extends CourseBaseRequest{
+
+  @NotNull
+  private Long trainerId;
+  @NotBlank
+  private String tags;
 
 }

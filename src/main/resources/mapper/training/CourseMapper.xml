@@ -4,6 +4,19 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.mungtrainer.mtserver.training.dao.CourseDAO">
+    <select id="hasPaidApplications" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM training_course_application a
+            JOIN training_session s ON a.session_id = s.session_id
+        WHERE a.status = 'PAID'
+          AND s.course_id = #{courseId}
+    </select>
+    <select id="isOwnerCourse" resultType="boolean">
+        select count(*) > 0
+        from training_course
+        where course_id = #{courseId}
+        and trainer_id = #{userId}
+    </select>
     <select id="existsTags" resultType="boolean">
         select count(*) > 0
         from training_course
@@ -86,4 +99,212 @@
                    NOW()
                )
     </insert>
+
+    <update id="updateCourse">
+        UPDATE training_course
+        SET
+            tags = #{tags},
+            type = #{type},
+            lesson_form = #{lessonForm},
+            title = #{title},
+            description = #{description},
+            status = #{status},
+            is_free = #{isFree},
+            location = #{location},
+            main_image = #{mainImage},
+            detail_image = #{detailImage},
+            refund_policy = #{refundPolicy},
+            schedule = #{schedule},
+            dog_size = #{dogSize},
+            items = #{items},
+            difficulty = #{difficulty},
+            updated_by = #{updatedBy},
+            updated_at = #{updatedAt}
+        WHERE course_id = #{courseId}
+        AND is_deleted = 0
+    </update>
+
+
+    <!-- 삭제 부분 -->
+    <!-- 1) training_session 소프트 삭제 -->
+    <update id="softDeleteSessions">
+        UPDATE training_session
+        SET
+            is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{userId},
+            updated_at = NOW()
+        WHERE course_id = #{courseId}
+          AND is_deleted = 0
+    </update>
+
+
+    <!-- 2) training_course_application 소프트 삭제 -->
+    <update id="softDeleteApplications">
+        UPDATE training_course_application
+        SET
+            is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{userId},
+            updated_at = NOW()
+        WHERE session_id IN (
+            SELECT session_id FROM training_session
+            WHERE course_id = #{courseId}
+        )
+          AND is_deleted = 0
+    </update>
+
+
+    <!-- 3) waiting -->
+    <update id="softDeleteWaiting">
+        UPDATE waiting
+        SET
+            is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{userId},
+            updated_at = NOW()
+        WHERE application_id IN (
+            SELECT application_id FROM training_course_application
+            WHERE session_id IN (
+                SELECT session_id FROM training_session
+                WHERE course_id = #{courseId}
+            )
+        )
+          AND is_deleted = 0
+    </update>
+
+
+    <!-- 4) training_attendance -->
+    <update id="softDeleteAttendance">
+        UPDATE training_attendance
+        SET
+            is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{userId},
+            updated_at = NOW()
+        WHERE application_id IN (
+            SELECT application_id FROM training_course_application
+            WHERE session_id IN (
+                SELECT session_id FROM training_session
+                WHERE course_id = #{courseId}
+            )
+        )
+          AND is_deleted = 0
+    </update>
+
+
+    <!-- 5) training_session_change -->
+    <update id="softDeleteSessionChange">
+        UPDATE training_session_change
+        SET
+            is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{userId},
+            updated_at = NOW()
+        WHERE session_id IN (
+            SELECT session_id FROM training_session
+            WHERE course_id = #{courseId}
+        )
+          AND is_deleted = 0
+    </update>
+
+
+    <!-- 6) training_course_notice -->
+    <update id="softDeleteNotices">
+        UPDATE training_course_notice
+        SET
+            is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{userId},
+            updated_at = NOW()
+        WHERE session_id IN (
+            SELECT session_id FROM training_session
+            WHERE course_id = #{courseId}
+        )
+          AND is_deleted = 0
+    </update>
+
+
+    <!-- 7) wishlist_detail -->
+    <update id="softDeleteWishlistDetail">
+        UPDATE wishlist_detail
+        SET
+            is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{userId},
+            updated_at = NOW()
+        WHERE course_id = #{courseId}
+          AND is_deleted = 0
+    </update>
+
+
+    <!-- 8) wishlist_detail_dog -->
+    <update id="softDeleteWishlistDetailDog">
+        UPDATE wishlist_detail_dog
+        SET
+            is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{userId},
+            updated_at = NOW()
+        WHERE wishlist_item_id IN (
+            SELECT wishlist_item_id
+            FROM wishlist_detail
+            WHERE course_id = #{courseId}
+        )
+          AND is_deleted = 0
+    </update>
+
+
+    <!-- 9) feedback -->
+    <update id="softDeleteFeedback">
+        UPDATE feedback
+        SET
+            is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{userId},
+            updated_at = NOW()
+        WHERE application_id IN (
+            SELECT application_id FROM training_course_application
+            WHERE session_id IN (
+                SELECT session_id FROM training_session
+                WHERE course_id = #{courseId}
+            )
+        )
+          AND is_deleted = 0
+    </update>
+
+
+    <!-- 10) feedback_attachment -->
+    <update id="softDeleteFeedbackAttachment">
+        UPDATE feedback_attachment
+        SET
+            is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{userId},
+            updated_at = NOW()
+        WHERE feedback_id IN (
+            SELECT feedback_id FROM feedback
+            WHERE application_id IN (
+                SELECT application_id FROM training_course_application
+                WHERE session_id IN (
+                    SELECT session_id FROM training_session
+                    WHERE course_id = #{courseId}
+                )
+            )
+        )
+          AND is_deleted = 0
+    </update>
+
+
+    <!-- 11) 마지막: training_course 소프트 삭제 -->
+    <update id="softDeleteCourse">
+        UPDATE training_course
+        SET
+            is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{userId},
+            updated_at = NOW()
+        WHERE course_id = #{courseId}
+          AND is_deleted = 0
+    </update>
 </mapper>
