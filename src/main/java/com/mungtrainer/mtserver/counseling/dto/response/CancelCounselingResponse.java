@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class CreateCounselingResponseDTO {
-    private Long counselingId;
-    private String message;
+public class CancelCounselingResponse {
+    private boolean success; // 취소 성공 여부
+    private String message; // 결과 메시지
 }

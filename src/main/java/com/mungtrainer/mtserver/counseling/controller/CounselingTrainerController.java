@@ -1,8 +1,8 @@
 package com.mungtrainer.mtserver.counseling.controller;
 
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
-import com.mungtrainer.mtserver.counseling.dto.request.ApplicationStatusUpdateRequestDTO;
-import com.mungtrainer.mtserver.counseling.dto.request.CounselingPostRequestDTO;
+import com.mungtrainer.mtserver.counseling.dto.request.ApplicationStatusUpdateRequest;
+import com.mungtrainer.mtserver.counseling.dto.request.CounselingPostRequest;
 import com.mungtrainer.mtserver.counseling.dto.response.*;
 import com.mungtrainer.mtserver.counseling.service.CounselingService;
 import com.mungtrainer.mtserver.counseling.service.TrainerUserService;
@@ -24,22 +24,22 @@ public class CounselingTrainerController {
 
     // 상담 완료 전 후 리스트 조회
     @GetMapping("/counseling")
-    public List<CounselingDogResponseDTO> getCounselingDogs(
+    public List<CounselingDogResponse> getCounselingDogs(
             @RequestParam boolean completed
             ) {
         return counselingService.getDogsByCompleted(completed);
     }
 
     // 상담 내용 작성 (훈련사 본인만 가능)
-    @PatchMapping("/counseling/{counselingId}")
-    public ResponseEntity<CounselingPostResponseDTO> addCounselingContent(
+    @PatchMapping("/counseling/{counselingId}/content")
+    public ResponseEntity<CounselingPostResponse> addCounselingContent(
             @PathVariable("counselingId") Long counselingId,
-            @RequestBody CounselingPostRequestDTO requestDto
+            @RequestBody CounselingPostRequest requestDto
             ,@AuthenticationPrincipal CustomUserDetails userDetails
     ) {  // 로그인한 훈련사 정보
 
         Long userId = userDetails.getUserId();
-        CounselingPostResponseDTO response = counselingService.addCounselingContent(
+        CounselingPostResponse response = counselingService.addCounselingContent(
                 counselingId, requestDto, userId);
 
 
@@ -48,7 +48,7 @@ public class CounselingTrainerController {
 
     // 훈련사가 관리하는 회원 목록 조회
     @GetMapping("/users/{trainerId}")
-    public List<TrainerUserListResponseDTO> getTrainerUsers(
+    public List<TrainerUserListResponse> getTrainerUsers(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Long trainerId = userDetails.getUserId();
@@ -66,26 +66,26 @@ public class CounselingTrainerController {
     // <=============== 반려견 통계 페이지 조회 ========================>
     // 목록 조회 → 반려견이 신청했던 모든 훈련 정보를 요약해서 보여주는 가벼운 쿼리
     @GetMapping("/user/dogs/{dogId}")
-    public ResponseEntity<DogStatsResponseDTO> getDogStats(
+    public ResponseEntity<DogStatsResponse> getDogStats(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable("dogId") Long dogId
     ) {
         Long trainerId = userDetails.getUserId();
-        DogStatsResponseDTO dogStats = trainerService.getDogStats(dogId, trainerId);
+        DogStatsResponse dogStats = trainerService.getDogStats(dogId, trainerId);
         return ResponseEntity.ok(dogStats);
     }
 
     // 승인 대기 중인 신청 목록
     @GetMapping("/applications")
-    public List<appliedWatingDTO> getWaitingApplications(){
-        return trainerService.getWatingApplications();
+    public List<AppliedWaitingResponse> getWaitingApplications(){
+        return trainerService.getWaitingApplications();
     }
 
     // 승인 or 거절
     @PatchMapping("/applications/{application_id}")
     public String applicationUpdateStatus(
             @PathVariable Long application_id,
-            @RequestBody ApplicationStatusUpdateRequestDTO request
+            @RequestBody ApplicationStatusUpdateRequest request
             ,@AuthenticationPrincipal CustomUserDetails userDetails
             )
     {

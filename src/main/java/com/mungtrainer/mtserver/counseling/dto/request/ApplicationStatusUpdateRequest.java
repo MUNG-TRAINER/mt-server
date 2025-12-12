@@ -5,9 +5,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ApplicationStatusUpdateRequestDTO {
-    private String status;        // APPROVED, REJECTED
+public class ApplicationStatusUpdateRequest {
+    private String status;        // ACCEPT, REJECTED
     private String rejectReason;  // REJECTED일 때만 필요
-    private Long trainerId;       // updated_by
 
 }

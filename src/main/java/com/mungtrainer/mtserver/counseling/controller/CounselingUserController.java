@@ -1,9 +1,9 @@
 package com.mungtrainer.mtserver.counseling.controller;
 
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
-import com.mungtrainer.mtserver.counseling.dto.request.CreateCounselingRequestDTO;
-import com.mungtrainer.mtserver.counseling.dto.response.CancelCounselingResponseDTO;
-import com.mungtrainer.mtserver.counseling.dto.response.CreateCounselingResponseDTO;
+import com.mungtrainer.mtserver.counseling.dto.request.CreateCounselingRequest;
+import com.mungtrainer.mtserver.counseling.dto.response.CancelCounselingResponse;
+import com.mungtrainer.mtserver.counseling.dto.response.CreateCounselingResponse;
 import com.mungtrainer.mtserver.counseling.service.CounselingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +19,8 @@ public class CounselingUserController {
     // 상담 신청
     @PostMapping
 //    @PreAuthorize("#userId == #userDetails.userId")
-    public CreateCounselingResponseDTO createCounseling(@Valid @RequestBody CreateCounselingRequestDTO requestDto,
-                                                       @AuthenticationPrincipal CustomUserDetails userDetails
+    public CreateCounselingResponse createCounseling(@Valid @RequestBody CreateCounselingRequest requestDto,
+                                                     @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Long userId = userDetails.getUserId();
         return counselingService.createCounseling(requestDto, userId);
@@ -29,7 +29,7 @@ public class CounselingUserController {
 
     // 상담 신청 취소
     @DeleteMapping("/{counselingId}")
-    public CancelCounselingResponseDTO cancelCounseling(
+    public CancelCounselingResponse cancelCounseling(
             @PathVariable("counselingId") Long counselingId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {

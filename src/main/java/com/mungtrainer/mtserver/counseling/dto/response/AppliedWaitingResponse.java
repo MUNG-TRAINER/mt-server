@@ -8,7 +8,7 @@ import java.time.LocalTime;
 
 @Getter
 @Setter
-public class appliedWatingDTO {
+public class AppliedWaitingResponse {
     private String dogName;
     private String ownerName;
     private String courseTitle;

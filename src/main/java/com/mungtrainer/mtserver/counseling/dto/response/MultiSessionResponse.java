@@ -12,7 +12,7 @@ import java.time.LocalTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MultiSessionDTO {
+public class MultiSessionResponse {
     private Long sessionId;
     private Integer sessionNo;
     private LocalDate sessionDate;

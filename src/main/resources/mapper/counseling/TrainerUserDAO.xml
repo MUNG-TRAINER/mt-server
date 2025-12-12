@@ -2,10 +2,41 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.mungtrainer.mtserver.counseling.dao.TrainerUserDao">
+<mapper namespace="com.mungtrainer.mtserver.counseling.dao.TrainerUserDAO">
+
+
+    <!-- =======================
+         ResultMap 정의
+         ======================= -->
+    <resultMap id="MultiCourseWithSessions" type="com.mungtrainer.mtserver.counseling.dto.response.MultiCourseGroupResponse">
+        <id property="courseId" column="courseId"/>
+        <result property="title" column="title"/>
+        <result property="tags" column="tags"/>
+        <result property="description" column="description"/>
+        <result property="location" column="location"/>
+        <result property="type" column="type"/>
+        <result property="difficulty" column="difficulty"/>
+        <result property="mainImage" column="mainImage"/>
+        <result property="totalSessions" column="totalSessions"/>
+        <result property="attendedSessions" column="attendedSessions"/>
+        <result property="attendanceRate" column="attendanceRate"/>
+
+        <!-- 세션 리스트 매핑 -->
+        <collection property="sessions" ofType="com.mungtrainer.mtserver.counseling.dto.response.MultiSessionResponse">
+            <id property="sessionId" column="sessionId"/>
+            <result property="sessionNo" column="sessionNo"/>
+            <result property="sessionDate" column="sessionDate"/>
+            <result property="startTime" column="startTime"/>
+            <result property="endTime" column="endTime"/>
+            <result property="locationDetail" column="locationDetail"/>
+            <result property="attendanceStatus" column="attendanceStatus"/>
+        </collection>
+    </resultMap>
+
+
     <!-- 훈련사가 관리하는 회원 목록 조회 -->
     <select id="findUsersByTrainerId"
-            resultType="com.mungtrainer.mtserver.counseling.dto.response.TrainerUserListResponseDTO">
+            resultType="com.mungtrainer.mtserver.counseling.dto.response.TrainerUserListResponse">
         SELECT
         u.user_id AS userId,
         u.name AS name,
@@ -21,7 +52,7 @@
 
 <!--    특정 반려견이 신청한 과정 중 같은 tags 기준으로 몇 회차 들었는지 조회-->
     <select id="findTrainingApplicationsByDogId"
-            resultType="com.mungtrainer.mtserver.counseling.dto.response.TrainingApplicationResponseDTO">
+            resultType="com.mungtrainer.mtserver.counseling.dto.response.TrainingApplicationResponse">
         SELECT
         c.course_id,
         c.title AS course_title,
@@ -64,15 +95,15 @@
         WHERE a.dog_id = #{dogId}
         AND c.is_deleted = 0
         AND a.is_deleted = 0
-        AND c.type != '다회차'
+        AND c.type != 'MULTI'
 
         ORDER BY c.tags, s.session_date;
     </select>
 
-<!--    신청한 다회차 course 목록-->
+<!--    신청한 다회차(MULTI) course 목록-->
     <select id="findMultiCoursesByDogId"
             parameterType="long"
-            resultType="com.mungtrainer.mtserver.counseling.dto.response.MultiCourseGroupDTO">
+            resultType="com.mungtrainer.mtserver.counseling.dto.response.MultiCourseGroupResponse">
 
         SELECT DISTINCT
         tc.course_id AS courseId,
@@ -89,13 +120,13 @@
         JOIN training_course_application tca
         ON ts.session_id = tca.session_id
         WHERE tca.dog_id = #{dogId}
-        AND tc.type = '다회차'
+        AND tc.type = 'MULTI'
         AND tc.is_deleted = 0
     </select>
 
     <select id="findSessionsWithAttendance"
             parameterType="map"
-            resultType="com.mungtrainer.mtserver.counseling.dto.response.MultiSessionDTO">
+            resultType="com.mungtrainer.mtserver.counseling.dto.response.MultiSessionResponse">
 
         SELECT
         ts.session_id AS sessionId,
@@ -117,7 +148,59 @@
     </select>
 
 
-<!--    출석률 계산용 count 쿼리-->
+    <!-- =======================
+        다회차 과정 + 세션 + 출석
+        ======================= -->
+    <select id="findMultiCourseDetail"
+            parameterType="map"
+            resultMap="MultiCourseWithSessions">
+
+        SELECT
+        tc.course_id AS courseId,
+        tc.title,
+        tc.tags,
+        tc.description,
+        tc.location,
+        tc.type,
+        tc.difficulty,
+        tc.main_image AS mainImage,
+        ts.session_id AS sessionId,
+        ts.session_no AS sessionNo,
+        ts.session_date AS sessionDate,
+        ts.start_time AS startTime,
+        ts.end_time AS endTime,
+        ts.location_detail AS locationDetail,
+        ta.status AS attendanceStatus,
+        sub.totalSessions AS totalSessions,
+        sub.attendedSessions AS attendedSessions,
+        (CASE WHEN sub.totalSessions = 0 THEN 0 ELSE sub.attendedSessions * 100.0 / sub.totalSessions END) AS attendanceRate
+        FROM training_course tc
+        JOIN training_session ts ON tc.course_id = ts.course_id
+        JOIN training_course_application tca
+        ON ts.session_id = tca.session_id
+        AND tca.dog_id = #{dogId}
+        LEFT JOIN training_attendance ta ON ta.application_id = tca.application_id
+        LEFT JOIN (
+        SELECT
+        ts2.course_id,
+        COUNT(DISTINCT ts2.session_id) AS totalSessions,
+        COUNT(DISTINCT CASE WHEN ta2.status = 'PRESENT' THEN ts2.session_id END) AS attendedSessions
+        FROM training_session ts2
+        JOIN training_course_application tca2
+        ON ts2.session_id = tca2.session_id
+        AND tca2.dog_id = #{dogId}
+        LEFT JOIN training_attendance ta2 ON tca2.application_id = ta2.application_id
+        GROUP BY ts2.course_id
+        ) sub ON sub.course_id = tc.course_id
+        WHERE tc.type = 'MULTI'
+        AND tc.is_deleted = 0
+        ORDER BY tc.course_id, ts.session_no
+    </select>
+
+
+
+
+    <!--    출석률 계산용 count 쿼리-->
 <!--    총 회차 수-->
     <select id="countSessionsByCourseId"
             parameterType="long"
@@ -145,7 +228,7 @@
 
 
 <!--    승인 대기 목록-->
-    <select id="selectWaitingApplications" resultType="com.mungtrainer.mtserver.counseling.dto.response.appliedWatingDTO">
+    <select id="selectWaitingApplications" resultType="com.mungtrainer.mtserver.counseling.dto.response.AppliedWaitingResponse">
         SELECT
         d.name AS dogName,
         u.name AS ownerName,

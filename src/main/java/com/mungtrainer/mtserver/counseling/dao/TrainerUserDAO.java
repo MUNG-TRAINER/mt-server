@@ -5,18 +5,19 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
-public interface TrainerUserDao {
+public interface TrainerUserDAO {
 
     // 회원 목록 조회
-    List<TrainerUserListResponseDTO> findUsersByTrainerId(@Param("trainerId") Long trainerId);
+    List<TrainerUserListResponse> findUsersByTrainerId(@Param("trainerId") Long trainerId);
     // 반려견 신청 과정 조회 (출석 미포함, tags 기준 회차 계산)
-    List<TrainingApplicationResponseDTO> findTrainingApplicationsByDogId(@Param("dogId") Long dogId);
+    List<TrainingApplicationResponse> findTrainingApplicationsByDogId(@Param("dogId") Long dogId);
 
-    List<MultiCourseGroupDTO> findMultiCoursesByDogId(Long dogId);
+    List<MultiCourseGroupResponse> findMultiCoursesByDogId(Long dogId);
 
-    List<MultiSessionDTO> findSessionsWithAttendance(
+    List<MultiSessionResponse> findSessionsWithAttendance(
             @Param("dogId") Long dogId,
             @Param("courseId") Long courseId
     );
@@ -29,7 +30,7 @@ public interface TrainerUserDao {
             @Param("courseId") Long courseId
     );
 
-    List<appliedWatingDTO> selectWaitingApplications();
+    List<AppliedWaitingResponse> selectWaitingApplications();
 
     int updateStatusApproved(@Param("applicationId") Long applicationId,
                              @Param("trainerId") Long trainerId);
@@ -37,4 +38,6 @@ public interface TrainerUserDao {
     int updateStatusRejected(@Param("applicationId") Long applicationId,
                              @Param("trainerId") Long trainerId,
                              @Param("rejectReason") String rejectReason);
+
+    List<MultiCourseGroupResponse> findMultiCourseDetail(Map<String, Long> params);
 }

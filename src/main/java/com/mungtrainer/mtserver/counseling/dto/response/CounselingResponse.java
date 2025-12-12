@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CounselingResponseDTO {
+public class CounselingResponse {
 
     /**
      * 상담 ID

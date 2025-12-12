@@ -5,6 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class CancelCounselingRequestDTO {
-    private Long counselingId;
+public class CreateCounselingRequest {
+    private Long dogId;
+    private String phone;
 }

@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CounselingPostRequestDTO {
+public class CounselingPostRequest {
     @NotBlank(message = "상담 내용은 필수입니다")
     private String content; // 상담 내용
 }

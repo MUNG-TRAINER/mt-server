@@ -8,13 +8,13 @@ import java.time.LocalTime;
 import java.util.List;
 
 @Getter @Setter @Builder
-public class DogStatsResponseDTO {
+public class DogStatsResponse {
 
     private DogResponse dog;
-    private List<CounselingResponseDTO> counselings;
+    private List<CounselingResponse> counselings;
     private Stats stats;     // 통계 정보는 여기에만 포함됨
     private List<TrainingSessionDto> trainingApplications; // 단회차
-    private List<MultiCourseCategoryDTO> multiCourses;  // 다회차
+    private List<MultiCourseCategoryResponse> multiCourses;  // 다회차
 
     @Getter @Setter @AllArgsConstructor
     public static class Stats {
