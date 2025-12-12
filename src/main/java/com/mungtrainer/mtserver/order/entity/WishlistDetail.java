@@ -1,6 +1,7 @@
 package com.mungtrainer.mtserver.order.entity;
 
 import com.mungtrainer.mtserver.common.entity.BaseEntity;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -25,13 +26,20 @@ public class WishlistDetail extends BaseEntity {
     private Long wishlistId;
 
     /**
-     * 신청 ID (FK - training_course_application.application_id)
+     * 코스 ID (FK - training_course.course_id)
      */
-    private Long applicationId;
+    private Long courseId;
 
     /**
      * 가격
      */
     private Integer price;
+
+    /**
+     * 상태 (ACTIVE, ORDERED, ABANDONED)
+     */
+    @Pattern(regexp = "ACTIVE|ORDERED|ABANDONED",
+            message = "유효하지 않은 상태입니다.")
+    private String status;
 }
 

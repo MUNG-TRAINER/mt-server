@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mungtrainer.mtserver.order.dao.WishlistDao">
+
+    <!--  response용  -->
+    <select id="findWishlistResponsesByUserId" resultType="com.mungtrainer.mtserver.order.dto.response.WishlistResponse">
+        SELECT
+            w.user_id AS userId,
+            wd.wishlist_item_id AS wishlistItemId,
+            wd.wishlist_id AS wishlistId,
+            wd.course_id AS courseId,
+            wdd.dog_id AS dogId,
+            wd.price AS price,
+            wd.status AS status
+        FROM wishlist w
+        JOIN wishlist_detail wd ON w.wishlist_id = wd.wishlist_id
+        LEFT JOIN wishlist_detail_dog wdd ON wd.wishlist_item_id = wdd.wishlist_item_id
+        WHERE w.user_id = #{userId}
+    </select>
+
+    <!--   userId로 wishlistId 가져오기-->
+    <select id="findByUserId" parameterType="long" resultType="long">
+        SELECT wishlist_id
+        FROM wishlist
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- wishlistItemId로 WishlistDetail 가져오기-->
+    <select id="findWishlistIdByItemId" parameterType="long" resultType="com.mungtrainer.mtserver.order.entity.WishlistDetail">
+        SELECT *
+        FROM wishlist_detail
+        WHERE wishlist_item_id = #{wishlistItemId}
+    </select>
+
+    <!-- wishlistItemId로 wishlistDetailDog 가져오기-->
+    <select id="findByWishlistDetailDog" parameterType="long" resultType="com.mungtrainer.mtserver.order.entity.WishlistDetailDog">
+        SELECT *
+        FROM wishlist_detail_dog
+        WHERE wishlist_item_id = #{wishlistItemId}
+    </select>
+
+    <!-- 장바구니 수정-->
+    <update id="updateDog" parameterType="map">
+        UPDATE wishlist_detail_dog
+        SET dog_id = #{dogId}, updated_at = NOW()
+        WHERE wishlist_item_id = #{wishlistItemId}
+    </update>
+
+    <!-- 장바구니 삭제-->
+    <update id="updateStatus" parameterType="map">
+        UPDATE wishlist_detail
+        SET status = #{status}, updated_at = NOW()
+        WHERE wishlist_item_id = #{wishlistItemId}
+
+    </update>
+
+    <!-- 장바구니 추가-->
+    <insert id="insertWishList" parameterType="com.mungtrainer.mtserver.order.entity.WishlistDetail">
+        INSERT INTO wishlist_detail(
+            wishlist_item_id,
+            wishlist_id,
+            course_id,
+            price,
+            status,
+            created_by,
+            created_at,
+            updated_by,
+            updated_at
+        ) VALUES (
+            #{wishlist_item_id},
+            #{wishlist_id},
+            #{course_id},
+            #{price},
+            #{status},
+            #{createdBy},
+            #{createdAt},
+            #{updatedBy},
+            #{updatedAt}
+        )
+    </insert>
+
+</mapper>
