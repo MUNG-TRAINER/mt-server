@@ -4,10 +4,7 @@ import com.mungtrainer.mtserver.auth.dto.request.AuthTrainerJoinRequest;
 import com.mungtrainer.mtserver.auth.dto.request.AuthUserJoinRequest;
 import com.mungtrainer.mtserver.auth.dto.request.LoginRequest;
 import com.mungtrainer.mtserver.auth.dto.request.PasswordChangeRequest;
-import com.mungtrainer.mtserver.auth.dto.response.AuthDuplicatedCheckResponse;
-import com.mungtrainer.mtserver.auth.dto.response.AuthJoinResponse;
-import com.mungtrainer.mtserver.auth.dto.response.LoginResponse;
-import com.mungtrainer.mtserver.auth.dto.response.PasswordChangeResponse;
+import com.mungtrainer.mtserver.auth.dto.response.*;
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
 import com.mungtrainer.mtserver.common.security.JwtTokenProvider;
 import com.mungtrainer.mtserver.auth.service.AuthService;
@@ -160,5 +157,15 @@ public class AuthController {
     String userName = principal.getUsername();
     authService.passwordChange(request, userName);
     return ResponseEntity.ok(new PasswordChangeResponse("success",200,"비밀번호가 성공적으로 변경되었습니다."));
+  }
+
+  @GetMapping("/check")
+  public ResponseEntity<CheckResponse> changePassword(
+      @AuthenticationPrincipal CustomUserDetails principal) {
+    return ResponseEntity.ok(CheckResponse.builder()
+                                          .userId(principal.getUserId())
+                                          .role(principal.getRole())
+                                          .username(principal.getUsername())
+                                          .build());
   }
 }
