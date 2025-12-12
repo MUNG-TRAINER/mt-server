@@ -39,6 +39,28 @@
         AND is_deleted = 0
     </select>
 
+    <!-- 세션 정원 조회 -->
+    <select id="getMaxStudentsBySessionId" parameterType="long" resultType="int">
+        SELECT max_students
+        FROM training_session
+        WHERE session_id = #{sessionId}
+    </select>
+
+    <!-- 현재 신청 인원수 조회 -->
+    <select id="countApplicationBySessionId" parameterType="long" resultType="int">
+        SELECT COUNT(*)
+        FROM training_course_application
+        WHERE session_id = #{sessionId}
+            AND status = 'APPLIED'
+            AND is_deleted = 0
+    </select>
+
+    <!--  대기테이블에 추가  -->
+    <insert id="insertWaiting" parameterType="map">
+        INSERT INTO waiting (application_id, status, created_by, updated_by, created_at, updated_at)
+        VALUES (#{applicationId}, 'WAITING',#{userId},#{userId}, NOW(), NOW())
+    </insert>
+
     <!-- 신청 생성 -->
     <insert id="insertApplication" parameterType="com.mungtrainer.mtserver.training.entity.TrainingCourseApplication" useGeneratedKeys="true" keyProperty="applicationId">
         INSERT INTO training_course_application (
@@ -69,6 +91,23 @@
         UPDATE training_course_application
         SET status = #{status},
             updated_at = NOW()
+        WHERE application_id = #{applicationId}
+    </update>
+
+    <!--  세션별 대기자 조회  -->
+    <select id="findWaitingBySessionId" resultType="long" parameterType="long">
+        SELECT w.application_id
+        FROM waiting w
+        JOIN training_course_application a ON w.application_id = a.application_id
+        WHERE a.session_id = #{sessionId}
+        AND w.status = 'WAITING'
+        ORDER BY w.created_at ASC
+    </select>
+
+    <!--  대기테이블 상태 업데이트  -->
+    <update id="updateWaitingStatus" parameterType="map">
+        UPDATE waiting
+        SET status = #{status}, updated_at = NOW()
         WHERE application_id = #{applicationId}
     </update>
 

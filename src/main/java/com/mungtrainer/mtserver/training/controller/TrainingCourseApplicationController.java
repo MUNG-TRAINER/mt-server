@@ -44,6 +44,7 @@ public class TrainingCourseApplicationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+
     // 훈련과정 신청 취소
     @DeleteMapping("/{applicationId}")
     public ResponseEntity<Void> deleteApplication(@AuthenticationPrincipal CustomUserDetails principal, @PathVariable Long applicationId){

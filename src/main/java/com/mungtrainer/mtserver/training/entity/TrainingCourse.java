@@ -1,6 +1,7 @@
 package com.mungtrainer.mtserver.training.entity;
 
 import com.mungtrainer.mtserver.common.entity.BaseEntity;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -42,6 +43,7 @@ public class TrainingCourse extends BaseEntity {
     /**
      * 회차 여부
      */
+    @Pattern(regexp = "산책|그룹수업|1:1", message = "유효하지 않은 상태입니다.")
     private String type;
 
    /**
@@ -52,6 +54,7 @@ public class TrainingCourse extends BaseEntity {
     /**
      * 상태 (SCHEDULED, CANCELLED, DONE)
      */
+    @Pattern(regexp = "SCHEDULED|CANCELLED|DONE", message = "유효하지 않은 상태입니다.")
     private String status;
 
     /**
@@ -62,6 +65,7 @@ public class TrainingCourse extends BaseEntity {
     /**
      * 난이도
      */
+    @Pattern(regexp = "초급|중급|고급", message = "유효하지 않은 상태입니다.")
     private String difficulty;
 
     /**
@@ -97,6 +101,7 @@ public class TrainingCourse extends BaseEntity {
     /**
      * 반려견 크기
      */
+    @Pattern(regexp = "소형견|중형견|대형견", message = "유효하지 않은 상태입니다.")
     private String dogSize;
 }
 

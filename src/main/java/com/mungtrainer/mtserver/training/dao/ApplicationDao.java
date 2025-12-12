@@ -20,9 +20,24 @@ public interface ApplicationDao {
     // 생성 중복 체크
     boolean existsByDogAndSession(@Param("dogId") Long dogId, @Param("sessionId") Long sessionId);
 
+    // 세션 정원 조회
+    int getMaxStudentsBySessionId(@Param("sessionId") Long sessionId);
+
+    // 현재 신청 인원수 조회
+    int countApplicationBySessionId(@Param("sessionId") Long sessionId);
+
+    // 대기 테이블에 추가
+    void insertWaiting(@Param("applicationId") Long applicationId, @Param("userId") Long userId);
+
     // 훈련과정 신청 생성
     int insertApplication(TrainingCourseApplication application);
 
     // 훈련과정 신청 취소 (상태 업데이트)
     void updateApplicationStatus(@Param("applicationId") Long applicationId, @Param("status") String status);
+
+    // 세션별 대기자 조회
+    List<Long> findWaitingBySessionId(@Param("sessionId") Long sessionId);
+
+    // 대기테이블 상태 업데이트
+    void updateWaitingStatus(@Param("applicationId") Long applicationId, @Param("status") String status);
 }
