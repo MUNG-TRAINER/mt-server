@@ -53,23 +53,33 @@ public class TrainingCourseApplicationService {
 
     // 신청 생성
     public ApplicationResponse createApplication(Long userId,ApplicationRequest request) {
-        // 1. 해당 사용자 인증
+        // 해당 사용자 인증
         Long ownerId = applicationDao.findOwnerByDogId(request.getDogId());
         if(ownerId == null || !ownerId.equals(userId)){
             throw new CustomException(ErrorCode.UNAUTHORIZED_APPLICATION);
         }
 
-        // 2. 중복 신청 체크
+        //  중복 신청 체크
         boolean exists = applicationDao.existsByDogAndSession(request.getDogId(), request.getSessionId());
         if (exists) {
             throw new CustomException(ErrorCode.DUPLICATE_APPLICATION);
+        }
+
+        // 세션 정원조회 및 상태 변경
+        int maxStudent = applicationDao.getMaxStudentsBySessionId(request.getSessionId());
+        int currentCount = applicationDao.countApplicationBySessionId(request.getSessionId());
+        String status;
+        if(currentCount>=maxStudent){
+            status="WAITING";
+        }else {
+            status="APPLIED";
         }
 
         TrainingCourseApplication created = TrainingCourseApplication.builder()
                 .sessionId(request.getSessionId())
                 .dogId(request.getDogId())
                 .appliedAt(LocalDateTime.now())
-                .status("APPLIED") // 기본 상태
+                .status(status)
                 .createdBy(userId)
                 .updatedBy(userId)
                 .createdAt(LocalDateTime.now())
@@ -79,19 +89,48 @@ public class TrainingCourseApplicationService {
         if (rows != 1) {
             throw new CustomException(ErrorCode.APPLICATION_CREATION_FAILED);
         }
+        // 웨이팅이면 대기테이블에 추가
+        if("WAITING".equals(status)){
+            applicationDao.insertWaiting(created.getApplicationId(),userId);
+        }
         return toResponse(created);
     }
 
     // 신청 취소
     public void cancelApplication(Long userId, Long applicationId) {
         TrainingCourseApplication application = applicationDao.findById(applicationId);
+        // null이면 조회불가 에러
         if (application == null) {
             throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
         }
-
+        // 본인만 취소 가능 에러
         if (!application.getCreatedBy().equals(userId)) {
             throw new CustomException(ErrorCode.UNAUTHORIZED_APPLICATION);
         }
+        // 현재 해당 신청 status 확인
+        String currentStatus = application.getStatus();
+        // 만약 상태가 웨이팅인 경우 웨이팅 신청 취소로 상태 변경
+        if ("WAITING".equals(currentStatus)) {
+            applicationDao.updateWaitingStatus(applicationId, "CANCELLED");
+            return;
+        }
+
+        // 신청 취소
         applicationDao.updateApplicationStatus(applicationId, "CANCELLED");
+
+        // 대기자 목록 조회
+        Long sessionId = application.getSessionId();
+        List<Long> waitingList = applicationDao.findWaitingBySessionId(sessionId);
+
+        // 대기자 신청으로 승격
+        if (waitingList != null && !waitingList.isEmpty()) {
+            Long nextApplicationId = waitingList.get(0); // 첫번째 대기자 applicationId
+
+            // application 테이블 상태 변경 (대기 → 신청됨)
+            applicationDao.updateApplicationStatus(nextApplicationId, "APPLIED");
+
+            // waiting 테이블 상태 변경 (WAITING → ENTERED)
+            applicationDao.updateWaitingStatus(nextApplicationId, "ENTERED");
+        }
+        }
     }
-}

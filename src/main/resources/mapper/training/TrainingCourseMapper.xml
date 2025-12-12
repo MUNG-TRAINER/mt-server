@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mungtrainer.mtserver.training.dao.TrainingCourseDao">
+
+    <select id="findByCourseId" parameterType="long" resultType="com.mungtrainer.mtserver.training.entity.TrainingCourse">
+        SELECT course_id, trainer_id, tags, title, description, type, status, is_free, difficulty, location, schedule, refund_policy, main_image, detail_image, items, dog_size
+        FROM training_course
+        WHERE course_id = #{courseId}
+    </select>
+
+</mapper>

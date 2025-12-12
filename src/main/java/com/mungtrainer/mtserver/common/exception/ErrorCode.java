@@ -27,6 +27,9 @@ public enum ErrorCode {
   UNAUTHORIZED_APPLICATION(403, "본인만 신청 가능합니다."),
   APPLICATION_CREATION_FAILED(500, "신청 생성 실패"),
 
+    // 코스 상세페이지
+    COURSE_NOT_FOUND(404, "존재하지 않는 훈련과정입니다."),
+
   // 출석 관련
   ATTENDANCE_UPDATE_FAILED(500,"출석 상태 변경에 실패했습니다"),
 
