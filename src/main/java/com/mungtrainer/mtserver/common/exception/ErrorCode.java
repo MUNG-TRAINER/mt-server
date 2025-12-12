@@ -18,6 +18,9 @@ public enum ErrorCode {
   PROFILE_UPDATE_FAILED(500, "프로필 수정에 실패했습니다."),
   INVALID_COURSE_ID(400, "유효하지 않은 훈련 과정 ID입니다."),
 
+  // 훈련 과정
+  INTERNAL_SERVER_ERROR(500, "고유 tags 생성에 실패했습니다."),
+
   // 신청 관련
   DUPLICATE_APPLICATION(409, "이미 신청한 세션입니다.(APPLIED 상태)"),
   APPLICATION_NOT_FOUND(404, "신청 정보를 찾을 수 없습니다."),

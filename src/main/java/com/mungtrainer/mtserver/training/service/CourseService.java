@@ -10,6 +10,7 @@ import com.mungtrainer.mtserver.training.entity.TrainingCourse;
 import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,11 +21,9 @@ import java.util.UUID;
 public class CourseService {
   private final CourseDAO courseDAO;
 
+  @Transactional
   public CourseUploadResponse createCourse(CourseUploadRequest req, Long userId) {
-    String tags;
-    do{
-      tags = UUID.randomUUID().toString().replace("-", "").substring(0, 30);
-    }while (courseDAO.existsTags(tags));
+    String tags = generateUUID();
     TrainingCourse course = TrainingCourse.builder()
                                           .trainerId(userId)
                                           .tags(tags)
@@ -76,33 +75,20 @@ public class CourseService {
                                .build();
   }
 
-  public CourseUploadResponse createSession(SessionUploadRequest req
-                                           ,Long userId, Long courseId) {
-
-    if ( courseDAO.getCourseById(courseId) == null ) {
-      throw new CustomException(ErrorCode.INVALID_COURSE_ID);
+  private String generateUUID() {
+    String tags = null;
+    final int MAX_RETRY = 20;
+    int retry = 0;
+    while (retry < MAX_RETRY) {
+      tags = UUID.randomUUID().toString().replace("-", "").substring(0, 30);
+      if (!courseDAO.existsTags(tags)) {
+        break;
+      }
+      retry++;
     }
-
-    TrainingSession session = TrainingSession.builder()
-                                             .courseId(courseId)
-                                             .sessionNo(req.getSessionNo())
-                                             .sessionDate(req.getSessionDate())
-                                             .startTime(req.getStartTime())
-                                             .endTime(req.getEndTime())
-                                             .locationDetail(req.getLocationDetail())
-                                             .status(req.getStatus())   // SCHEDULED | CANCELED | DONE
-                                             .maxStudents(req.getMaxStudents())
-                                             .content(req.getContent())
-                                             .price(req.getPrice())
-                                             .createdBy(userId)
-                                             .updatedBy(userId)
-                                             .build();
-    courseDAO.insertSession(session);
-
-    return CourseUploadResponse.builder()
-                               .status("Success")
-                               .code(201)
-                               .message("훈련 과정 업로드 완료")
-                               .build();
+    if (retry == MAX_RETRY) {
+      throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+    }
+    return tags;
   }
 }

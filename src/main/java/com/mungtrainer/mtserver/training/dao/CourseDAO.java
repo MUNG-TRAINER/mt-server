@@ -8,9 +8,8 @@ import java.util.List;
 
 @Mapper
 public interface CourseDAO {
-  int insertCourse(TrainingCourse course);
-  int insertSession(TrainingSession trainingSession);
-  int insertSessions(List<TrainingSession> trainingSessions);
+  void insertCourse(TrainingCourse course);
+  void insertSessions(List<TrainingSession> trainingSessions);
 
   TrainingCourse getCourseById(Long courseId);
 
