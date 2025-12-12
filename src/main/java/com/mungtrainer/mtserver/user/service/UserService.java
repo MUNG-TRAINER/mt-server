@@ -1,5 +1,6 @@
 package com.mungtrainer.mtserver.user.service;
 
+import com.mungtrainer.mtserver.auth.service.AuthService;
 import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
@@ -12,6 +13,8 @@ import com.mungtrainer.mtserver.user.dao.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import static com.mungtrainer.mtserver.auth.service.AuthService.*;
 
 @Service
 @RequiredArgsConstructor
@@ -50,7 +53,7 @@ public class UserService {
       }
 
       // 2. 트레이너가 조회
-      if ("TRAINER".equals(currentUserRole)) {
+      if (Role.TRAINER.name().equals(currentUserRole)) {
         boolean isConnected = userMapper.isConnectedToTrainer(targetUser.getUserId(), currentUserId);
         if (isConnected) {
           return UserProfileResponse.createTrainerAccessProfile(targetUser, profileImageUrl);
@@ -58,7 +61,7 @@ public class UserService {
       }
 
       // 3. 타인이 조회 - 공개 여부 확인
-      if (Boolean.FALSE.equals(targetUser.getIsPublic())) {
+      if (!Boolean.TRUE.equals(targetUser.getIsPublic())) {
         throw new CustomException(ErrorCode.PROFILE_NOT_PUBLIC);
       }
 

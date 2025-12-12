@@ -40,11 +40,12 @@
 
     <!-- 트레이너-회원 연결 여부 확인 -->
     <select id="isConnectedToTrainer" resultType="boolean">
-        SELECT COUNT(*) > 0
-        FROM trainer_user
-        WHERE user_id = #{userId}
-          AND trainer_id = #{trainerId}
-          AND deleted_at IS NULL
+        SELECT EXISTS(
+            SELECT 1 FROM trainer_user
+            WHERE user_id = #{userId}
+              AND trainer_id = #{trainerId}
+              AND deleted_at IS NULL
+        )
     </select>
 
     <update id="updateUserProfile">
