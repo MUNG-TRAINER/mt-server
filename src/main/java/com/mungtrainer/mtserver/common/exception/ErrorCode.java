@@ -50,8 +50,10 @@ public enum ErrorCode {
   SESSION_EMPTY_UPDATE(400, "수정할 내용이 없습니다."),
   SESSION_HAS_APPLICATIONS(400, "신청자가 있는 세션은 삭제할 수 없습니다."),
   SESSION_DELETE_FAILED(500, "세션 삭제에 실패했습니다."),
-  SESSION_UPDATE_FAILED(500, "세션 수정에 실패했습니다.");
+  SESSION_UPDATE_FAILED(500, "세션 수정에 실패했습니다."),
 
+  // S3 관련
+  INVALID_REQUEST_DATA(400, "요청 데이터가 유효하지 않습니다.");
 
 
   public final int status;

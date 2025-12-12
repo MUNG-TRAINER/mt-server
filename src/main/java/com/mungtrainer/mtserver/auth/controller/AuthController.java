@@ -4,10 +4,7 @@ import com.mungtrainer.mtserver.auth.dto.request.AuthTrainerJoinRequest;
 import com.mungtrainer.mtserver.auth.dto.request.AuthUserJoinRequest;
 import com.mungtrainer.mtserver.auth.dto.request.LoginRequest;
 import com.mungtrainer.mtserver.auth.dto.request.PasswordChangeRequest;
-import com.mungtrainer.mtserver.auth.dto.response.AuthDuplicatedCheckResponse;
-import com.mungtrainer.mtserver.auth.dto.response.AuthJoinResponse;
-import com.mungtrainer.mtserver.auth.dto.response.LoginResponse;
-import com.mungtrainer.mtserver.auth.dto.response.PasswordChangeResponse;
+import com.mungtrainer.mtserver.auth.dto.response.*;
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
 import com.mungtrainer.mtserver.common.security.JwtTokenProvider;
 import com.mungtrainer.mtserver.auth.service.AuthService;
@@ -81,7 +78,7 @@ public class AuthController {
     response.addCookie(rtCookie);
 
     // 5) 바디 응답
-    return ResponseEntity.ok(new LoginResponse("로그인 성공"));
+    return ResponseEntity.ok(new LoginResponse("success",200,"로그인에 성공했습니다."));
   }
 
   @GetMapping("/logout")
@@ -97,7 +94,7 @@ public class AuthController {
     authService.updateRefreshToken(principal.getUserId(), null);
 
 
-    return ResponseEntity.ok(new LoginResponse("로그아웃 완료"));
+    return ResponseEntity.ok(new LoginResponse("success",200,"로그아웃에 성공했습니다."));
   }
 
   @PostMapping("/refresh-token")
@@ -108,7 +105,7 @@ public class AuthController {
     // 1. 쿠키에 RT 없거나 무효한 JWT
     if (refreshToken == null ||
         !jwtTokenProvider.validateToken(refreshToken, JwtTokenProvider.TokenType.REFRESH)) {
-      return ResponseEntity.status(401).body(new LoginResponse("유효하지 않은 리프레시 토큰입니다"));
+      return ResponseEntity.status(401).body(new LoginResponse("failure",401,"유효하지 않은 토큰입니다."));
     }
 
     // 2. username 추출
@@ -119,7 +116,7 @@ public class AuthController {
 
     // 4. DB에 저장된 RT와 비교
     if (!refreshToken.equals(user.getRefreshToken())) {
-      return ResponseEntity.status(401).body(new LoginResponse("리프레시 토큰이 일치하지 않습니다"));
+      return ResponseEntity.status(401).body(new LoginResponse("failure",401,"유효하지 않은 토큰입니다."));
     }
 
     // 여기까지 통과한 RT만 재발급 가능
@@ -142,7 +139,7 @@ public class AuthController {
     response.addCookie(CookieUtil.createCookie("refresh_token", newRT,
                                                jwtTokenProvider.getRefreshTokenValidityInMs() / 1000));
 
-    return ResponseEntity.ok(new LoginResponse("토큰 재발급 성공"));
+    return ResponseEntity.ok(new LoginResponse("success",200,"토큰 재발급에 성공했습니다."));
   }
 
   @GetMapping("/check-email")
@@ -159,6 +156,16 @@ public class AuthController {
       @AuthenticationPrincipal CustomUserDetails principal) {
     String userName = principal.getUsername();
     authService.passwordChange(request, userName);
-    return ResponseEntity.ok(PasswordChangeResponse.builder().message("비밀번호 변경 성공").build());
+    return ResponseEntity.ok(new PasswordChangeResponse("success",200,"비밀번호가 성공적으로 변경되었습니다."));
+  }
+
+  @GetMapping("/check")
+  public ResponseEntity<CheckResponse> checkAuthentication(
+      @AuthenticationPrincipal CustomUserDetails principal) {
+    return ResponseEntity.ok(CheckResponse.builder()
+                                          .userId(principal.getUserId())
+                                          .role(principal.getRole())
+                                          .username(principal.getUsername())
+                                          .build());
   }
 }
