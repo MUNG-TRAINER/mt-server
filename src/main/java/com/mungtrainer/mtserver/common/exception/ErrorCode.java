@@ -16,6 +16,7 @@ public enum ErrorCode {
   INVALID_CONFIRM_PASSWORD(400, "비밀번호 확인이 실패했습니다."),
   USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다."),
   PROFILE_UPDATE_FAILED(500, "프로필 수정에 실패했습니다."),
+  PROFILE_NOT_PUBLIC(403, "해당 사용자의 프로필은 비공개입니다."),
   INVALID_COURSE_ID(400, "유효하지 않은 훈련 과정 ID입니다."),
 
   // 훈련 과정
