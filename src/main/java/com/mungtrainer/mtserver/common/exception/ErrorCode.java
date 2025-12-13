@@ -2,6 +2,7 @@ package com.mungtrainer.mtserver.common.exception;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
@@ -50,6 +51,7 @@ public enum ErrorCode {
   PAYMENT_INVALID_AMOUNT(400, "결제 금액이 유효하지 않습니다."),
   PAYMENT_FAILED(500, "결제 처리에 실패했습니다."),
   PAYMENT_ALREADY_COMPLETED(409, "이미 결제가 완료된 주문입니다."),
+  SESSION_CANNOT_DELETE_HAS_PAYMENT(400, "결제 완료된 신청이 있어 삭제할 수 없습니다."),
 
   // 훈련 세션 관련
   SESSION_NOT_FOUND(404, "해당 세션을 찾을 수 없습니다."),

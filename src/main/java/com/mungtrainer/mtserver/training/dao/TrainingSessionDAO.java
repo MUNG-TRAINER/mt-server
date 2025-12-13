@@ -49,5 +49,16 @@ public interface TrainingSessionDAO {
      */
     TrainingSession findById(Long sessionId);
 
+    /**
+     * 결제 완료된 신청이 있는지 확인
+     */
+    Boolean hasPaidApplications(@Param("sessionId") Long sessionId);
+
+    /**
+     * 세션 및 연관 데이터 soft delete
+     */
+    int deleteSessionWithRelatedData(@Param("sessionId") Long sessionId,
+                                     @Param("deletedBy") Long deletedBy);
+
 
 }

@@ -172,4 +172,133 @@
           AND is_deleted = 0
     </select>
 
+    <!-- 결제 완료된 신청 확인 -->
+    <select id="hasPaidApplications" resultType="Boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM training_course_application tca
+                     INNER JOIN order_item oi ON tca.application_id = oi.application_id
+                AND oi.is_deleted = 0
+                     INNER JOIN order_master om ON oi.order_id = om.order_id
+                AND om.is_deleted = 0
+            WHERE tca.session_id = #{sessionId}
+              AND tca.is_deleted = 0
+              AND om.order_status IN ('PAID', 'PARTIAL_REFUNDED')
+        )
+    </select>
+
+    <!-- 세션 및 연관 데이터 soft delete -->
+    <update id="deleteSessionWithRelatedData">
+        <!-- 1. 피드백 첨부파일 soft delete -->
+        UPDATE feedback_attachment
+        SET is_deleted = 1,
+        deleted_at = NOW(),
+        updated_by = #{deletedBy},
+        updated_at = NOW()
+        WHERE feedback_id IN (
+        SELECT feedback_id
+        FROM feedback
+        WHERE application_id IN (
+        SELECT application_id
+        FROM training_course_application
+        WHERE session_id = #{sessionId}
+        AND is_deleted = 0
+        )
+        AND is_deleted = 0
+        )
+        AND is_deleted = 0;
+
+        <!-- 2. 피드백 soft delete -->
+        UPDATE feedback
+        SET is_deleted = 1,
+        deleted_at = NOW(),
+        updated_by = #{deletedBy},
+        updated_at = NOW()
+        WHERE application_id IN (
+        SELECT application_id
+        FROM training_course_application
+        WHERE session_id = #{sessionId}
+        AND is_deleted = 0
+        )
+        AND is_deleted = 0;
+
+        <!-- 3. 출석 정보 soft delete -->
+        UPDATE training_attendance
+        SET is_deleted = 1,
+        deleted_at = NOW(),
+        updated_by = #{deletedBy},
+        updated_at = NOW()
+        WHERE application_id IN (
+        SELECT application_id
+        FROM training_course_application
+        WHERE session_id = #{sessionId}
+        AND is_deleted = 0
+        )
+        AND is_deleted = 0;
+
+        <!-- 4. 위시리스트 상세 soft delete -->
+        UPDATE wishlist_detail
+        SET is_deleted = 1,
+        deleted_at = NOW(),
+        updated_by = #{deletedBy},
+        updated_at = NOW()
+        WHERE application_id IN (
+        SELECT application_id
+        FROM training_course_application
+        WHERE session_id = #{sessionId}
+        AND is_deleted = 0
+        )
+        AND is_deleted = 0;
+
+        <!-- 5. 대기 soft delete -->
+        UPDATE waiting
+        SET is_deleted = 1,
+        deleted_at = NOW(),
+        updated_by = #{deletedBy},
+        updated_at = NOW()
+        WHERE application_id IN (
+        SELECT application_id
+        FROM training_course_application
+        WHERE session_id = #{sessionId}
+        AND is_deleted = 0
+        )
+        AND is_deleted = 0;
+
+        <!-- 6. 신청 정보 soft delete -->
+        UPDATE training_course_application
+        SET is_deleted = 1,
+        deleted_at = NOW(),
+        updated_by = #{deletedBy},
+        updated_at = NOW()
+        WHERE session_id = #{sessionId}
+        AND is_deleted = 0;
+
+        <!-- 7. 세션 공지사항 soft delete -->
+        UPDATE training_course_notice
+        SET is_deleted = 1,
+        deleted_at = NOW(),
+        updated_by = #{deletedBy},
+        updated_at = NOW()
+        WHERE session_id = #{sessionId}
+        AND is_deleted = 0;
+
+        <!-- 8. 세션 변경 이력 soft delete -->
+        UPDATE training_session_change
+        SET is_deleted = 1,
+        deleted_at = NOW(),
+        updated_by = #{deletedBy},
+        updated_at = NOW()
+        WHERE session_id = #{sessionId}
+        AND is_deleted = 0;
+
+        <!-- 9. 세션 soft delete -->
+        UPDATE training_session
+        SET is_deleted = 1,
+        deleted_at = NOW(),
+        updated_by = #{deletedBy},
+        updated_at = NOW()
+        WHERE session_id = #{sessionId}
+        AND is_deleted = 0;
+    </update>
+
 </mapper>
