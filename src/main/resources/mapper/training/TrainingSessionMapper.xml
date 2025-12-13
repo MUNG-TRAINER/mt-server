@@ -174,7 +174,7 @@
                 AND om.is_deleted = 0
             WHERE tca.session_id = #{sessionId}
               AND tca.is_deleted = 0
-              AND om.order_status IN ('PAID', 'PARTIAL_REFUNDED', 'PENDING', 'REFUND_REQUESTED', 'REFUNDING')
+              AND om.order_status IN ('PAID', 'PARTIAL_REFUNDED')
         )
     </select>
 
