@@ -44,6 +44,13 @@ public enum ErrorCode {
   DOG_IMAGE_DELETE_FAILED(500, "반려견 프로필 이미지 삭제에 실패했습니다."),
   DOG_ID_GENERATION_FAILED(500, "반려견 ID 생성에 실패했습니다."),
 
+  // ===== 주문/결제 관련 =====
+  ORDER_NOT_FOUND(404, "주문 정보를 찾을 수 없습니다."),
+  ORDER_CREATION_FAILED(500, "주문 생성에 실패했습니다."),
+  PAYMENT_INVALID_AMOUNT(400, "결제 금액이 유효하지 않습니다."),
+  PAYMENT_FAILED(500, "결제 처리에 실패했습니다."),
+  PAYMENT_ALREADY_COMPLETED(409, "이미 결제가 완료된 주문입니다."),
+
   // 훈련 세션 관련
   SESSION_NOT_FOUND(404, "해당 세션을 찾을 수 없습니다."),
   SESSION_NO_PERMISSION(403, "해당 세션에 대한 권한이 없습니다."),

@@ -21,11 +21,12 @@ public class PaymentRequest {
     @NotNull(message = "신청서 ID는 필수입니다.")
     private Long applicationId;
 
-    /**
-     * 사용자 ID
-     */
-    @NotNull(message = "사용자 ID는 필수입니다.")
-    private Long userId;
+//  인증정보에서 받아오기    
+//    /**
+//     * 사용자 ID
+//     */
+//    @NotNull(message = "사용자 ID는 필수입니다.")
+//    private Long userId;
 
     /**
      * 결제 방법 (나중에 오픈뱅킹 연동 시 사용)

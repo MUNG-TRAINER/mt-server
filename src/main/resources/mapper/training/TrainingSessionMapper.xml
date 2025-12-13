@@ -169,6 +169,7 @@
                updated_at
         FROM training_session
         WHERE session_id = #{sessionId}
+          AND is_deleted = 0
     </select>
 
 </mapper>

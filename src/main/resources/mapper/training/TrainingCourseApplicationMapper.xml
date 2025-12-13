@@ -35,7 +35,7 @@
              UPDATE training_course_application
              SET status = #{status},
                  updated_at = NOW()
-             WHERE application_id = #{applicationId}
+             WHERE application_id = #{applicationId} AND status = 'APPLIED'
          </update>
 
      </mapper>

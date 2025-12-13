@@ -1,9 +1,9 @@
 package com.mungtrainer.mtserver.order.service;
 
-
-import com.mungtrainer.mtserver.dog.dao.DogMapper;
+import com.mungtrainer.mtserver.common.exception.CustomException;
+import com.mungtrainer.mtserver.common.exception.ErrorCode;
+import com.mungtrainer.mtserver.dog.dao.DogDAO;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
-import com.mungtrainer.mtserver.dog.entity.Dog;
 import com.mungtrainer.mtserver.order.dto.response.PaymentResponse;
 import com.mungtrainer.mtserver.order.dto.request.PaymentRequest;
 import com.mungtrainer.mtserver.order.entity.OrderMaster;
@@ -38,11 +38,11 @@ public class OrderPaymentService {
     private static final String PAYMENT_LOG_STATUS_REQUESTED = "REQUESTED";
     private static final String PAYMENT_LOG_STATUS_SUCCESS = "SUCCESS";
 
-    private final TrainingCourseApplicationDAO applicationMapper;
-    private final TrainingSessionDAO sessionMapper;
-    private final OrderDAO orderMapper;
-    private final PaymentDAO paymentMapper;
-    private final DogMapper dogMapper;
+    private final TrainingCourseApplicationDAO applicationDAO;
+    private final TrainingSessionDAO sessionDAO;
+    private final OrderDAO orderDAO;
+    private final PaymentDAO paymentDAO;
+    private final DogDAO dogDAO;
 
     /**
      * 결제 처리 메인 메서드
@@ -52,12 +52,12 @@ public class OrderPaymentService {
      * - 상태 업데이트
      */
     @Transactional
-    public PaymentResponse processPayment(PaymentRequest request) {
+    public PaymentResponse processPayment(PaymentRequest request, Long userId) {
         log.info("===== 결제 처리 시작 =====");
-        log.info("신청서 ID: {}, 사용자 ID: {}", request.getApplicationId(), request.getUserId());
+        log.info("신청서 ID: {}, 사용자 ID: {}", request.getApplicationId(), userId);
 
         // 1. 신청서 검증 및 조회
-        TrainingCourseApplication application = validateAndGetApplication(request);
+        TrainingCourseApplication application = validateAndGetApplication(request, userId);
         log.info("신청서 검증 완료 - 반려견 ID: {}, 세션 ID: {}", application.getDogId(), application.getSessionId());
 
         // 2. 세션 정보 조회 (가격 정보)
@@ -65,7 +65,7 @@ public class OrderPaymentService {
         log.info("세션 조회 완료 - 가격: {}원", session.getPrice());
 
         // 3. 주문 생성
-        OrderMaster order = createOrder(request, session);
+        OrderMaster order = createOrder(request, session, userId);
         log.info("주문 생성 완료 - 주문 ID: {}, 총액: {}원, 결제액: {}원",
                 order.getOrderId(), order.getTotalAmount(), order.getPaidAmount());
 
@@ -100,25 +100,26 @@ public class OrderPaymentService {
     /**
      * 신청서 검증 및 조회
      */
-    private TrainingCourseApplication validateAndGetApplication(PaymentRequest request) {
-        TrainingCourseApplication application = applicationMapper.findById(request.getApplicationId());
+    private TrainingCourseApplication validateAndGetApplication(PaymentRequest request, Long userId) {
+        TrainingCourseApplication application = applicationDAO.findById(request.getApplicationId());
 
         if (application == null) {
-            throw new IllegalArgumentException("존재하지 않는 신청서입니다. applicationId: " + request.getApplicationId());
+            throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
         }
 
         // 신청서 상태 확인 (APPLIED 상태만 결제 가능)
         if (!APPLICATION_STATUS_APPLIED.equals(application.getStatus())) {
-            throw new IllegalStateException(
-                    String.format("신청 상태(APPLIED)인 경우에만 결제할 수 있습니다. 현재 상태: %s", application.getStatus())
-            );
+            if (APPLICATION_STATUS_PAID.equals(application.getStatus())) {
+                throw new CustomException(ErrorCode.PAYMENT_ALREADY_COMPLETED);
+            }
+            throw new CustomException(ErrorCode.UNAUTHORIZED_APPLICATION);
         }
 
         // 반려견 소유자 검증 (한 번에 처리)
-        DogResponse dog = dogMapper.selectDogByIdAndUserId(application.getDogId(), request.getUserId());
+        DogResponse dog = dogDAO.selectDogByIdAndUserId(application.getDogId(), userId);
 
         if (dog == null) {
-          throw new IllegalArgumentException("존재하지 않는 반려견이거나 해당 신청서에 대한 권한이 없습니다.");
+            throw new CustomException(ErrorCode.DOG_NO_PERMISSION);
         }
 
         return application;
@@ -128,14 +129,14 @@ public class OrderPaymentService {
      * 세션 정보 조회
      */
     private TrainingSession getTrainingSession(Long sessionId) {
-        TrainingSession session = sessionMapper.findById(sessionId);
+        TrainingSession session = sessionDAO.findById(sessionId);
 
         if (session == null) {
-            throw new IllegalArgumentException("존재하지 않는 세션입니다. sessionId: " + sessionId);
+            throw new CustomException(ErrorCode.SESSION_NOT_FOUND);
         }
 
         if (session.getPrice() == null || session.getPrice() <= 0) {
-            throw new IllegalStateException("유효하지 않은 가격 정보입니다. price: " + session.getPrice());
+            throw new CustomException(ErrorCode.PAYMENT_INVALID_AMOUNT);
         }
 
         return session;
@@ -144,28 +145,29 @@ public class OrderPaymentService {
     /**
      * 주문 생성
      */
-    private OrderMaster createOrder(PaymentRequest request, TrainingSession session) {
+    private OrderMaster createOrder(PaymentRequest request, TrainingSession session, Long userId) {
         Integer totalAmount = session.getPrice();
-        Integer discountAmount = request.getDiscountAmount() != null ? request.getDiscountAmount() : 0;
-        Integer paidAmount = totalAmount - discountAmount;
+        int discountAmount = request.getDiscountAmount() != null ? request.getDiscountAmount() : 0;
+        int paidAmount = totalAmount - discountAmount;
 
-        if (paidAmount < 0) {
-            throw new IllegalArgumentException("할인 금액이 총 금액보다 클 수 없습니다.");
-        }
-
-        if (paidAmount == 0) {
-            throw new IllegalArgumentException("결제 금액은 0원보다 커야 합니다.");
+        if (paidAmount < 0 || paidAmount == 0) {
+            throw new CustomException(ErrorCode.PAYMENT_INVALID_AMOUNT);
         }
 
         OrderMaster order = OrderMaster.builder()
                 .wishlistId(null)  // 직접 결제이므로 null
-                .userId(request.getUserId())
+                .userId(userId)
                 .orderStatus(ORDER_STATUS_PAYMENT_PENDING)
                 .totalAmount(totalAmount)
                 .paidAmount(paidAmount)
                 .build();
 
-        orderMapper.insertOrder(order);
+        orderDAO.insertOrder(order);
+
+        if (order.getOrderId() == null) {
+            throw new CustomException(ErrorCode.ORDER_CREATION_FAILED);
+        }
+
         return order;
     }
 
@@ -179,7 +181,7 @@ public class OrderPaymentService {
                 .price(price)
                 .build();
 
-        orderMapper.insertOrderItem(orderItem);
+        orderDAO.insertOrderItem(orderItem);
         return orderItem;
     }
 
@@ -205,7 +207,12 @@ public class OrderPaymentService {
                 .paidAt(LocalDateTime.now())
                 .build();
 
-        paymentMapper.insertPayment(payment);
+        paymentDAO.insertPayment(payment);
+
+        if (payment.getPaymentId() == null) {
+            throw new CustomException(ErrorCode.PAYMENT_FAILED);
+        }
+
         return payment;
     }
 
@@ -219,7 +226,7 @@ public class OrderPaymentService {
                 .paidAt(LocalDateTime.now())
                 .build();
 
-        orderMapper.updateOrderStatus(order);
+        orderDAO.updateOrderStatus(order);
     }
 
     /**
@@ -231,7 +238,7 @@ public class OrderPaymentService {
                 .status(status)
                 .build();
 
-        applicationMapper.updateStatus(application);
+        applicationDAO.updateStatus(application);
     }
 
     /**
@@ -247,7 +254,7 @@ public class OrderPaymentService {
                 .failureReason(status.equals(PAYMENT_LOG_STATUS_SUCCESS) ? null : reason)
                 .build();
 
-        paymentMapper.insertPaymentLog(paymentLog);
+        paymentDAO.insertPaymentLog(paymentLog);
     }
 
     /**
@@ -255,24 +262,11 @@ public class OrderPaymentService {
      * 형식: ORD_yyyyMMddHHmmss_UUID
      */
     private String generateMerchantUid() {
-      String merchantUid;
-      int maxRetries = 3;
-      int retry = 0;
-
-      do {
         String timestamp = LocalDateTime.now()
-            .toString()
-            .replaceAll("[-:T.]", "");
+                .toString()
+                .replaceAll("[-:T.]", "");
         String uuid = UUID.randomUUID().toString().substring(0, 8);
-        merchantUid = String.format("ORD_%s_%s", timestamp, uuid);
-
-        // TODO: DB에 중복 체크 (옵션)
-        // if (paymentMapper.existsByMerchantUid(merchantUid)) continue;
-
-        break;
-      } while (retry++ < maxRetries);
-
-      return merchantUid;
+        return String.format("ORD_%s_%s", timestamp, uuid);
     }
 
     /**
