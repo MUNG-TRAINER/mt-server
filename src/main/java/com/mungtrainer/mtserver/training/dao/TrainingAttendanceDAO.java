@@ -8,7 +8,7 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 @Mapper
-public interface TrainingAttendanceMapper {
+public interface TrainingAttendanceDAO {
 
   /**
    * 특정 세션의 모든 출석 목록 조회 (DTO 반환)

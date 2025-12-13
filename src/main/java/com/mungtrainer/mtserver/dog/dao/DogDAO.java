@@ -12,7 +12,7 @@ import java.util.Map;
  * 반려견 정보 매퍼 인터페이스
  */
 @Mapper
-public interface DogMapper {
+public interface DogDAO {
 
     /**
      * 반려견 정보 생성

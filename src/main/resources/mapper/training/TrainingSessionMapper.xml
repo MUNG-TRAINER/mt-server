@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.mungtrainer.mtserver.training.dao.TrainingSessionMapper">
+<mapper namespace="com.mungtrainer.mtserver.training.dao.TrainingSessionDAO">
 
     <resultMap id="sessionResultMap" type="com.mungtrainer.mtserver.training.dto.response.TrainingSessionResponse">
         <id property="sessionId" column="session_id"/>
@@ -16,6 +16,23 @@
         <result property="currentStudents" column="current_students"/>
         <result property="content" column="content"/>
         <result property="price" column="price"/>
+    </resultMap>
+
+    <!-- Result Map -->
+    <resultMap id="trainingSessionResultMap" type="com.mungtrainer.mtserver.training.entity.TrainingSession">
+        <id property="sessionId" column="session_id"/>
+        <result property="courseId" column="course_id"/>
+        <result property="sessionNo" column="session_no"/>
+        <result property="sessionDate" column="session_date"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="locationDetail" column="location_detail"/>
+        <result property="status" column="status"/>
+        <result property="maxStudents" column="max_students"/>
+        <result property="content" column="content"/>
+        <result property="price" column="price"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
     <!-- 특정 코스의 세션 목록 조회 -->
@@ -134,5 +151,25 @@
         WHERE session_id = #{sessionId}
           AND is_deleted = 0
     </update>
+
+    <!-- 세션 ID로 조회 -->
+    <select id="findById" parameterType="long" resultMap="trainingSessionResultMap">
+        SELECT session_id,
+               course_id,
+               session_no,
+               session_date,
+               start_time,
+               end_time,
+               location_detail,
+               status,
+               max_students,
+               content,
+               price,
+               created_at,
+               updated_at
+        FROM training_session
+        WHERE session_id = #{sessionId}
+          AND is_deleted = 0
+    </select>
 
 </mapper>

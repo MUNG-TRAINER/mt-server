@@ -1,6 +1,5 @@
 package com.mungtrainer.mtserver.user.dao;
 
-import com.mungtrainer.mtserver.trainer.entity.TrainerProfile;
 import com.mungtrainer.mtserver.user.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -8,7 +7,7 @@ import org.apache.ibatis.annotations.Param;
 import java.util.Optional;
 
 @Mapper
-public interface UserMapper {
+public interface UserDAO {
 
     /**
      * 사용자 ID로 조회

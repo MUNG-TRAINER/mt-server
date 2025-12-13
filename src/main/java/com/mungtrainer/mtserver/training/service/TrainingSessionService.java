@@ -4,7 +4,7 @@ import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.training.dto.request.UpdateSessionRequest;
 import com.mungtrainer.mtserver.training.dto.response.TrainingSessionResponse;
-import com.mungtrainer.mtserver.training.dao.TrainingSessionMapper;
+import com.mungtrainer.mtserver.training.dao.TrainingSessionDAO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +16,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class TrainingSessionService {
 
-    private final TrainingSessionMapper trainingSessionMapper;
+    private final TrainingSessionDAO trainingSessionMapper;
 
     /**
      * 특정 코스의 세션 목록 조회
