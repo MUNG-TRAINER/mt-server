@@ -3,12 +3,12 @@ package com.mungtrainer.mtserver.dog.service;
 import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
+import com.mungtrainer.mtserver.dog.dao.DogDAO;
 import com.mungtrainer.mtserver.dog.dto.request.DogCreateRequest;
 import com.mungtrainer.mtserver.dog.dto.request.DogImageUploadRequest;
 import com.mungtrainer.mtserver.dog.dto.request.DogUpdateRequest;
 import com.mungtrainer.mtserver.dog.dto.response.DogImageUploadResponse;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
-import com.mungtrainer.mtserver.dog.dao.DogMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
@@ -28,7 +28,7 @@ import java.util.Map;
 @Transactional(readOnly = true)
 public class DogService {
 
-    private final DogMapper dogMapper;
+    private final DogDAO dogMapper;
     private final S3Service s3Service;
 
     /**

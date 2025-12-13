@@ -50,10 +50,12 @@ public class TrainingSessionService {
         }
 
         try {
-          int deletedCount = trainingSessionMapper.deleteSession(sessionId);
-          if (deletedCount == 0) {
-            throw new CustomException(ErrorCode.SESSION_NOT_FOUND);
-          }
+            int updatedCount = trainingSessionMapper.updateSession(request, sessionId);
+            if (updatedCount == 0) {
+                throw new CustomException(ErrorCode.SESSION_NOT_FOUND);
+            }
+        } catch (CustomException e) {
+            throw e;
         } catch (Exception e) {
             throw new CustomException(ErrorCode.SESSION_UPDATE_FAILED);
         }
@@ -64,35 +66,31 @@ public class TrainingSessionService {
      */
     @Transactional
     public void deleteSession(Long sessionId, Long trainerId) {
-      log.info("세션 삭제 요청 - sessionId: {}, trainerId: {}", sessionId, trainerId);
+        validateTrainerOwnership(sessionId, trainerId);
 
-      validateTrainerOwnership(sessionId, trainerId);
-
-      // 1. 결제 완료된 신청이 있는지 확인
-      Boolean hasPaidApplications = trainingSessionMapper.hasPaidApplications(sessionId);
-      if (hasPaidApplications != null && hasPaidApplications) {
-        log.warn("결제 완료된 신청이 있어 삭제 불가 - sessionId: {}", sessionId);
-        throw new CustomException(ErrorCode.SESSION_CANNOT_DELETE_HAS_PAYMENT);
-      }
-
-      // 2. 미결제 신청만 있는 경우 삭제 허용
-      try {
-        int deletedCount = trainingSessionMapper.deleteSessionWithRelatedData(
-            sessionId,
-            trainerId
-        );
-
-        if (deletedCount == 0) {
-          throw new CustomException(ErrorCode.SESSION_NOT_FOUND);
+        Boolean hasPaidApplications = trainingSessionMapper.hasPaidApplications(sessionId);
+        if (hasPaidApplications != null && hasPaidApplications) {
+            throw new CustomException(ErrorCode.SESSION_CANNOT_DELETE_HAS_PAYMENT);
         }
 
-        log.info("세션 삭제 완료 - sessionId: {}, deletedCount: {}", sessionId, deletedCount);
-      } catch (CustomException e) {
-        throw e;
-      } catch (Exception e) {
-        log.error("세션 삭제 실패 - sessionId: {}, error: {}", sessionId, e.getMessage());
-        throw new CustomException(ErrorCode.SESSION_DELETE_FAILED);
-      }
+        try {
+            trainingSessionMapper.deleteFeedbackAttachmentsBySessionId(sessionId, trainerId);
+            trainingSessionMapper.deleteFeedbacksBySessionId(sessionId, trainerId);
+            trainingSessionMapper.deleteAttendancesBySessionId(sessionId, trainerId);
+            trainingSessionMapper.deleteWaitingBySessionId(sessionId, trainerId);
+            trainingSessionMapper.deleteApplicationsBySessionId(sessionId, trainerId);
+            trainingSessionMapper.deleteNoticesBySessionId(sessionId, trainerId);
+            trainingSessionMapper.deleteSessionChangesBySessionId(sessionId, trainerId);
+
+            int deletedCount = trainingSessionMapper.deleteSessionById(sessionId, trainerId);
+            if (deletedCount == 0) {
+                throw new CustomException(ErrorCode.SESSION_NOT_FOUND);
+            }
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new CustomException(ErrorCode.SESSION_DELETE_FAILED);
+        }
     }
 
     /**

@@ -7,7 +7,7 @@ import com.mungtrainer.mtserver.counseling.dao.TrainerUserDAO;
 import com.mungtrainer.mtserver.counseling.dto.request.ApplicationStatusUpdateRequest;
 import com.mungtrainer.mtserver.counseling.dto.response.*;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
-import com.mungtrainer.mtserver.dog.dao.DogMapper;
+import com.mungtrainer.mtserver.dog.dao.DogDAO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TrainerUserService {
 
-    private final DogMapper dogMapper;
+    private final DogDAO dogDao;
     private final TrainerUserDAO trainerUserDao;
     private final S3Service s3Service;
     private final CounselingDAO counselingDao;
@@ -35,7 +35,7 @@ public class TrainerUserService {
 //            throw new UnauthorizedException("해당 회원의 정보에 접근할 권한이 없습니다.");
 //        }
         // 1. DB에서 반려견 리스트 조회
-        List<DogResponse> dogs = dogMapper.selectDogsByUserId(userId);
+        List<DogResponse> dogs = dogDao.selectDogsByUserId(userId);
 
         if (dogs.isEmpty()) return List.of();
 
@@ -59,7 +59,7 @@ public class TrainerUserService {
     public DogStatsResponse getDogStats(Long dogId, Long trainerId) {
 
         // 1. 반려견 조회 + Presigned URL 변환
-        DogResponse dog = dogMapper.selectDogById(dogId);
+        DogResponse dog = dogDao.selectDogById(dogId);
         if (dog == null) {
             throw new RuntimeException("Dog not found");
         }
@@ -182,7 +182,7 @@ public class TrainerUserService {
 //public DogStatsResponse getDogStats(Long dogId, Long trainerId) {
 //
 //    // 1. 반려견 조회 + Presigned URL 변환
-//    DogResponse dog = dogMapper.selectDogById(dogId);
+//    DogResponse dog = dogDao.selectDogById(dogId);
 //    if (dog == null) {
 //        throw new RuntimeException("Dog not found");
 //    }

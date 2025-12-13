@@ -18,7 +18,6 @@
         <result property="price" column="price"/>
     </resultMap>
 
-    <!-- Result Map -->
     <resultMap id="trainingSessionResultMap" type="com.mungtrainer.mtserver.training.entity.TrainingSession">
         <id property="sessionId" column="session_id"/>
         <result property="courseId" column="course_id"/>
@@ -35,7 +34,6 @@
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
-    <!-- 특정 코스의 세션 목록 조회 -->
     <select id="findSessionsByCourseId" parameterType="long" resultMap="sessionResultMap">
         SELECT
             ts.session_id,
@@ -60,7 +58,6 @@
         ORDER BY ts.session_no ASC
     </select>
 
-    <!-- 특정 세션 상세 조회 -->
     <select id="findSessionById" resultMap="sessionResultMap">
         SELECT
             ts.session_id,
@@ -85,7 +82,6 @@
         GROUP BY ts.session_id
     </select>
 
-    <!-- 세션이 해당 훈련사의 것인지 확인 -->
     <select id="isSessionOwnedByTrainer" resultType="boolean">
         SELECT EXISTS(
             SELECT 1
@@ -98,7 +94,6 @@
         )
     </select>
 
-    <!-- 세션 정보 수정 -->
     <update id="updateSession">
         UPDATE training_session
         <set>
@@ -132,7 +127,6 @@
           AND is_deleted = 0
     </update>
 
-    <!-- 세션에 신청자가 있는지 확인 -->
     <select id="hasActiveApplications" resultType="boolean">
         SELECT EXISTS(
             SELECT 1
@@ -143,7 +137,6 @@
         )
     </select>
 
-    <!-- 세션 삭제 (Soft Delete) -->
     <update id="deleteSession">
         UPDATE training_session
         SET is_deleted = 1,
@@ -152,7 +145,6 @@
           AND is_deleted = 0
     </update>
 
-    <!-- 세션 ID로 조회 -->
     <select id="findById" parameterType="long" resultMap="trainingSessionResultMap">
         SELECT session_id,
                course_id,
@@ -172,14 +164,13 @@
           AND is_deleted = 0
     </select>
 
-    <!-- 결제 완료된 신청 확인 -->
     <select id="hasPaidApplications" resultType="Boolean">
         SELECT EXISTS(
             SELECT 1
             FROM training_course_application tca
-                     INNER JOIN order_item oi ON tca.application_id = oi.application_id
+            INNER JOIN order_item oi ON tca.application_id = oi.application_id
                 AND oi.is_deleted = 0
-                     INNER JOIN order_master om ON oi.order_id = om.order_id
+            INNER JOIN order_master om ON oi.order_id = om.order_id
                 AND om.is_deleted = 0
             WHERE tca.session_id = #{sessionId}
               AND tca.is_deleted = 0
@@ -187,118 +178,109 @@
         )
     </select>
 
-    <!-- 세션 및 연관 데이터 soft delete -->
-    <update id="deleteSessionWithRelatedData">
-        <!-- 1. 피드백 첨부파일 soft delete -->
+    <update id="deleteFeedbackAttachmentsBySessionId">
         UPDATE feedback_attachment
         SET is_deleted = 1,
-        deleted_at = NOW(),
-        updated_by = #{deletedBy},
-        updated_at = NOW()
+            deleted_at = NOW(),
+            updated_by = #{deletedBy},
+            updated_at = NOW()
         WHERE feedback_id IN (
-        SELECT feedback_id
-        FROM feedback
-        WHERE application_id IN (
-        SELECT application_id
-        FROM training_course_application
-        WHERE session_id = #{sessionId}
-        AND is_deleted = 0
+            SELECT feedback_id
+            FROM feedback
+            WHERE application_id IN (
+                SELECT application_id
+                FROM training_course_application
+                WHERE session_id = #{sessionId}
+                  AND is_deleted = 0
+            )
+              AND is_deleted = 0
         )
-        AND is_deleted = 0
-        )
-        AND is_deleted = 0;
+          AND is_deleted = 0
+    </update>
 
-        <!-- 2. 피드백 soft delete -->
+    <update id="deleteFeedbacksBySessionId">
         UPDATE feedback
         SET is_deleted = 1,
-        deleted_at = NOW(),
-        updated_by = #{deletedBy},
-        updated_at = NOW()
+            deleted_at = NOW(),
+            updated_by = #{deletedBy},
+            updated_at = NOW()
         WHERE application_id IN (
-        SELECT application_id
-        FROM training_course_application
-        WHERE session_id = #{sessionId}
-        AND is_deleted = 0
+            SELECT application_id
+            FROM training_course_application
+            WHERE session_id = #{sessionId}
+              AND is_deleted = 0
         )
-        AND is_deleted = 0;
+          AND is_deleted = 0
+    </update>
 
-        <!-- 3. 출석 정보 soft delete -->
+    <update id="deleteAttendancesBySessionId">
         UPDATE training_attendance
         SET is_deleted = 1,
-        deleted_at = NOW(),
-        updated_by = #{deletedBy},
-        updated_at = NOW()
+            deleted_at = NOW(),
+            updated_by = #{deletedBy},
+            updated_at = NOW()
         WHERE application_id IN (
-        SELECT application_id
-        FROM training_course_application
-        WHERE session_id = #{sessionId}
-        AND is_deleted = 0
+            SELECT application_id
+            FROM training_course_application
+            WHERE session_id = #{sessionId}
+              AND is_deleted = 0
         )
-        AND is_deleted = 0;
+          AND is_deleted = 0
+    </update>
 
-        <!-- 4. 위시리스트 상세 soft delete -->
-        UPDATE wishlist_detail
-        SET is_deleted = 1,
-        deleted_at = NOW(),
-        updated_by = #{deletedBy},
-        updated_at = NOW()
-        WHERE application_id IN (
-        SELECT application_id
-        FROM training_course_application
-        WHERE session_id = #{sessionId}
-        AND is_deleted = 0
-        )
-        AND is_deleted = 0;
-
-        <!-- 5. 대기 soft delete -->
+    <update id="deleteWaitingBySessionId">
         UPDATE waiting
         SET is_deleted = 1,
-        deleted_at = NOW(),
-        updated_by = #{deletedBy},
-        updated_at = NOW()
+            deleted_at = NOW(),
+            updated_by = #{deletedBy},
+            updated_at = NOW()
         WHERE application_id IN (
-        SELECT application_id
-        FROM training_course_application
-        WHERE session_id = #{sessionId}
-        AND is_deleted = 0
+            SELECT application_id
+            FROM training_course_application
+            WHERE session_id = #{sessionId}
+              AND is_deleted = 0
         )
-        AND is_deleted = 0;
+          AND is_deleted = 0
+    </update>
 
-        <!-- 6. 신청 정보 soft delete -->
+    <update id="deleteApplicationsBySessionId">
         UPDATE training_course_application
         SET is_deleted = 1,
-        deleted_at = NOW(),
-        updated_by = #{deletedBy},
-        updated_at = NOW()
+            deleted_at = NOW(),
+            updated_by = #{deletedBy},
+            updated_at = NOW()
         WHERE session_id = #{sessionId}
-        AND is_deleted = 0;
+          AND is_deleted = 0
+    </update>
 
-        <!-- 7. 세션 공지사항 soft delete -->
+    <update id="deleteNoticesBySessionId">
         UPDATE training_course_notice
         SET is_deleted = 1,
-        deleted_at = NOW(),
-        updated_by = #{deletedBy},
-        updated_at = NOW()
+            deleted_at = NOW(),
+            updated_by = #{deletedBy},
+            updated_at = NOW()
         WHERE session_id = #{sessionId}
-        AND is_deleted = 0;
+          AND is_deleted = 0
+    </update>
 
-        <!-- 8. 세션 변경 이력 soft delete -->
+    <update id="deleteSessionChangesBySessionId">
         UPDATE training_session_change
         SET is_deleted = 1,
-        deleted_at = NOW(),
-        updated_by = #{deletedBy},
-        updated_at = NOW()
+            deleted_at = NOW(),
+            updated_by = #{deletedBy},
+            updated_at = NOW()
         WHERE session_id = #{sessionId}
-        AND is_deleted = 0;
+          AND is_deleted = 0
+    </update>
 
-        <!-- 9. 세션 soft delete -->
+    <update id="deleteSessionById">
         UPDATE training_session
         SET is_deleted = 1,
-        deleted_at = NOW(),
-        updated_by = #{deletedBy},
-        updated_at = NOW()
+            deleted_at = NOW(),
+            updated_by = #{deletedBy},
+            updated_at = NOW()
         WHERE session_id = #{sessionId}
-        AND is_deleted = 0;
+          AND is_deleted = 0
     </update>
 
 </mapper>
