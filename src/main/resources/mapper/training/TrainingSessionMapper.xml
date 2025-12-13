@@ -174,28 +174,22 @@
                 AND om.is_deleted = 0
             WHERE tca.session_id = #{sessionId}
               AND tca.is_deleted = 0
-              AND om.order_status IN ('PAID', 'PARTIAL_REFUNDED')
+              AND om.order_status IN ('PAID', 'PARTIAL_REFUNDED', 'PENDING', 'REFUND_REQUESTED', 'REFUNDING')
         )
     </select>
 
     <update id="deleteFeedbackAttachmentsBySessionId">
-        UPDATE feedback_attachment
-        SET is_deleted = 1,
-            deleted_at = NOW(),
-            updated_by = #{deletedBy},
-            updated_at = NOW()
-        WHERE feedback_id IN (
-            SELECT feedback_id
-            FROM feedback
-            WHERE application_id IN (
-                SELECT application_id
-                FROM training_course_application
-                WHERE session_id = #{sessionId}
-                  AND is_deleted = 0
-            )
-              AND is_deleted = 0
-        )
-          AND is_deleted = 0
+        UPDATE feedback_attachment fa
+            INNER JOIN feedback f ON fa.feedback_id = f.feedback_id
+            INNER JOIN training_course_application tca ON f.application_id = tca.application_id
+            SET fa.is_deleted = 1,
+                fa.deleted_at = NOW(),
+                fa.updated_by = #{deletedBy},
+                fa.updated_at = NOW()
+        WHERE tca.session_id = #{sessionId}
+          AND tca.is_deleted = 0
+          AND f.is_deleted = 0
+          AND fa.is_deleted = 0
     </update>
 
     <update id="deleteFeedbacksBySessionId">

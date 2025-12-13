@@ -57,43 +57,43 @@ public interface TrainingSessionDAO {
     /**
      * 피드백 첨부파일 삭제
      */
-    void deleteFeedbackAttachmentsBySessionId(@Param("sessionId") Long sessionId,
+    int deleteFeedbackAttachmentsBySessionId(@Param("sessionId") Long sessionId,
                                                @Param("deletedBy") Long deletedBy);
 
     /**
      * 피드백 삭제
      */
-    void deleteFeedbacksBySessionId(@Param("sessionId") Long sessionId,
+    int deleteFeedbacksBySessionId(@Param("sessionId") Long sessionId,
                                      @Param("deletedBy") Long deletedBy);
 
     /**
      * 출석 정보 삭제
      */
-    void deleteAttendancesBySessionId(@Param("sessionId") Long sessionId,
+    int deleteAttendancesBySessionId(@Param("sessionId") Long sessionId,
                                        @Param("deletedBy") Long deletedBy);
 
     /**
      * 대기 정보 삭제
      */
-    void deleteWaitingBySessionId(@Param("sessionId") Long sessionId,
+    int deleteWaitingBySessionId(@Param("sessionId") Long sessionId,
                                    @Param("deletedBy") Long deletedBy);
 
     /**
      * 신청 정보 삭제
      */
-    void deleteApplicationsBySessionId(@Param("sessionId") Long sessionId,
+    int deleteApplicationsBySessionId(@Param("sessionId") Long sessionId,
                                         @Param("deletedBy") Long deletedBy);
 
     /**
      * 세션 공지사항 삭제
      */
-    void deleteNoticesBySessionId(@Param("sessionId") Long sessionId,
+    int deleteNoticesBySessionId(@Param("sessionId") Long sessionId,
                                    @Param("deletedBy") Long deletedBy);
 
     /**
      * 세션 변경 이력 삭제
      */
-    void deleteSessionChangesBySessionId(@Param("sessionId") Long sessionId,
+    int deleteSessionChangesBySessionId(@Param("sessionId") Long sessionId,
                                           @Param("deletedBy") Long deletedBy);
 
     /**
