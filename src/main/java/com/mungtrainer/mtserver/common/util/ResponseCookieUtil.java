@@ -2,7 +2,7 @@ package com.mungtrainer.mtserver.common.util;
 
 import jakarta.servlet.http.Cookie;
 
-public class CookieUtil {
+public class ResponseCookieUtil {
 
   public static Cookie createCookie(String name, String value, long maxAgeSeconds) {
 
@@ -11,7 +11,7 @@ public class CookieUtil {
     cookie.setSecure(false);       // true -> HTTPS에서만 전송
     cookie.setPath("/");          // 모든 경로에서 유효
     cookie.setMaxAge((int) maxAgeSeconds);
-    cookie.setAttribute("SameSite", "Lax"); // 또는 Lax (cross-site 여부에 따라 선택)
+    cookie.setAttribute("SameSite", "None"); // 또는 Lax (cross-site 여부에 따라 선택)
 
     return cookie;
   }
@@ -22,7 +22,7 @@ public class CookieUtil {
     cookie.setSecure(false);
     cookie.setPath("/");
     cookie.setMaxAge(0); // 즉시 삭제
-    cookie.setAttribute("SameSite", "Lax");
+    cookie.setAttribute("SameSite", "None");
 
     return cookie;
   }

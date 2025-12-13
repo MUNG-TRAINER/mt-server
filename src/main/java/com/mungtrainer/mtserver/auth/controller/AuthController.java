@@ -9,7 +9,7 @@ import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
 import com.mungtrainer.mtserver.common.security.JwtTokenProvider;
 import com.mungtrainer.mtserver.auth.service.AuthService;
 import com.mungtrainer.mtserver.common.security.service.CustomUserDetailsService;
-import com.mungtrainer.mtserver.common.util.CookieUtil;
+import com.mungtrainer.mtserver.common.util.ResponseCookieUtil;
 import com.mungtrainer.mtserver.user.entity.User;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -70,8 +70,8 @@ public class AuthController {
     long rtMaxAge =  jwtTokenProvider.getRefreshTokenValidityInMs() / 1000;
 
     // 3) 쿠키 생성
-    Cookie atCookie = CookieUtil.createCookie(ACCESS_TOKEN, accessToken, atMaxAge);
-    Cookie rtCookie = CookieUtil.createCookie(REFRESH_TOKEN, refreshToken, rtMaxAge);
+    Cookie atCookie = ResponseCookieUtil.createCookie(ACCESS_TOKEN, accessToken, atMaxAge);
+    Cookie rtCookie = ResponseCookieUtil.createCookie(REFRESH_TOKEN, refreshToken, rtMaxAge);
 
     // 4) 응답에 쿠키 추가
     response.addCookie(atCookie);
@@ -85,8 +85,8 @@ public class AuthController {
   public ResponseEntity<LoginResponse> logout(
       @AuthenticationPrincipal CustomUserDetails principal,
       HttpServletResponse response) {
-    Cookie deleteAt = CookieUtil.deleteCookie(ACCESS_TOKEN);
-    Cookie deleteRt = CookieUtil.deleteCookie(REFRESH_TOKEN);
+    Cookie deleteAt = ResponseCookieUtil.deleteCookie(ACCESS_TOKEN);
+    Cookie deleteRt = ResponseCookieUtil.deleteCookie(REFRESH_TOKEN);
 
     response.addCookie(deleteAt);
     response.addCookie(deleteRt);
@@ -134,9 +134,9 @@ public class AuthController {
     authService.updateRefreshToken(user.getUserId(), newRT);
 
     // 7. 쿠키 갱신
-    response.addCookie(CookieUtil.createCookie("access_token", newAT,
+    response.addCookie(ResponseCookieUtil.createCookie("access_token", newAT,
                                                jwtTokenProvider.getAccessTokenValidityInMs() / 1000));
-    response.addCookie(CookieUtil.createCookie("refresh_token", newRT,
+    response.addCookie(ResponseCookieUtil.createCookie("refresh_token", newRT,
                                                jwtTokenProvider.getRefreshTokenValidityInMs() / 1000));
 
     return ResponseEntity.ok(new LoginResponse("success",200,"토큰 재발급에 성공했습니다."));

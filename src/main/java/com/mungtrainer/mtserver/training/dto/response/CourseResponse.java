@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class CourseUploadResponse {
+public class CourseResponse {
   private String status;
   private int code;
   private String message;
