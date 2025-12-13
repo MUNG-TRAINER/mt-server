@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mungtrainer.mtserver.order.dao.PaymentDAO">
+
+    <!-- Payment Result Map -->
+    <resultMap id="paymentResultMap" type="com.mungtrainer.mtserver.order.entity.Payment">
+        <id property="paymentId" column="payment_id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="method" column="method"/>
+        <result property="amount" column="amount"/>
+        <result property="paymentStatus" column="payment_status"/>
+        <result property="merchantUid" column="merchant_uid"/>
+        <result property="paidAt" column="paid_at"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- PaymentLog Result Map -->
+    <resultMap id="paymentLogResultMap" type="com.mungtrainer.mtserver.order.entity.PaymentLog">
+        <id property="logId" column="log_id"/>
+        <result property="paymentId" column="payment_id"/>
+        <result property="status" column="status"/>
+        <result property="amount" column="amount"/>
+        <result property="pgTid" column="pg_tid"/>
+        <result property="merchantUid" column="merchant_uid"/>
+        <result property="failureReason" column="failure_reason"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- 결제 생성 -->
+    <insert id="insertPayment" parameterType="com.mungtrainer.mtserver.order.entity.Payment"
+            useGeneratedKeys="true" keyProperty="paymentId">
+        INSERT INTO payment (
+            order_id,
+            method,
+            amount,
+            payment_status,
+            merchant_uid,
+            paid_at,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{orderId},
+            #{method},
+            #{amount},
+            #{paymentStatus},
+            #{merchantUid},
+            #{paidAt},
+            NOW(),
+            NOW()
+        )
+    </insert>
+
+    <!-- 결제 로그 생성 -->
+    <insert id="insertPaymentLog" parameterType="com.mungtrainer.mtserver.order.entity.PaymentLog"
+            useGeneratedKeys="true" keyProperty="logId">
+        INSERT INTO payment_log (
+            payment_id,
+            status,
+            amount,
+            pg_tid,
+            merchant_uid,
+            failure_reason,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{paymentId},
+            #{status},
+            #{amount},
+            #{pgTid},
+            #{merchantUid},
+            #{failureReason},
+            NOW(),
+            NOW()
+        )
+    </insert>
+
+</mapper>
