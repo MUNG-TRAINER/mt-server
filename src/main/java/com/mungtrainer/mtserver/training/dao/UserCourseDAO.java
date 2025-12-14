@@ -1,6 +1,5 @@
 package com.mungtrainer.mtserver.training.dao;
 
-import com.mungtrainer.mtserver.counseling.dto.response.CounselingDogResponse;
 import com.mungtrainer.mtserver.training.dto.response.UserCourseResponse;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;

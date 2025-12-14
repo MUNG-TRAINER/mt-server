@@ -1,7 +1,6 @@
 package com.mungtrainer.mtserver.training.service;
 
 import com.mungtrainer.mtserver.common.s3.S3Service;
-import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
 import com.mungtrainer.mtserver.training.dao.UserCourseDAO;
 import com.mungtrainer.mtserver.training.dto.response.UserCourseGroupedResponse;
 import com.mungtrainer.mtserver.training.dto.response.UserCourseResponse;
@@ -10,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +17,13 @@ public class UserCourseService {
     private final UserCourseDAO userCourseDAO;
     private final S3Service s3Service;
 
+    private static final Set<String> ALLOWED_STATUS = Set.of("SCHEDULED", "DONE");
+
     public List<UserCourseGroupedResponse> getUserCourses(Long userId, String status) {
+        if (status != null && !ALLOWED_STATUS.contains(status)) {
+            throw new IllegalArgumentException("허용되지 않는 status 값입니다: " + status);
+        }
+
 
         List<UserCourseResponse> flatList =
                 userCourseDAO.selectUserCourses(userId, status);
@@ -37,14 +41,19 @@ public class UserCourseService {
 
 
         // 2. Presigned URL 일괄 발급
-        List<String> presignedUrls = s3Service.generateDownloadPresignedUrls(imageKeys);
+        List<String> presignedUrls;
+        if (imageKeys.isEmpty()) {
+            presignedUrls = Collections.emptyList();
+        } else {
+            presignedUrls = s3Service.generateDownloadPresignedUrls(imageKeys);
+        }
 
         Map<String, String> imageUrlMap = new HashMap<>();
         for (int i = 0; i < imageKeys.size(); i++) {
             imageUrlMap.put(imageKeys.get(i), presignedUrls.get(i));
         }
 
-        // 3. key ↔ url 매핑
+        // 3. course별 그룹화 및 session 데이터 구성
         Map<Long, UserCourseGroupedResponse> courseMap = new LinkedHashMap<>();
 
         for (UserCourseResponse row : flatList) {

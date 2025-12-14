@@ -9,9 +9,9 @@ import lombok.Setter;
 @Setter
 public class CourseReuploadRequest extends CourseBaseRequest{
 
-  @NotNull
-  private Long trainerId;
-  @NotBlank
-  private String tags;
+    @NotNull
+    private Long trainerId;
+    @NotBlank
+    private String tags;
 
 }

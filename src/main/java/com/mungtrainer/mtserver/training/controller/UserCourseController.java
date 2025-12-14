@@ -19,7 +19,7 @@ public class UserCourseController {
     private final UserCourseService userCourseService;
 
     @GetMapping
-    public List<UserCourseGroupedResponse> getUserCourse(
+    public List<UserCourseGroupedResponse> getUserCourses (
             @RequestParam String status,
             @AuthenticationPrincipal CustomUserDetails userDetails
             ) {

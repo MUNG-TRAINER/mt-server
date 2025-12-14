@@ -8,8 +8,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CourseUpdateRequest extends CourseBaseRequest{
-  @NotNull
-  private Long trainerId;
-  @NotBlank
-  private String tags;
+    @NotNull
+    private Long trainerId;
+    @NotBlank
+    private String tags;
 }

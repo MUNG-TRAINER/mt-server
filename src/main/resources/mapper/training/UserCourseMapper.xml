@@ -43,7 +43,14 @@
           AND tca.is_deleted = 0
           AND ts.status = #{sessionStatus}
 
-        ORDER BY ts.session_date DESC, ts.start_time DESC
+        <choose>
+            <when test="sessionStatus == 'SCHEDULED'">
+                ORDER BY ts.session_date ASC, ts.start_time ASC
+            </when>
+            <otherwise>
+                ORDER BY ts.session_date DESC, ts.start_time DESC
+            </otherwise>
+        </choose>
 
     </select>
 
