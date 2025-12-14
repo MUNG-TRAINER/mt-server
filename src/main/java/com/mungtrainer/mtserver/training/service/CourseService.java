@@ -5,6 +5,7 @@ import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.training.dao.CourseDAO;
 import com.mungtrainer.mtserver.training.dto.request.*;
+import com.mungtrainer.mtserver.training.dto.response.CourseListResponse;
 import com.mungtrainer.mtserver.training.dto.response.CourseResponse;
 import com.mungtrainer.mtserver.training.entity.TrainingCourse;
 import com.mungtrainer.mtserver.training.entity.TrainingSession;
@@ -24,6 +25,12 @@ import java.util.UUID;
 public class CourseService {
   private final CourseDAO courseDAO;
   private final S3Service s3Service;
+
+
+  @Transactional
+  public List<CourseListResponse> getCourses(Long userId, List<String> statuses, List<String> types, List<String> lessonForms){
+    return courseDAO.findCourses(userId, statuses, types, lessonForms);
+  }
 
   @Transactional
   public CourseResponse createCourse(CourseUploadRequest req, Long userId) {
@@ -137,8 +144,8 @@ public class CourseService {
           @Override
           public void afterCommit() {
             TrainingCourse course = courseDAO.getCourseById(courseId);
-//            s3Service.deleteFile(course.getMainImage());
-//            s3Service.deleteFile(course.getDetailImage());
+            s3Service.deleteFile(course.getMainImage());
+            s3Service.deleteFile(course.getDetailImage());
           }
         }
                                                              );

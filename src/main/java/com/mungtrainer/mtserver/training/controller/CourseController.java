@@ -4,6 +4,7 @@ import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
 import com.mungtrainer.mtserver.training.dto.request.CourseReuploadRequest;
 import com.mungtrainer.mtserver.training.dto.request.CourseUpdateRequest;
 import com.mungtrainer.mtserver.training.dto.request.CourseUploadRequest;
+import com.mungtrainer.mtserver.training.dto.response.CourseListResponse;
 import com.mungtrainer.mtserver.training.dto.response.CourseResponse;
 import com.mungtrainer.mtserver.training.service.CourseService;
 import jakarta.validation.Valid;
@@ -12,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/trainer/course")
@@ -25,6 +28,16 @@ public class CourseController {
       @AuthenticationPrincipal CustomUserDetails principal) {
     Long userId = principal.getUserId();
     return ResponseEntity.status(HttpStatus.CREATED).body(courseService.createCourse(courseUploadRequest, userId));
+  }
+
+  @GetMapping
+  public ResponseEntity<List<CourseListResponse>>  getCourses(
+      @RequestParam(required = false) List<String> status,
+      @RequestParam(required = false) List<String> type,
+      @RequestParam(required = false) List<String> lesson_form,
+      @AuthenticationPrincipal CustomUserDetails principal) {
+    Long userId =  principal.getUserId();
+    return ResponseEntity.ok(courseService.getCourses(userId, status, type, lesson_form));
   }
 
   @PostMapping("/{courseId}")

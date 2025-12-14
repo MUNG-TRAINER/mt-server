@@ -4,6 +4,58 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.mungtrainer.mtserver.training.dao.CourseDAO">
+    <select id="findCourses" resultType="com.mungtrainer.mtserver.training.dto.response.CourseListResponse">
+        SELECT
+        c.course_id,
+        c.trainer_id,
+        c.title,
+        c.type,
+        c.status,
+        c.lesson_form,
+        c.is_free,
+        c.difficulty,
+        c.schedule,
+        c.main_image
+        FROM training_course c
+        WHERE c.trainer_id = #{userId}
+        AND c.is_deleted = 0
+
+        <if test="statuses != null and statuses.size() > 0">
+            AND c.status IN
+                <foreach collection="statuses"
+                         item="status"
+                         open="("
+                         separator=","
+                         close=")">
+                    #{status}
+                </foreach>
+
+        </if>
+        <if test="types != null and types.size() > 0">
+            AND c.type IN
+            <foreach collection="types"
+                     item="type"
+                     open="("
+                     separator=","
+                     close=")">
+                #{type}
+            </foreach>
+
+        </if>
+        <if test="lessonForms != null and lessonForms.size() > 0">
+            AND c.lesson_form IN
+            <foreach collection="lessonForms"
+                     item="lessonForm"
+                     open="("
+                     separator=","
+                     close=")">
+                #{lessonForm}
+            </foreach>
+
+        </if>
+
+        ORDER BY c.created_at DESC
+    </select>
     <select id="hasPaidApplications" resultType="boolean">
         SELECT COUNT(*) > 0
         FROM training_course_application a
