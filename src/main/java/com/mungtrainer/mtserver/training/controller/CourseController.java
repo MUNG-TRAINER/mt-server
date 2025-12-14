@@ -34,10 +34,10 @@ public class CourseController {
   public ResponseEntity<List<CourseListResponse>>  getCourses(
       @RequestParam(required = false) List<String> status,
       @RequestParam(required = false) List<String> type,
-      @RequestParam(required = false) List<String> lesson_form,
+      @RequestParam(name = "lesson_form",required = false) List<String> lessonForm,
       @AuthenticationPrincipal CustomUserDetails principal) {
     Long userId =  principal.getUserId();
-    return ResponseEntity.ok(courseService.getCourses(userId, status, type, lesson_form));
+    return ResponseEntity.ok(courseService.getCourses(userId, status, type, lessonForm));
   }
 
   @PostMapping("/{courseId}")

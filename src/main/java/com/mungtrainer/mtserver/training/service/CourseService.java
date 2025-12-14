@@ -27,7 +27,7 @@ public class CourseService {
   private final S3Service s3Service;
 
 
-  @Transactional
+  @Transactional(readOnly = true)
   public List<CourseListResponse> getCourses(Long userId, List<String> statuses, List<String> types, List<String> lessonForms){
     return courseDAO.findCourses(userId, statuses, types, lessonForms);
   }
