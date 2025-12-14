@@ -14,16 +14,16 @@ import java.util.*;
 @RequiredArgsConstructor
 public class UserCourseService {
 
+    private static final Set<String> ALLOWED_STATUS = Set.of("SCHEDULED", "DONE");
+
     private final UserCourseDAO userCourseDAO;
     private final S3Service s3Service;
 
-    private static final Set<String> ALLOWED_STATUS = Set.of("SCHEDULED", "DONE");
 
     public List<UserCourseGroupedResponse> getUserCourses(Long userId, String status) {
         if (status != null && !ALLOWED_STATUS.contains(status)) {
             throw new IllegalArgumentException("허용되지 않는 status 값입니다: " + status);
         }
-
 
         List<UserCourseResponse> flatList =
                 userCourseDAO.selectUserCourses(userId, status);
