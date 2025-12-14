@@ -22,13 +22,13 @@
 
         <if test="statuses != null and statuses.size() > 0">
             AND c.status IN
-                <foreach collection="statuses"
-                         item="status"
-                         open="("
-                         separator=","
-                         close=")">
-                    #{status}
-                </foreach>
+            <foreach collection="statuses"
+                     item="status"
+                     open="("
+                     separator=","
+                     close=")">
+                #{status}
+            </foreach>
 
         </if>
         <if test="types != null and types.size() > 0">
@@ -59,7 +59,7 @@
     <select id="hasPaidApplications" resultType="boolean">
         SELECT COUNT(*) > 0
         FROM training_course_application a
-            JOIN training_session s ON a.session_id = s.session_id
+                 JOIN training_session s ON a.session_id = s.session_id
         WHERE a.status = 'PAID'
           AND s.course_id = #{courseId}
     </select>
@@ -67,7 +67,7 @@
         select count(*) > 0
         from training_course
         where course_id = #{courseId}
-        and trainer_id = #{userId}
+          and trainer_id = #{userId}
     </select>
     <select id="existsTags" resultType="boolean">
         select count(*) > 0
@@ -173,7 +173,7 @@
             updated_by = #{updatedBy},
             updated_at = #{updatedAt}
         WHERE course_id = #{courseId}
-        AND is_deleted = 0
+          AND is_deleted = 0
     </update>
 
     <!-- 삭제 -->
@@ -182,16 +182,16 @@
     <update id="cancelSessionsAndApplications">
         UPDATE training_session s
             LEFT JOIN training_course_application a
-            ON a.session_id = s.session_id
-                AND a.is_deleted = 0
-        SET
-            s.status = 'CANCELLED',
-            s.updated_by = #{userId},
-            s.updated_at = NOW(),
+        ON a.session_id = s.session_id
+            AND a.is_deleted = 0
+            SET
+                s.status = 'CANCELLED',
+                s.updated_by = #{userId},
+                s.updated_at = NOW(),
 
-            a.status = 'CANCELLED',
-            a.updated_by = #{userId},
-            a.updated_at = NOW()
+                a.status = 'CANCELLED',
+                a.updated_by = #{userId},
+                a.updated_at = NOW()
         WHERE s.course_id = #{courseId}
           AND s.is_deleted = 0
     </update>
@@ -212,31 +212,31 @@
     <update id="softDeleteByApplication">
         UPDATE training_course_application a
             JOIN training_session s
-            ON a.session_id = s.session_id
+        ON a.session_id = s.session_id
             LEFT JOIN waiting w
             ON w.application_id = a.application_id
-                AND w.is_deleted = 0
+            AND w.is_deleted = 0
             LEFT JOIN training_attendance ta
             ON ta.application_id = a.application_id
-                AND ta.is_deleted = 0
+            AND ta.is_deleted = 0
             LEFT JOIN feedback f
             ON f.application_id = a.application_id
-                AND f.is_deleted = 0
-        SET
-            w.is_deleted = 1,
-            w.deleted_at = NOW(),
-            w.updated_by = #{userId},
-            w.updated_at = NOW(),
+            AND f.is_deleted = 0
+            SET
+                w.is_deleted = 1,
+                w.deleted_at = NOW(),
+                w.updated_by = #{userId},
+                w.updated_at = NOW(),
 
-            ta.is_deleted = 1,
-            ta.deleted_at = NOW(),
-            ta.updated_by = #{userId},
-            ta.updated_at = NOW(),
+                ta.is_deleted = 1,
+                ta.deleted_at = NOW(),
+                ta.updated_by = #{userId},
+                ta.updated_at = NOW(),
 
-            f.is_deleted = 1,
-            f.deleted_at = NOW(),
-            f.updated_by = #{userId},
-            f.updated_at = NOW()
+                f.is_deleted = 1,
+                f.deleted_at = NOW(),
+                f.updated_by = #{userId},
+                f.updated_at = NOW()
         WHERE s.course_id = #{courseId}
           AND a.is_deleted = 0
     </update>
@@ -245,16 +245,16 @@
     <update id="softDeleteFeedbackAttachments">
         UPDATE feedback_attachment fa
             JOIN feedback f
-            ON fa.feedback_id = f.feedback_id
+        ON fa.feedback_id = f.feedback_id
             JOIN training_course_application a
             ON f.application_id = a.application_id
             JOIN training_session s
             ON a.session_id = s.session_id
-        SET
-            fa.is_deleted = 1,
-            fa.deleted_at = NOW(),
-            fa.updated_by = #{userId},
-            fa.updated_at = NOW()
+            SET
+                fa.is_deleted = 1,
+                fa.deleted_at = NOW(),
+                fa.updated_by = #{userId},
+                fa.updated_at = NOW()
         WHERE s.course_id = #{courseId}
           AND fa.is_deleted = 0
     </update>
@@ -263,21 +263,21 @@
     <update id="softDeleteBySession">
         UPDATE training_session s
             LEFT JOIN training_session_change sc
-            ON sc.session_id = s.session_id
-                AND sc.is_deleted = 0
+        ON sc.session_id = s.session_id
+            AND sc.is_deleted = 0
             LEFT JOIN training_course_notice n
             ON n.session_id = s.session_id
-                AND n.is_deleted = 0
-        SET
-            sc.is_deleted = 1,
-            sc.deleted_at = NOW(),
-            sc.updated_by = #{userId},
-            sc.updated_at = NOW(),
+            AND n.is_deleted = 0
+            SET
+                sc.is_deleted = 1,
+                sc.deleted_at = NOW(),
+                sc.updated_by = #{userId},
+                sc.updated_at = NOW(),
 
-            n.is_deleted = 1,
-            n.deleted_at = NOW(),
-            n.updated_by = #{userId},
-            n.updated_at = NOW()
+                n.is_deleted = 1,
+                n.deleted_at = NOW(),
+                n.updated_by = #{userId},
+                n.updated_at = NOW()
         WHERE s.course_id = #{courseId}
           AND s.is_deleted = 0
     </update>
