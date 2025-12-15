@@ -10,7 +10,6 @@ import com.mungtrainer.mtserver.trainer.entity.TrainerProfile;
 import com.mungtrainer.mtserver.user.dao.UserDAO;
 import com.mungtrainer.mtserver.user.entity.User;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.stereotype.Service;
 
 @Service
