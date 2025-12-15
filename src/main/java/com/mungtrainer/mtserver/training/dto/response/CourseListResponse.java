@@ -16,4 +16,8 @@ public class CourseListResponse {
   private String difficulty;
   private String schedule;
   private String mainImage;
+
+  public void setMainImage(String mainImage) {
+    this.mainImage = mainImage;
+  }
 }
