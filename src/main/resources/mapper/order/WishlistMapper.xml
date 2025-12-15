@@ -130,9 +130,9 @@
     <update id="softDeleteByDogId">
         UPDATE wishlist_detail_dog
         SET is_deleted = 1,
-        deleted_at = NOW(),
-        updated_by = #{deletedBy},
-        updated_at = NOW()
+            deleted_at = NOW(),
+            updated_by = #{deletedBy},
+            updated_at = NOW()
         WHERE dog_id = #{dogId}
         AND is_deleted = 0
     </update>
