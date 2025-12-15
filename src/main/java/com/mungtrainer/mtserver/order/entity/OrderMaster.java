@@ -22,6 +22,11 @@ public class OrderMaster extends BaseEntity {
     private Long orderId;
 
     /**
+     * 장바구니 ID (FK - wishlist.wishlist_id)
+     */
+    private Long wishlistId;
+
+    /**
      * 사용자 ID (FK - user.user_id)
      */
     private Long userId;
@@ -46,4 +51,3 @@ public class OrderMaster extends BaseEntity {
      */
     private LocalDateTime paidAt;
 }
-

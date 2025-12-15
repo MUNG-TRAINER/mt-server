@@ -1,5 +1,6 @@
 package com.mungtrainer.mtserver.trainer.service;
 
+import com.mungtrainer.mtserver.common.
 import com.mungtrainer.mtserver.common.config.S3Service;
 import com.mungtrainer.mtserver.trainer.dao.TrainerDAO;
 import com.mungtrainer.mtserver.trainer.dto.request.TrainerProfileUpdateRequest;
