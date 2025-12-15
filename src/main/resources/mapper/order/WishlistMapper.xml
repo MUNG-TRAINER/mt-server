@@ -109,7 +109,6 @@
         )
     </insert>
 
-
     <!-- 장바구니 강아지 연결 정보 삭제 (여러 아이템) -->
     <delete id="deleteWishlistItemDog" parameterType="list">
         DELETE FROM wishlist_detail_dog
@@ -126,6 +125,14 @@
         <foreach collection="wishlistItemIds" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
+    </delete>
+
+    <!-- 반려견 삭제 시 wishlist_detail도 함께 하드 삭제 -->
+    <delete id="deleteByDogId">
+        DELETE wdd, wd
+        FROM wishlist_detail wd
+        INNER JOIN wishlist_detail_dog wdd ON wd.wishlist_item_id = wdd.wishlist_item_id
+        WHERE wdd.dog_id = #{dogId}
     </delete>
 
 </mapper>

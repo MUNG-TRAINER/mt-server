@@ -43,6 +43,7 @@ public enum ErrorCode {
   DOG_DELETE_FAILED(500, "반려견 삭제에 실패했습니다."),
   DOG_IMAGE_DELETE_FAILED(500, "반려견 프로필 이미지 삭제에 실패했습니다."),
   DOG_ID_GENERATION_FAILED(500, "반려견 ID 생성에 실패했습니다."),
+  DOG_HAS_ACTIVE_TRAINING(400, "진행 중인 훈련 과정이 있어 삭제할 수 없습니다."),
 
   // 훈련 과정
   UNAUTHORIZED_RESOURCE_ACCESS(403, "본인이 작성한 리소스가 아닙니다."),
