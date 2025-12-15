@@ -2,7 +2,7 @@ package com.mungtrainer.mtserver.training.service;
 
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
-import com.mungtrainer.mtserver.training.dao.ApplicationDao;
+import com.mungtrainer.mtserver.training.dao.ApplicationDAO;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationRequest;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationResponse;
 import com.mungtrainer.mtserver.training.entity.TrainingCourseApplication;
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TrainingCourseApplicationService {
 
-    private final ApplicationDao applicationDao;
+    private final ApplicationDAO applicationDao;
 
     // 엔티티를 dto로 변환
     private ApplicationResponse toResponse(TrainingCourseApplication application) {

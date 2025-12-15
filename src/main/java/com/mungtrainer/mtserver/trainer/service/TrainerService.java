@@ -1,7 +1,7 @@
 package com.mungtrainer.mtserver.trainer.service;
 
 import com.mungtrainer.mtserver.common.s3.S3Service;
-import com.mungtrainer.mtserver.trainer.dao.TrainerDao;
+import com.mungtrainer.mtserver.trainer.dao.TrainerDAO;
 import com.mungtrainer.mtserver.trainer.dto.request.TrainerProfileUpdateRequest;
 import com.mungtrainer.mtserver.trainer.dto.response.TrainerResponse;
 import com.mungtrainer.mtserver.trainer.entity.TrainerProfile;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TrainerService {
 
-    private final TrainerDao trainerDao;
+    private final TrainerDAO trainerDao;
     private final S3Service s3Service;
 
     // 훈련사 프로필 조회

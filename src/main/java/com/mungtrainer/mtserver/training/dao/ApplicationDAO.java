@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 @Mapper
-public interface ApplicationDao {
+public interface ApplicationDAO {
     // 유저 Id로 신청 리스트 조회
     List<TrainingCourseApplication> findByUserId(@Param("userId") Long userId);
 

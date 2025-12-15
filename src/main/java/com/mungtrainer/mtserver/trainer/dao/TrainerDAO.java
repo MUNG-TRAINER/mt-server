@@ -5,7 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 @Mapper
-public interface TrainerDao {
+public interface TrainerDAO {
 
     // 트레이너 Id로 조회
     TrainerProfile findById(@Param("trainerId") Long trainerId);

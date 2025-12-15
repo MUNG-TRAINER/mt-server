@@ -51,4 +51,3 @@ public class OrderMaster extends BaseEntity {
      */
     private LocalDateTime paidAt;
 }
-
