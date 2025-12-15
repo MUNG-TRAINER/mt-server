@@ -8,4 +8,5 @@ import lombok.Setter;
 public class WishlistCreateRequest {
     private Long wishlistId;
     private Long courseId;
+    private Long dogId;
 }

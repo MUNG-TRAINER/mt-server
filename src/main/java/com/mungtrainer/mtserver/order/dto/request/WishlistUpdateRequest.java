@@ -6,6 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class WishlistUpdateRequest {
-    private long wishlistItemId;
-    private long dogId;
+    private Long wishlistItemId;
+    private Long dogId;
 }

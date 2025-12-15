@@ -43,6 +43,13 @@ public enum ErrorCode {
   DOG_IMAGE_DELETE_FAILED(500, "반려견 프로필 이미지 삭제에 실패했습니다."),
   DOG_ID_GENERATION_FAILED(500, "반려견 ID 생성에 실패했습니다."),
 
+    // 장바구니(Wishlist) 관련
+    WISHLIST_NOT_FOUND(404, "장바구니 항목을 찾을 수 없습니다"),
+    UNAUTHORIZED_WISHLIST(403, "권한이 없는 장바구니 항목입니다"),
+    INVALID_WISHLIST_STATUS(400, "장바구니 상태가 유효하지 않습니다"),
+    COURSE_PRICE_NOT_FOUND(404, "코스 가격 정보를 찾을 수 없습니다"),
+    COURSE_DUPLICATE(400, "이미 장바구니에 담긴 코스입니다."),
+
   // 훈련 세션 관련
   SESSION_NOT_FOUND(404, "해당 세션을 찾을 수 없습니다."),
   SESSION_NO_PERMISSION(403, "해당 세션에 대한 권한이 없습니다."),
