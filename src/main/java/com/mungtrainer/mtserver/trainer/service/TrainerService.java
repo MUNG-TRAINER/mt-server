@@ -1,11 +1,16 @@
 package com.mungtrainer.mtserver.trainer.service;
 
+import com.mungtrainer.mtserver.common.exception.CustomException;
+import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.trainer.dao.TrainerDAO;
 import com.mungtrainer.mtserver.trainer.dto.request.TrainerProfileUpdateRequest;
 import com.mungtrainer.mtserver.trainer.dto.response.TrainerResponse;
 import com.mungtrainer.mtserver.trainer.entity.TrainerProfile;
+import com.mungtrainer.mtserver.user.dao.UserDAO;
+import com.mungtrainer.mtserver.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,11 +18,12 @@ import org.springframework.stereotype.Service;
 public class TrainerService {
 
     private final TrainerDAO trainerDao;
+    private final UserDAO userDAO;
     private final S3Service s3Service;
 
     // 훈련사 프로필 조회
     public TrainerResponse getTrainerProfileById(Long trainerId) {
-
+        User user = userDAO.findById(trainerId).orElseThrow(()->new CustomException(ErrorCode.NOT_FOUND_USERNAME));
         TrainerProfile profile = trainerDao.findById(trainerId);
 
         if (profile == null) {
@@ -25,16 +31,25 @@ public class TrainerService {
         }
         // DB에 저장된 파일 key
         String fileKey = profile.getCertificationImageUrl();
+        String profileFileKey = user.getProfileImage();
 
         // presigned URL 생성
         String presignedUrl = null;
+        String profilePresignedUrl = null;
         //null/빈 문자열 체크 후 처리
         if(fileKey != null && !fileKey.isBlank()) {
             presignedUrl = s3Service.generateDownloadPresignedUrl(fileKey);
         }
+      if(profileFileKey != null && !profileFileKey.isBlank()) {
+        profilePresignedUrl = s3Service.generateDownloadPresignedUrl(profileFileKey);
+      }
 
         return TrainerResponse.builder()
                 .trainerId(profile.getTrainerId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .profileImage(profilePresignedUrl)
                 .careerInfo(profile.getCareerInfo())
                 .introduce(profile.getIntroduce())
                 .description(profile.getDescription())
