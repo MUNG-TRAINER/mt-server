@@ -179,6 +179,7 @@ public class AuthService {
         .build();
   }
 
+  @Transactional
   public void updateRefreshToken(Long userId, String refreshToken) {
     authDAO.updateRefreshToken(userId, refreshToken);
   }
