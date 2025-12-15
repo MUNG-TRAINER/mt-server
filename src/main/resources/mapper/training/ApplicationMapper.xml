@@ -111,4 +111,12 @@
         WHERE application_id = #{applicationId}
     </update>
 
+    <!--  장바구니 상태 업데이트  -->
+    <update id="updateWishlistDetailStatus">
+        UPDATE wishlist_detail
+        SET status = #{status},
+        updated_at = NOW()
+        WHERE wishlist_item_id = #{wishlistItemId}
+    </update>
+
 </mapper>

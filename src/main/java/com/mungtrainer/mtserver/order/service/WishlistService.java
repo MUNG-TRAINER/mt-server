@@ -53,7 +53,8 @@ public class WishlistService {
             wishlistId = wishlistIds.get(0);
         }
 
-        boolean exists = wishlistDao.existsCourseInWishlist(userId, request.getCourseId());
+        // 같은 강아지로 중복담기 시 에러처리
+        boolean exists = wishlistDao.existsCourseInWishlist(userId, request.getDogId(), request.getCourseId());
         if (exists) {
             throw new CustomException(ErrorCode.COURSE_DUPLICATE);
         }
@@ -93,22 +94,39 @@ public class WishlistService {
     public void updateWishlist(Long userId, Long wishlistItemId, WishlistUpdateRequest request){
         List<Long> userWishlistIds = wishlistDao.findByUserId(userId);
         WishlistDetail wishlistDetail = wishlistDao.findWishlistDetailByItemId(wishlistItemId);
+
+        // wishlistDetail 없으면 에러처리
         if(wishlistDetail == null){
             throw new CustomException(ErrorCode.WISHLIST_NOT_FOUND);
         }
+        // 본인소유 장바구니 아닐경우 에러처리
         if (!userWishlistIds.contains(wishlistDetail.getWishlistId())) {
             throw new CustomException(ErrorCode.UNAUTHORIZED_WISHLIST);
         }
+        // 상태가 active가 아니면 에러처리
         if(!wishlistDetail.getStatus().equals("ACTIVE")){
             throw new CustomException(ErrorCode.INVALID_WISHLIST_STATUS);
         }
 
+        // 같은 강아지가 이미 내역에 존재하면 에러처리
+        boolean exists = wishlistDao.existsCourseInWishlistExcludeItem(
+                userId,
+                request.getDogId(),
+                wishlistDetail.getCourseId(),
+                wishlistItemId
+        );
+        if (exists) {
+            throw new CustomException(ErrorCode.COURSE_DUPLICATE);
+        }
+
         WishlistDetailDog detailDog = wishlistDao.findWishlistDetailDogByItemId(wishlistItemId);
+        //detailDog가 없으면 에러처리
         if (detailDog == null) {
             throw new CustomException(ErrorCode.WISHLIST_NOT_FOUND);
         }
+        //같은 강아지로 수정요청이 들어오면 return
         if(detailDog.getDogId().equals(request.getDogId())) return;
-
+        // 아니면 수정 완료
         wishlistDao.updateDog(wishlistItemId, request.getDogId());
     }
 
@@ -118,16 +136,19 @@ public class WishlistService {
         List<Long> userWishlistIds = wishlistDao.findByUserId(userId);
         List<Long> ids = new ArrayList<>();
 
+        // 권한이 없거나 존재하지 않는 항목의 ID를 수집
         for(Long id : requestIds){
             WishlistDetail wishlistDetail = wishlistDao.findWishlistDetailByItemId(id);
             if(wishlistDetail == null || !userWishlistIds.contains(wishlistDetail.getWishlistId())) {
                 ids.add(id);
             }
         }
+        // ids가 비지않았다면 에러처리
         if(!ids.isEmpty()){
             throw new CustomException(ErrorCode.UNAUTHORIZED_WISHLIST);
         }
 
+        // detailDog -> detail 순으로 지우기
         wishlistDao.deleteWishlistItemDog(requestIds);
         wishlistDao.deleteWishlistItem(requestIds);
     }
