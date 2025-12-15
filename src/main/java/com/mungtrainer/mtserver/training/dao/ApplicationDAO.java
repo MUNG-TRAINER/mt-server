@@ -40,4 +40,7 @@ public interface ApplicationDAO {
 
     // 대기테이블 상태 업데이트
     void updateWaitingStatus(@Param("applicationId") Long applicationId, @Param("status") String status);
+
+    // wishlist_detail 상태 업데이트
+    void updateWishlistDetailStatus(@Param("wishlistItemId") Long wishlistItemId, @Param("status") String status);
 }

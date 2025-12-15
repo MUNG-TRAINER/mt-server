@@ -52,7 +52,7 @@ public class TrainingCourseApplicationService {
     }
 
     // 신청 생성
-    public ApplicationResponse createApplication(Long userId,ApplicationRequest request) {
+    public ApplicationResponse createApplication(Long userId,ApplicationRequest request,Long wishlistItemId) {
         // 해당 사용자 인증
         Long ownerId = applicationDao.findOwnerByDogId(request.getDogId());
         if(ownerId == null || !ownerId.equals(userId)){
@@ -89,6 +89,12 @@ public class TrainingCourseApplicationService {
         if (rows != 1) {
             throw new CustomException(ErrorCode.APPLICATION_CREATION_FAILED);
         }
+
+        // 5. 장바구니에서 넘어온 경우 상태 변경
+        if (wishlistItemId != null) {
+            applicationDao.updateWishlistDetailStatus(wishlistItemId, "ORDERED");
+        }
+
         // 웨이팅이면 대기테이블에 추가
         if("WAITING".equals(status)){
             applicationDao.insertWaiting(created.getApplicationId(),userId);

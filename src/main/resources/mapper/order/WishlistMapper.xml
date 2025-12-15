@@ -95,9 +95,23 @@
         SELECT COUNT(1) > 0
         FROM wishlist_detail wd
         JOIN wishlist w ON wd.wishlist_id = w.wishlist_id
+        LEFT JOIN wishlist_detail_dog wdd ON wd.wishlist_item_id = wdd.wishlist_item_id
         WHERE w.user_id = #{userId}
         AND wd.course_id = #{courseId}
+        AND wdd.dog_id = #{dogId}
         AND wd.status = 'ACTIVE'
+    </select>
+
+    <select id="existsCourseInWishlistExcludeItem" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM wishlist_detail wd
+        JOIN wishlist_detail_dog wdd ON wd.wishlist_item_id = wdd.wishlist_item_id
+        JOIN wishlist w ON wd.wishlist_id = w.wishlist_id
+        WHERE w.user_id = #{userId}
+        AND wdd.dog_id = #{dogId}
+        AND wd.course_id = #{courseId}
+        AND wd.status = 'ACTIVE'
+        AND wd.wishlist_item_id != #{wishlistItemId}
     </select>
 
     <!-- wishlist_detail_dog insert -->

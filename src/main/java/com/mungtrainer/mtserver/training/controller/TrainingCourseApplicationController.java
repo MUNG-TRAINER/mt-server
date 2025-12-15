@@ -37,11 +37,11 @@ public class TrainingCourseApplicationController {
         return ResponseEntity.ok(application);
     }
 
-    // 훈련과정 신청 생성
+     // 훈련과정 신청 생성
     @PostMapping
-    public ResponseEntity<ApplicationResponse> createApplication(@AuthenticationPrincipal CustomUserDetails principal, @RequestBody ApplicationRequest request){
+    public ResponseEntity<ApplicationResponse> createApplication(@AuthenticationPrincipal CustomUserDetails principal, @RequestBody ApplicationRequest request ){
         Long userId = principal.getUserId();
-        ApplicationResponse created = applicationService.createApplication(userId,request);
+        ApplicationResponse created = applicationService.createApplication(userId,request,  request.getWishlistItemId());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
