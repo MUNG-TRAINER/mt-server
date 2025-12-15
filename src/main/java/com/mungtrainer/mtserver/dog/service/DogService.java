@@ -179,8 +179,8 @@ public class DogService {
         throw new CustomException(ErrorCode.DOG_HAS_ACTIVE_TRAINING);
       }
 
-      // 3. 연관 데이터 처리 (위시리스트 소프트 삭제)
-      wishlistDAO.softDeleteByDogId(dogId, userId);
+      // 3. 연관 데이터 처리 (위시리스트 하드 삭제)
+      wishlistDAO.deleteByDogId(dogId);
 
       // 4. S3 파일 먼저 삭제 (실패 시 DB 작업도 롤백됨)
       if (dog.getProfileImage() != null && !dog.getProfileImage().isBlank()) {

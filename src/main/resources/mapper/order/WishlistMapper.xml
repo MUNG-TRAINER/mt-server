@@ -127,14 +127,12 @@
         </foreach>
     </delete>
 
-    <update id="softDeleteByDogId">
-        UPDATE wishlist_detail_dog
-        SET is_deleted = 1,
-            deleted_at = NOW(),
-            updated_by = #{deletedBy},
-            updated_at = NOW()
-        WHERE dog_id = #{dogId}
-        AND is_deleted = 0
-    </update>
+    <!-- 반려견 삭제 시 wishlist_detail도 함께 하드 삭제 -->
+    <delete id="deleteByDogId">
+        DELETE wd, wdd
+        FROM wishlist_detail wd
+        INNER JOIN wishlist_detail_dog wdd ON wd.wishlist_item_id = wdd.wishlist_item_id
+        WHERE wdd.dog_id = #{dogId}
+    </delete>
 
 </mapper>

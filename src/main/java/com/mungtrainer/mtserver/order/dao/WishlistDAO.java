@@ -52,7 +52,6 @@ public interface WishlistDAO {
     // 장바구니 상세 삭제 (여러 아이템)
     void deleteWishlistItem(@Param("wishlistItemIds") List<Long> wishlistItemIds);
 
-    // 반려견 ID로 위시리스트 상세 소프트 삭제
-    int softDeleteByDogId(@Param("dogId") Long dogId,
-                        @Param("deletedBy") Long deletedBy);
+    // 반려견 ID로 위시리스트 상세 하드 삭제
+    int deleteByDogId(@Param("dogId") Long dogId);
 }
