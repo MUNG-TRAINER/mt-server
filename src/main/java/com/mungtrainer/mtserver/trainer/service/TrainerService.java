@@ -5,7 +5,6 @@ import com.mungtrainer.mtserver.trainer.dao.TrainerDAO;
 import com.mungtrainer.mtserver.trainer.dto.request.TrainerProfileUpdateRequest;
 import com.mungtrainer.mtserver.trainer.dto.response.TrainerResponse;
 import com.mungtrainer.mtserver.trainer.entity.TrainerProfile;
-import com.mungtrainer.mtserver.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -35,10 +35,10 @@ public interface WishlistDAO {
     List<Long> findByUserId(@Param("userId") Long userId);
 
     // wishlistItemId로 WishlistDetail 가져오기
-    WishlistDetail findWishlistIdByItemId(@Param("wishlistItemId") Long wishlistItemId);
+    WishlistDetail findWishlistDetailByItemId(@Param("wishlistItemId") Long wishlistItemId);
 
     // wishlistItemId로 WishlistDetailDog 가져오기
-    WishlistDetailDog findByWishlistDetailDog(@Param("wishlistItemId") Long wishlistItemId);
+    WishlistDetailDog findWishlistDetailDogByItemId(@Param("wishlistItemId") Long wishlistItemId);
 
     // 장바구니 강아지 수정
     void updateDog(@Param("wishlistItemId") Long wishlistItemId, @Param("dogId") Long dogId);

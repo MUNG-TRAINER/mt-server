@@ -55,7 +55,7 @@ public class WishlistService {
 
         boolean exists = wishlistDao.existsCourseInWishlist(userId, request.getCourseId());
         if (exists) {
-            throw new CustomException(ErrorCode.COURSE_DUPLICATE); // 새로운 에러 코드 정의 필요
+            throw new CustomException(ErrorCode.COURSE_DUPLICATE);
         }
 
         // 2. wishlist_detail 생성
@@ -92,7 +92,7 @@ public class WishlistService {
     // 장바구니 강아지 수정
     public void updateWishlist(Long userId, Long wishlistItemId, WishlistUpdateRequest request){
         List<Long> userWishlistIds = wishlistDao.findByUserId(userId);
-        WishlistDetail wishlistDetail = wishlistDao.findWishlistIdByItemId(wishlistItemId);
+        WishlistDetail wishlistDetail = wishlistDao.findWishlistDetailByItemId(wishlistItemId);
         if(wishlistDetail == null){
             throw new CustomException(ErrorCode.WISHLIST_NOT_FOUND);
         }
@@ -103,7 +103,10 @@ public class WishlistService {
             throw new CustomException(ErrorCode.INVALID_WISHLIST_STATUS);
         }
 
-        WishlistDetailDog detailDog = wishlistDao.findByWishlistDetailDog(wishlistItemId);
+        WishlistDetailDog detailDog = wishlistDao.findWishlistDetailDogByItemId(wishlistItemId);
+        if (detailDog == null) {
+            throw new CustomException(ErrorCode.WISHLIST_NOT_FOUND);
+        }
         if(detailDog.getDogId().equals(request.getDogId())) return;
 
         wishlistDao.updateDog(wishlistItemId, request.getDogId());
@@ -116,7 +119,7 @@ public class WishlistService {
         List<Long> ids = new ArrayList<>();
 
         for(Long id : requestIds){
-            WishlistDetail wishlistDetail = wishlistDao.findWishlistIdByItemId(id);
+            WishlistDetail wishlistDetail = wishlistDao.findWishlistDetailByItemId(id);
             if(wishlistDetail == null || !userWishlistIds.contains(wishlistDetail.getWishlistId())) {
                 ids.add(id);
             }

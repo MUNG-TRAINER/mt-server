@@ -4,15 +4,16 @@ import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationRequest;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationResponse;
 import com.mungtrainer.mtserver.training.service.TrainingCourseApplicationService;
-import com.mungtrainer.mtserver.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/api/application")
 @RequiredArgsConstructor

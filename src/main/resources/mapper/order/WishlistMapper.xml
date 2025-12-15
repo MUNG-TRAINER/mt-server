@@ -28,14 +28,14 @@
     </select>
 
     <!-- wishlistItemId로 WishlistDetail 가져오기 -->
-    <select id="findWishlistIdByItemId" parameterType="long" resultType="com.mungtrainer.mtserver.order.entity.WishlistDetail">
+    <select id="findWishlistDetailByItemId" parameterType="long" resultType="com.mungtrainer.mtserver.order.entity.WishlistDetail">
         SELECT *
         FROM wishlist_detail
         WHERE wishlist_item_id = #{wishlistItemId}
     </select>
 
     <!-- wishlistItemId로 WishlistDetailDog 가져오기 -->
-    <select id="findByWishlistDetailDog" parameterType="long" resultType="com.mungtrainer.mtserver.order.entity.WishlistDetailDog">
+    <select id="findWishlistDetailDogByItemId" parameterType="long" resultType="com.mungtrainer.mtserver.order.entity.WishlistDetailDog">
         SELECT *
         FROM wishlist_detail_dog
         WHERE wishlist_item_id = #{wishlistItemId}
@@ -110,7 +110,7 @@
     </insert>
 
 
-    <!-- 장바구니 강아지 삭제 (여러 아이템) -->
+    <!-- 장바구니 강아지 연결 정보 삭제 (여러 아이템) -->
     <delete id="deleteWishlistItemDog" parameterType="list">
         DELETE FROM wishlist_detail_dog
         WHERE wishlist_item_id IN
@@ -119,7 +119,7 @@
         </foreach>
     </delete>
 
-    <!-- 장바구니 상세 삭제 (여러 아이템) -->
+    <!-- 장바구니 강아지 연결 정보 삭제 (여러 아이템) -->
     <delete id="deleteWishlistItem" parameterType="list">
         DELETE FROM wishlist_detail
         WHERE wishlist_item_id IN
