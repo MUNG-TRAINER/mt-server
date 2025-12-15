@@ -8,6 +8,10 @@ import lombok.Getter;
 @Builder
 public class TrainerResponse {
     private Long trainerId;
+    private String name;
+    private String email;
+    private String phone;
+    private String profileImage;
     private String careerInfo;
     private String introduce;
     private String description;
