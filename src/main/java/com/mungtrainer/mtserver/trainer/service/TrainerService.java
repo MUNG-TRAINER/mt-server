@@ -22,7 +22,7 @@ public class TrainerService {
 
     // 훈련사 프로필 조회
     public TrainerResponse getTrainerProfileById(Long trainerId) {
-        User user = userDAO.findById(trainerId).orElseThrow(()->new CustomException(ErrorCode.NOT_FOUND_USERNAME));
+        User user = userDAO.findById(trainerId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         TrainerProfile profile = trainerDao.findById(trainerId);
 
         if (profile == null) {
