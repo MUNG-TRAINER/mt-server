@@ -136,7 +136,7 @@ public class WishlistService {
         List<Long> userWishlistIds = wishlistDao.findByUserId(userId);
         List<Long> ids = new ArrayList<>();
 
-       // 에러처리가 날 경우들 ids에 담기
+        // 권한이 없거나 존재하지 않는 항목의 ID를 수집
         for(Long id : requestIds){
             WishlistDetail wishlistDetail = wishlistDao.findWishlistDetailByItemId(id);
             if(wishlistDetail == null || !userWishlistIds.contains(wishlistDetail.getWishlistId())) {

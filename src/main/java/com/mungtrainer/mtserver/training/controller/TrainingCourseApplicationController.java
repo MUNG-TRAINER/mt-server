@@ -37,7 +37,7 @@ public class TrainingCourseApplicationController {
         return ResponseEntity.ok(application);
     }
 
-     // 훈련과정 신청 생성
+    // 훈련과정 신청 생성
     @PostMapping
     public ResponseEntity<ApplicationResponse> createApplication(@AuthenticationPrincipal CustomUserDetails principal, @RequestBody ApplicationRequest request ){
         Long userId = principal.getUserId();

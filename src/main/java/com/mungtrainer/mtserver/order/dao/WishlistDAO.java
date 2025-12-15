@@ -31,7 +31,7 @@ public interface WishlistDAO {
     // userId + courseId + dogId로 이미 존재하는지 확인
     boolean existsCourseInWishlist(@Param("userId") Long userId,@Param("dogId") Long dogId,@Param("courseId") Long courseId);
     // 수정하려는 강아지와 같은 강아지가 이미 내역에 존재하는지 여부
-    boolean existsCourseInWishlistExcludeItem(@Param("userId") Long userId,@Param("dogId") Long dogId,@Param("courseId") Long courseId, Long  wishlistItemId);
+    boolean existsCourseInWishlistExcludeItem(@Param("userId") Long userId,@Param("dogId") Long dogId,@Param("courseId") Long courseId, @Param("wishlistItemId") Long  wishlistItemId);
 
     // userId로 wishlistId 리스트 가져오기
     List<Long> findByUserId(@Param("userId") Long userId);
