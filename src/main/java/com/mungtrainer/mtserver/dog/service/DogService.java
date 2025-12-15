@@ -182,7 +182,7 @@ public class DogService {
       // 3. 연관 데이터 처리 (위시리스트 하드 삭제)
       wishlistDAO.deleteByDogId(dogId);
 
-      // 4. S3 파일 먼저 삭제 (실패 시 DB 작업도 롤백됨)
+      // 4. S3 파일 삭제 (실패 시 DB 작업도 롤백됨)
       if (dog.getProfileImage() != null && !dog.getProfileImage().isBlank()) {
         s3Service.deleteFile(dog.getProfileImage());
         log.info("S3 이미지 삭제 완료. dogId: {}, imageKey: {}", dogId, dog.getProfileImage());

@@ -42,7 +42,7 @@
             SELECT COUNT(*) > 0
             FROM training_course_application
             WHERE dog_id = #{dogId}
-              AND status IN ('APPLIED', 'PAID', 'ACCEPT')
+              AND status IN ('APPLIED', 'PAID')
               AND is_deleted = 0
         </select>
 
