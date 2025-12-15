@@ -15,6 +15,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -162,6 +163,9 @@ public class AuthController {
   @GetMapping("/check")
   public ResponseEntity<CheckResponse> checkAuthentication(
       @AuthenticationPrincipal CustomUserDetails principal) {
+    if (principal == null) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
     return ResponseEntity.ok(CheckResponse.builder()
                                           .userId(principal.getUserId())
                                           .role(principal.getRole())
