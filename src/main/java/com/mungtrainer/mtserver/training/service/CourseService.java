@@ -3,6 +3,7 @@ package com.mungtrainer.mtserver.training.service;
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.common.s3.S3Service;
+import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
 import com.mungtrainer.mtserver.training.dao.CourseDAO;
 import com.mungtrainer.mtserver.training.dto.request.*;
 import com.mungtrainer.mtserver.training.dto.response.CourseListResponse;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,16 +33,19 @@ public class CourseService {
   public List<CourseListResponse> getCourses(Long userId, List<String> statuses, List<String> types, List<String> lessonForms){
     List<CourseListResponse> courseListResponses = courseDAO.findCourses(userId, statuses, types, lessonForms);
 
-    for (CourseListResponse course : courseListResponses) {
-      String fileKey = course.getMainImage();
-      // presigned URL 생성
-      String presignedUrl = null;
-      //null/빈 문자열 체크 후 처리
-      if(fileKey != null && !fileKey.isBlank()) {
-        presignedUrl = s3Service.generateDownloadPresignedUrl(fileKey);
-      }
-      course.setMainImage(presignedUrl);
+
+    List<String> imageKeys = courseListResponses.stream()
+                                 .map(CourseListResponse::getMainImage)
+                                 .collect(Collectors.toList());
+
+    // S3 Presigned URL 일괄 발급
+    List<String> presignedUrls = s3Service.generateDownloadPresignedUrls(imageKeys);
+
+    // url 매핑
+    for (int i = 0; i < courseListResponses.size(); i++) {
+      courseListResponses.get(i).setMainImage(presignedUrls.get(i));
     }
+
     return courseListResponses;
   }
 
