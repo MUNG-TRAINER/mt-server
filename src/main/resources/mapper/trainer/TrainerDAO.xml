@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mungtrainer.mtserver.trainer.dao.TrainerDAO">
+
+    <!-- 트레이너 ID로 단건 조회 -->
+    <select id="findById" resultType="com.mungtrainer.mtserver.trainer.entity.TrainerProfile">
+        SELECT
+        trainer_id,
+        career_info,
+        introduce,
+        description,
+        style,
+        tag,
+        certification_image_url,
+        created_at,
+        updated_at
+        FROM trainer_profile
+        WHERE trainer_id = #{trainerId}
+    </select>
+
+    <!-- 트레이너 프로필 업데이트 -->
+    <update id="updateTrainerProfile" parameterType="com.mungtrainer.mtserver.trainer.entity.TrainerProfile">
+        UPDATE trainer_profile
+        SET
+        career_info = #{careerInfo},
+        introduce = #{introduce},
+        description = #{description},
+        style = #{style},
+        tag = #{tag},
+        certification_image_url = #{certificationImageUrl},
+        updated_at = NOW()
+        WHERE trainer_id = #{trainerId}
+    </update>
+
+</mapper>

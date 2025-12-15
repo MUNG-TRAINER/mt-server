@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mungtrainer.mtserver.order.dao.WishlistDAO">
+
+    <!-- 장바구니 리스트 조회 -->
+    <select id="findWishlistResponsesByUserId" parameterType="long" resultType="com.mungtrainer.mtserver.order.dto.response.WishlistResponse">
+        SELECT
+        w.user_id AS userId,
+        wd.wishlist_item_id AS wishlistItemId,
+        wd.wishlist_id AS wishlistId,
+        wd.course_id AS courseId,
+        wdd.dog_id AS dogId,
+        wd.price AS price,
+        wd.status AS status
+        FROM wishlist w
+        JOIN wishlist_detail wd ON w.wishlist_id = wd.wishlist_id
+        LEFT JOIN wishlist_detail_dog wdd ON wd.wishlist_item_id = wdd.wishlist_item_id
+        WHERE w.user_id = #{userId}
+    </select>
+
+    <!-- userId로 wishlistId 리스트 가져오기 -->
+    <select id="findByUserId" parameterType="long" resultType="long">
+        SELECT wishlist_id
+        FROM wishlist
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- wishlistItemId로 WishlistDetail 가져오기 -->
+    <select id="findWishlistDetailByItemId" parameterType="long" resultType="com.mungtrainer.mtserver.order.entity.WishlistDetail">
+        SELECT *
+        FROM wishlist_detail
+        WHERE wishlist_item_id = #{wishlistItemId}
+    </select>
+
+    <!-- wishlistItemId로 WishlistDetailDog 가져오기 -->
+    <select id="findWishlistDetailDogByItemId" parameterType="long" resultType="com.mungtrainer.mtserver.order.entity.WishlistDetailDog">
+        SELECT *
+        FROM wishlist_detail_dog
+        WHERE wishlist_item_id = #{wishlistItemId}
+    </select>
+
+    <!-- 장바구니 강아지 수정 -->
+    <update id="updateDog">
+        UPDATE wishlist_detail_dog
+        SET dog_id = #{dogId}, updated_at = NOW()
+        WHERE wishlist_item_id = #{wishlistItemId}
+    </update>
+
+    <!-- 장바구니 상태 업데이트 -->
+    <update id="updateStatus">
+        UPDATE wishlist_detail
+        SET status = #{status}, updated_at = NOW()
+        WHERE wishlist_item_id = #{wishlistItemId}
+    </update>
+
+    <!-- 활성화된 wishlist 조회 -->
+    <select id="findActiveWishlistByUserId" resultType="long" parameterType="long">
+        SELECT wishlist_id
+        FROM wishlist
+        WHERE user_id = #{userId} AND status = 'ACTIVE'
+    </select>
+
+    <!-- wishlist insert -->
+    <insert id="insertWishlist" parameterType="com.mungtrainer.mtserver.order.entity.Wishlist" useGeneratedKeys="true" keyProperty="wishlistId">
+        INSERT INTO wishlist (
+        user_id, status, created_by, created_at, updated_by, updated_at
+        ) VALUES (
+        #{userId}, #{status}, #{createdBy}, #{createdAt}, #{updatedBy}, #{updatedAt}
+        )
+    </insert>
+
+    <!-- wishlist_detail insert -->
+    <insert id="insertWishListDetail" parameterType="com.mungtrainer.mtserver.order.entity.WishlistDetail" useGeneratedKeys="true" keyProperty="wishlistItemId">
+        INSERT INTO wishlist_detail
+        (wishlist_id, course_id, price, status, created_by, created_at, updated_by, updated_at)
+        VALUES
+        (#{wishlistId}, #{courseId}, #{price}, #{status}, #{createdBy}, #{createdAt}, #{updatedBy}, #{updatedAt})
+
+    </insert>
+
+
+    <!-- courseId로 첫 번째 session 가격 가져오기 -->
+    <select id="findCoursePriceById"  resultType="java.lang.Integer">
+        SELECT price
+        FROM training_session
+        WHERE course_id = #{courseId}
+        AND is_deleted = 0
+        ORDER BY session_date ASC, start_time ASC
+        LIMIT 1
+    </select>
+
+    <select id="existsCourseInWishlist" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM wishlist_detail wd
+        JOIN wishlist w ON wd.wishlist_id = w.wishlist_id
+        WHERE w.user_id = #{userId}
+        AND wd.course_id = #{courseId}
+        AND wd.status = 'ACTIVE'
+    </select>
+
+    <!-- wishlist_detail_dog insert -->
+    <insert id="insertWishListDetailDog" parameterType="com.mungtrainer.mtserver.order.entity.WishlistDetailDog">
+        INSERT INTO wishlist_detail_dog (
+        wishlist_item_id, dog_id, created_by, created_at, updated_by, updated_at
+        ) VALUES (
+        #{wishlistItemId}, #{dogId}, #{createdBy}, #{createdAt}, #{updatedBy}, #{updatedAt}
+        )
+    </insert>
+
+
+    <!-- 장바구니 강아지 연결 정보 삭제 (여러 아이템) -->
+    <delete id="deleteWishlistItemDog" parameterType="list">
+        DELETE FROM wishlist_detail_dog
+        WHERE wishlist_item_id IN
+        <foreach collection="wishlistItemIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 장바구니 강아지 연결 정보 삭제 (여러 아이템) -->
+    <delete id="deleteWishlistItem" parameterType="list">
+        DELETE FROM wishlist_detail
+        WHERE wishlist_item_id IN
+        <foreach collection="wishlistItemIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>
