@@ -38,4 +38,12 @@
              WHERE application_id = #{applicationId} AND status = 'APPLIED'
          </update>
 
+        <select id="existsActiveByDogId" resultType="boolean">
+            SELECT COUNT(*) > 0
+            FROM training_course_application
+            WHERE dog_id = #{dogId}
+              AND status IN ('APPLIED', 'PAID', 'ACCEPT')
+              AND is_deleted = 0
+        </select>
+
      </mapper>

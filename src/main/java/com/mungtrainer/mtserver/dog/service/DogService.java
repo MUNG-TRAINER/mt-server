@@ -9,6 +9,8 @@ import com.mungtrainer.mtserver.dog.dto.request.DogImageUploadRequest;
 import com.mungtrainer.mtserver.dog.dto.request.DogUpdateRequest;
 import com.mungtrainer.mtserver.dog.dto.response.DogImageUploadResponse;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
+import com.mungtrainer.mtserver.order.dao.WishlistDAO;
+import com.mungtrainer.mtserver.training.dao.TrainingCourseApplicationDAO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
@@ -30,6 +32,8 @@ public class DogService {
 
     private final DogDAO dogDAO;
     private final S3Service s3Service;
+    private final TrainingCourseApplicationDAO trainingCourseApplicationDAO;
+    private final WishlistDAO wishlistDAO;
 
     /**
      * 반려견 정보 생성
@@ -163,23 +167,34 @@ public class DogService {
      */
     @Transactional
     public void deleteDog(Long userId, Long dogId) {
+      // 1. 소유자 확인
+      DogResponse dog = dogDAO.selectDogByIdAndUserId(dogId, userId);
+      if (dog == null) {
+        throw new CustomException(ErrorCode.DOG_NO_PERMISSION);
+      }
 
-        // 소유자 확인
-        DogResponse dog = dogDAO.selectDogByIdAndUserId(dogId, userId);
-        if (dog == null) {
-            throw new CustomException(ErrorCode.DOG_NO_PERMISSION);
-        }
+      // 2. 진행 중인 훈련 과정 확인
+      boolean hasActiveTraining = trainingCourseApplicationDAO.existsActiveByDogId(dogId);
+      if (hasActiveTraining) {
+        throw new CustomException(ErrorCode.DOG_HAS_ACTIVE_TRAINING);
+      }
 
-        // S3 파일 먼저 삭제 (실패 시 DB 작업도 롤백됨)
-        if (dog.getProfileImage() != null) {
-          s3Service.deleteFile(dog.getProfileImage()); // 실패 시 RuntimeException 발생 → 트랜잭션 롤백
-        }
+      // 3. 연관 데이터 처리 (위시리스트 소프트 삭제)
+      wishlistDAO.softDeleteByDogId(dogId, userId);
 
-        // 소프트 삭제
-        int result = dogDAO.deleteDog(dogId, userId, userId);
-        if (result == 0) {
-            throw new CustomException(ErrorCode.DOG_DELETE_FAILED);
-        }
+      // 4. S3 파일 먼저 삭제 (실패 시 DB 작업도 롤백됨)
+      if (dog.getProfileImage() != null && !dog.getProfileImage().isBlank()) {
+        s3Service.deleteFile(dog.getProfileImage());
+        log.info("S3 이미지 삭제 완료. dogId: {}, imageKey: {}", dogId, dog.getProfileImage());
+      }
+
+      // 5. 반려견 소프트 삭제
+      int result = dogDAO.deleteDog(dogId, userId, userId);
+      if (result == 0) {
+        throw new CustomException(ErrorCode.DOG_DELETE_FAILED);
+      }
+
+      log.info("반려견 소프트 삭제 완료. dogId: {}, S3 이미지 즉시 삭제됨", dogId);
     }
 
     /**

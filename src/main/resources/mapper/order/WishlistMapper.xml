@@ -109,7 +109,6 @@
         )
     </insert>
 
-
     <!-- 장바구니 강아지 연결 정보 삭제 (여러 아이템) -->
     <delete id="deleteWishlistItemDog" parameterType="list">
         DELETE FROM wishlist_detail_dog
@@ -127,5 +126,15 @@
             #{id}
         </foreach>
     </delete>
+
+    <update id="softDeleteByDogId">
+        UPDATE wishlist_detail_dog
+        SET is_deleted = 1,
+        deleted_at = NOW(),
+        updated_by = #{deletedBy},
+        updated_at = NOW()
+        WHERE dog_id = #{dogId}
+        AND is_deleted = 0
+    </update>
 
 </mapper>
