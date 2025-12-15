@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mungtrainer.mtserver.training.dao.UserCourseDAO">
+
+    <select id="selectUserCourses"
+            resultType="com.mungtrainer.mtserver.training.dto.response.UserCourseResponse">
+
+        SELECT
+            -- course
+            tc.course_id        AS courseId,
+            tc.title            AS title,
+            tc.main_image       AS mainImage,
+            tc.lesson_form      AS lessonForm,
+            tc.difficulty       AS difficulty,
+            tc.location         AS location,
+            tc.type             AS type,
+
+            -- session
+            ts.session_id       AS sessionId,
+            ts.session_no       AS sessionNo,
+            ts.session_date     AS sessionDate,
+            ts.start_time       AS startTime,
+            ts.end_time         AS endTime,
+            ts.status           AS sessionStatus,
+
+            -- application
+            tca.status          AS applicationStatus
+
+        FROM training_course_application tca
+                 JOIN training_session ts
+                      ON tca.session_id = ts.session_id
+                          AND ts.is_deleted = 0
+                 JOIN training_course tc
+                      ON ts.course_id = tc.course_id
+                          AND tc.is_deleted = 0
+                 JOIN dog d
+                      ON tca.dog_id = d.dog_id
+                          AND d.is_deleted = 0
+
+        WHERE d.user_id = #{userId}
+          AND tca.is_deleted = 0
+          AND ts.status = #{sessionStatus}
+
+        <choose>
+            <when test="sessionStatus == 'SCHEDULED'">
+                ORDER BY ts.session_date ASC, ts.start_time ASC
+            </when>
+            <otherwise>
+                ORDER BY ts.session_date DESC, ts.start_time DESC
+            </otherwise>
+        </choose>
+
+    </select>
+
+</mapper>

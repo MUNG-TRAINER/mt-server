@@ -4,7 +4,7 @@ import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.training.dto.request.UpdateSessionRequest;
 import com.mungtrainer.mtserver.training.dto.response.TrainingSessionResponse;
-import com.mungtrainer.mtserver.training.dao.TrainingSessionMapper;
+import com.mungtrainer.mtserver.training.dao.TrainingSessionDAO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +16,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class TrainingSessionService {
 
-    private final TrainingSessionMapper trainingSessionMapper;
+    private final TrainingSessionDAO trainingSessionMapper;
 
     /**
      * 특정 코스의 세션 목록 조회
@@ -50,29 +50,44 @@ public class TrainingSessionService {
         }
 
         try {
-          int deletedCount = trainingSessionMapper.deleteSession(sessionId);
-          if (deletedCount == 0) {
-            throw new CustomException(ErrorCode.SESSION_NOT_FOUND);
-          }
+            int updatedCount = trainingSessionMapper.updateSession(request, sessionId);
+            if (updatedCount == 0) {
+                throw new CustomException(ErrorCode.SESSION_NOT_FOUND);
+            }
+        } catch (CustomException e) {
+            throw e;
         } catch (Exception e) {
             throw new CustomException(ErrorCode.SESSION_UPDATE_FAILED);
         }
     }
 
     /**
-     * 세션 삭제
+     * 세션 삭제 (연관 데이터 포함)
      */
     @Transactional
     public void deleteSession(Long sessionId, Long trainerId) {
         validateTrainerOwnership(sessionId, trainerId);
 
-        Boolean hasApplications = trainingSessionMapper.hasActiveApplications(sessionId);
-        if (hasApplications != null && hasApplications) {
-            throw new CustomException(ErrorCode.SESSION_HAS_APPLICATIONS);
+        Boolean hasPaidApplications = trainingSessionMapper.hasPaidApplications(sessionId);
+        if (hasPaidApplications != null && hasPaidApplications) {
+            throw new CustomException(ErrorCode.SESSION_CANNOT_DELETE_HAS_PAYMENT);
         }
 
         try {
-            trainingSessionMapper.deleteSession(sessionId);
+            trainingSessionMapper.deleteFeedbackAttachmentsBySessionId(sessionId, trainerId);
+            trainingSessionMapper.deleteFeedbacksBySessionId(sessionId, trainerId);
+            trainingSessionMapper.deleteAttendancesBySessionId(sessionId, trainerId);
+            trainingSessionMapper.deleteWaitingBySessionId(sessionId, trainerId);
+            trainingSessionMapper.deleteApplicationsBySessionId(sessionId, trainerId);
+            trainingSessionMapper.deleteNoticesBySessionId(sessionId, trainerId);
+            trainingSessionMapper.deleteSessionChangesBySessionId(sessionId, trainerId);
+
+            int deletedCount = trainingSessionMapper.deleteSessionById(sessionId, trainerId);
+            if (deletedCount == 0) {
+                throw new CustomException(ErrorCode.SESSION_NOT_FOUND);
+            }
+        } catch (CustomException e) {
+            throw e;
         } catch (Exception e) {
             throw new CustomException(ErrorCode.SESSION_DELETE_FAILED);
         }

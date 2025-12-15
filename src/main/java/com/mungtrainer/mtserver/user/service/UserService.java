@@ -1,6 +1,6 @@
 package com.mungtrainer.mtserver.user.service;
 
-import com.mungtrainer.mtserver.common.config.S3Service;
+import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.user.dto.request.UserImageUploadRequest;
@@ -8,27 +8,63 @@ import com.mungtrainer.mtserver.user.dto.request.UserProfileUpdateRequest;
 import com.mungtrainer.mtserver.user.dto.response.UserImageUploadResponse;
 import com.mungtrainer.mtserver.user.dto.response.UserProfileResponse;
 import com.mungtrainer.mtserver.user.entity.User;
-import com.mungtrainer.mtserver.user.dao.UserMapper;
+import com.mungtrainer.mtserver.user.dao.UserDAO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import static com.mungtrainer.mtserver.auth.service.AuthService.*;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserService {
 
-    private final UserMapper userMapper;
+    private final UserDAO userMapper;
     private final S3Service s3Service;
 
     /**
-     * 사용자 프로필 조회
+     * 내 프로필 조회 (전체 정보)
      */
     public UserProfileResponse getUserProfile(Long userId) {
-        User user = userMapper.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+      User user = userMapper.findById(userId)
+          .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        return convertToResponse(user);
+      String profileImageUrl = getProfileImageUrl(user);
+      return UserProfileResponse.createFullProfile(user, profileImageUrl);
+    }
+
+    /**
+     * 사용자명으로 프로필 조회 (권한에 따라 다른 정보 반환)
+     * @param userName 조회할 사용자명
+     * @param currentUserId 현재 로그인한 사용자 ID
+     * @param currentUserRole 현재 로그인한 사용자 역할
+     */
+    public UserProfileResponse getUserProfileByUserName(String userName, Long currentUserId, String currentUserRole) {
+      User targetUser = userMapper.findByUserName(userName)
+          .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+      String profileImageUrl = getProfileImageUrl(targetUser);
+
+      // 1. 본인 조회
+      if (targetUser.getUserId().equals(currentUserId)) {
+        return UserProfileResponse.createFullProfile(targetUser, profileImageUrl);
+      }
+
+      // 2. 트레이너가 조회
+      if (Role.TRAINER.name().equals(currentUserRole)) {
+        boolean isConnected = userMapper.isConnectedToTrainer(targetUser.getUserId(), currentUserId);
+        if (isConnected) {
+          return UserProfileResponse.createTrainerAccessProfile(targetUser, profileImageUrl);
+        }
+      }
+
+      // 3. 타인이 조회 - 공개 여부 확인
+      if (!Boolean.TRUE.equals(targetUser.getIsPublic())) {
+        throw new CustomException(ErrorCode.PROFILE_NOT_PUBLIC);
+      }
+
+      return UserProfileResponse.createPublicProfile(targetUser, profileImageUrl);
     }
 
     /**
@@ -52,43 +88,15 @@ public class UserService {
             s3Service.deleteFile(oldImageKey);
         }
 
-      // null이 아닌 필드만 업데이트
-      if (request.getName() != null) {
-          user.setName(request.getName());
-      }
-      if (request.getBirth() != null) {
-          user.setBirth(request.getBirth());
-      }
-      if (request.getPhone() != null) {
-          user.setPhone(request.getPhone());
-      }
-      if (request.getProfileImage() != null) {
-          user.setProfileImage(request.getProfileImage());
-      }
-      if (request.getIsPublic() != null) {
-          user.setIsPublic(request.getIsPublic());
-      }
-      if (request.getSido() != null) {
-          user.setSido(request.getSido());
-      }
-      if (request.getSigungu() != null) {
-          user.setSigungu(request.getSigungu());
-      }
-      if (request.getRoadname() != null) {
-          user.setRoadname(request.getRoadname());
-      }
-      if (request.getRestAddress() != null) {
-          user.setRestAddress(request.getRestAddress());
-      }
-      if (request.getPostcode() != null) {
-          user.setPostcode(request.getPostcode());
-      }
+        updateUserFields(user, request);
 
         int result = userMapper.updateUserProfile(user);
         if (result == 0) {
             throw new CustomException(ErrorCode.PROFILE_UPDATE_FAILED);
         }
-        return convertToResponse(user);
+
+        String profileImageUrl = getProfileImageUrl(user);
+        return UserProfileResponse.createFullProfile(user, profileImageUrl);
     }
 
     /**
@@ -112,30 +120,29 @@ public class UserService {
     }
 
     /**
-     * User 엔티티를 UserProfileResponse로 변환
-     * S3에 저장된 이미지 키를 Presigned URL로 변환
+     * 사용자 필드 업데이트 (Helper 메서드)
      */
-    private UserProfileResponse convertToResponse(User user) {
-        String profileImageUrl = null;
-        if (user.getProfileImage() != null && !user.getProfileImage().isBlank()) {
-            profileImageUrl = s3Service.generateDownloadPresignedUrl(user.getProfileImage());
-        }
-
-        return UserProfileResponse.builder()
-                .userId(user.getUserId())
-                .userName(user.getUserName())
-                .name(user.getName())
-                .birth(user.getBirth())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .profileImage(profileImageUrl)
-                .isPublic(user.getIsPublic())
-                .role(user.getRole())
-                .sido(user.getSido())
-                .sigungu(user.getSigungu())
-                .roadname(user.getRoadname())
-                .restAddress(user.getRestAddress())
-                .postcode(user.getPostcode())
-                .build();
+    private void updateUserFields(User user, UserProfileUpdateRequest request) {
+      if (request.getName() != null) user.setName(request.getName());
+      if (request.getBirth() != null) user.setBirth(request.getBirth());
+      if (request.getPhone() != null) user.setPhone(request.getPhone());
+      if (request.getProfileImage() != null) user.setProfileImage(request.getProfileImage());
+      if (request.getIsPublic() != null) user.setIsPublic(request.getIsPublic());
+      if (request.getSido() != null) user.setSido(request.getSido());
+      if (request.getSigungu() != null) user.setSigungu(request.getSigungu());
+      if (request.getRoadname() != null) user.setRoadname(request.getRoadname());
+      if (request.getRestAddress() != null) user.setRestAddress(request.getRestAddress());
+      if (request.getPostcode() != null) user.setPostcode(request.getPostcode());
     }
+
+    /**
+     * 프로필 이미지 URL 생성 (Helper 메서드)
+     */
+    private String getProfileImageUrl(User user) {
+      if (user.getProfileImage() != null && !user.getProfileImage().isBlank()) {
+        return s3Service.generateDownloadPresignedUrl(user.getProfileImage());
+      }
+      return null;
+    }
+
 }

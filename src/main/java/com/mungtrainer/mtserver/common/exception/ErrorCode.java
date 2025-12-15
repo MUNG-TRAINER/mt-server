@@ -16,6 +16,7 @@ public enum ErrorCode {
   INVALID_CONFIRM_PASSWORD(400, "비밀번호 확인이 실패했습니다."),
   USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다."),
   PROFILE_UPDATE_FAILED(500, "프로필 수정에 실패했습니다."),
+  PROFILE_NOT_PUBLIC(403, "해당 사용자의 프로필은 비공개입니다."),
   INVALID_COURSE_ID(400, "유효하지 않은 훈련 과정 ID입니다."),
 
   // 훈련 과정
@@ -27,8 +28,8 @@ public enum ErrorCode {
   UNAUTHORIZED_APPLICATION(403, "본인만 신청 가능합니다."),
   APPLICATION_CREATION_FAILED(500, "신청 생성 실패"),
 
-    // 코스 상세페이지
-    COURSE_NOT_FOUND(404, "존재하지 않는 훈련과정입니다."),
+  // 코스 상세페이지
+  COURSE_NOT_FOUND(404, "존재하지 않는 훈련과정입니다."),
 
   // 출석 관련
   ATTENDANCE_UPDATE_FAILED(500,"출석 상태 변경에 실패했습니다"),
@@ -43,6 +44,18 @@ public enum ErrorCode {
   DOG_IMAGE_DELETE_FAILED(500, "반려견 프로필 이미지 삭제에 실패했습니다."),
   DOG_ID_GENERATION_FAILED(500, "반려견 ID 생성에 실패했습니다."),
 
+  // 훈련 과정
+  UNAUTHORIZED_RESOURCE_ACCESS(403, "본인이 작성한 리소스가 아닙니다."),
+  COURSE_HAS_PAID_APPLICATIONS(400, "해당 코스에는 환불되지 않은 신청 내역이 있어 삭제할 수 없습니다. 먼저 환불을 처리한 후 다시 시도해주세요."),
+
+  // ===== 주문/결제 관련 =====
+  ORDER_NOT_FOUND(404, "주문 정보를 찾을 수 없습니다."),
+  ORDER_CREATION_FAILED(500, "주문 생성에 실패했습니다."),
+  PAYMENT_INVALID_AMOUNT(400, "결제 금액이 유효하지 않습니다."),
+  PAYMENT_FAILED(500, "결제 처리에 실패했습니다."),
+  PAYMENT_ALREADY_COMPLETED(409, "이미 결제가 완료된 주문입니다."),
+  SESSION_CANNOT_DELETE_HAS_PAYMENT(400, "결제 완료된 신청이 있습니다. 환불 처리 후 삭제해주세요."),
+
     // 장바구니(Wishlist) 관련
     WISHLIST_NOT_FOUND(404, "장바구니 항목을 찾을 수 없습니다"),
     UNAUTHORIZED_WISHLIST(403, "권한이 없는 장바구니 항목입니다"),
@@ -56,8 +69,10 @@ public enum ErrorCode {
   SESSION_EMPTY_UPDATE(400, "수정할 내용이 없습니다."),
   SESSION_HAS_APPLICATIONS(400, "신청자가 있는 세션은 삭제할 수 없습니다."),
   SESSION_DELETE_FAILED(500, "세션 삭제에 실패했습니다."),
-  SESSION_UPDATE_FAILED(500, "세션 수정에 실패했습니다.");
+  SESSION_UPDATE_FAILED(500, "세션 수정에 실패했습니다."),
 
+  // S3 관련
+  INVALID_REQUEST_DATA(400, "요청 데이터가 유효하지 않습니다.");
 
 
   public final int status;

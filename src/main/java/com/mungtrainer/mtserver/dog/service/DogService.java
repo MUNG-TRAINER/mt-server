@@ -1,14 +1,14 @@
 package com.mungtrainer.mtserver.dog.service;
 
-import com.mungtrainer.mtserver.common.config.S3Service;
+import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
+import com.mungtrainer.mtserver.dog.dao.DogDAO;
 import com.mungtrainer.mtserver.dog.dto.request.DogCreateRequest;
 import com.mungtrainer.mtserver.dog.dto.request.DogImageUploadRequest;
 import com.mungtrainer.mtserver.dog.dto.request.DogUpdateRequest;
 import com.mungtrainer.mtserver.dog.dto.response.DogImageUploadResponse;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
-import com.mungtrainer.mtserver.dog.dao.DogMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
@@ -28,7 +28,7 @@ import java.util.Map;
 @Transactional(readOnly = true)
 public class DogService {
 
-    private final DogMapper dogMapper;
+    private final DogDAO dogDAO;
     private final S3Service s3Service;
 
     /**
@@ -41,7 +41,7 @@ public class DogService {
     public Long createDog(Long userId, DogCreateRequest request) {
 
         // 이름 중복 확인
-        if (dogMapper.existsByUserIdAndName(userId, request.getName())) {
+        if (dogDAO.existsByUserIdAndName(userId, request.getName())) {
             throw new CustomException(ErrorCode.DOG_NAME_DUPLICATE);
         }
 
@@ -55,7 +55,7 @@ public class DogService {
 
         // 반려견 정보 저장 (프로필 이미지 URL 포함)
         try {
-          int result = dogMapper.insertDog(params);
+          int result = dogDAO.insertDog(params);
         } catch (DuplicateKeyException e) {
            throw new CustomException(ErrorCode.DOG_NAME_DUPLICATE);
         }
@@ -74,7 +74,7 @@ public class DogService {
      * @return 반려견 정보
      */
     public DogResponse getDog(Long dogId) {
-        DogResponse dog = dogMapper.selectDogById(dogId);
+        DogResponse dog = dogDAO.selectDogById(dogId);
         if (dog == null) {
           throw new CustomException(ErrorCode.DOG_NOT_FOUND);
         }
@@ -91,7 +91,7 @@ public class DogService {
      * @return 반려견 리스트
      */
     public List<DogResponse> getMyDogs(Long userId) {
-        List<DogResponse> dogs = dogMapper.selectDogsByUserId(userId);
+        List<DogResponse> dogs = dogDAO.selectDogsByUserId(userId);
 
         // 각 반려견의 프로필 이미지를 Presigned URL로 변환
         convertProfileImagesToPresignedUrls(dogs);
@@ -105,7 +105,7 @@ public class DogService {
      * @return 반려견 리스트
      */
     public List<DogResponse> getUserDogs(String username) {
-        List<DogResponse> dogs = dogMapper.selectDogsByUsername(username);
+        List<DogResponse> dogs = dogDAO.selectDogsByUsername(username);
 
         // 각 반려견의 프로필 이미지를 Presigned URL로 변환
         convertProfileImagesToPresignedUrls(dogs);
@@ -122,7 +122,7 @@ public class DogService {
     @Transactional
     public void updateDog(Long userId, Long dogId, DogUpdateRequest request) {
         // 소유자 확인
-        DogResponse dog = dogMapper.selectDogByIdAndUserId(dogId, userId);
+        DogResponse dog = dogDAO.selectDogByIdAndUserId(dogId, userId);
         if (dog == null) {
             throw new CustomException(ErrorCode.DOG_NO_PERMISSION);
         }
@@ -131,7 +131,7 @@ public class DogService {
         if (request.getName() != null
             && !request.getName().isBlank()
             && !request.getName().equals(dog.getName())) {
-          if (dogMapper.existsByUserIdAndName(userId, request.getName())) {
+          if (dogDAO.existsByUserIdAndName(userId, request.getName())) {
               throw new CustomException(ErrorCode.DOG_NAME_DUPLICATE);
           }
         }
@@ -150,7 +150,7 @@ public class DogService {
         }
 
         // 반려견 정보 수정 (프로필 이미지 URL 포함)
-        int result = dogMapper.updateDog(dogId, userId, request, userId);
+        int result = dogDAO.updateDog(dogId, userId, request, userId);
         if (result == 0) {
             throw new CustomException(ErrorCode.DOG_UPDATE_FAILED);
         }
@@ -165,7 +165,7 @@ public class DogService {
     public void deleteDog(Long userId, Long dogId) {
 
         // 소유자 확인
-        DogResponse dog = dogMapper.selectDogByIdAndUserId(dogId, userId);
+        DogResponse dog = dogDAO.selectDogByIdAndUserId(dogId, userId);
         if (dog == null) {
             throw new CustomException(ErrorCode.DOG_NO_PERMISSION);
         }
@@ -176,7 +176,7 @@ public class DogService {
         }
 
         // 소프트 삭제
-        int result = dogMapper.deleteDog(dogId, userId, userId);
+        int result = dogDAO.deleteDog(dogId, userId, userId);
         if (result == 0) {
             throw new CustomException(ErrorCode.DOG_DELETE_FAILED);
         }
@@ -208,7 +208,7 @@ public class DogService {
      */
     public DogImageUploadResponse generateUploadUrl(Long userId, Long dogId, DogImageUploadRequest request) {
       if (dogId != null) {
-        DogResponse dog = dogMapper.selectDogByIdAndUserId(dogId, userId);
+        DogResponse dog = dogDAO.selectDogByIdAndUserId(dogId, userId);
         if (dog == null) {
             throw new CustomException(ErrorCode.DOG_NO_PERMISSION);
         }

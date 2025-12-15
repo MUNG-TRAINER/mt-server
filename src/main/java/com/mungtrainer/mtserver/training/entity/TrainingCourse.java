@@ -43,7 +43,7 @@ public class TrainingCourse extends BaseEntity {
     /**
      * 회차 여부
      */
-    @Pattern(regexp = "산책|그룹수업|1:1", message = "유효하지 않은 상태입니다.")
+    @Pattern(regexp = "ONCE|MULTI", message = "유효하지 않은 회차 유형입니다.")
     private String type;
 
    /**
