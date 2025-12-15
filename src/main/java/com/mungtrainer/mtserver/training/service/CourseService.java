@@ -29,7 +29,19 @@ public class CourseService {
 
   @Transactional(readOnly = true)
   public List<CourseListResponse> getCourses(Long userId, List<String> statuses, List<String> types, List<String> lessonForms){
-    return courseDAO.findCourses(userId, statuses, types, lessonForms);
+    List<CourseListResponse> courseListResponses = courseDAO.findCourses(userId, statuses, types, lessonForms);
+
+    for (CourseListResponse course : courseListResponses) {
+      String fileKey = course.getMainImage();
+      // presigned URL 생성
+      String presignedUrl = null;
+      //null/빈 문자열 체크 후 처리
+      if(fileKey != null && !fileKey.isBlank()) {
+        presignedUrl = s3Service.generateDownloadPresignedUrl(fileKey);
+      }
+      course.setMainImage(presignedUrl);
+    }
+    return courseListResponses;
   }
 
   @Transactional
