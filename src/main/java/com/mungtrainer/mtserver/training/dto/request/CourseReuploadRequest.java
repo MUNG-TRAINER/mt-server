@@ -14,4 +14,7 @@ public class CourseReuploadRequest extends CourseBaseRequest{
     @NotBlank
     private String tags;
 
+    public CourseReuploadRequest() {
+      this.setStatus("SCHEDULED");
+    }
 }
