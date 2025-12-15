@@ -193,8 +193,6 @@ public class DogService {
       if (result == 0) {
         throw new CustomException(ErrorCode.DOG_DELETE_FAILED);
       }
-
-      log.info("반려견 소프트 삭제 완료. dogId: {}, S3 이미지 즉시 삭제됨", dogId);
     }
 
     /**
