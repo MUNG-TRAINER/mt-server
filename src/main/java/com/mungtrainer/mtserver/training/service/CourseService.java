@@ -185,12 +185,7 @@ public class CourseService {
   }
 
   private void deleteIfChanged(String oldKey, String newKey) {
-    if (newKey != null
-        && !newKey.isBlank()
-        && oldKey != null
-        && !oldKey.isBlank()
-        && !newKey.equals(oldKey)) {
-
+    if (!newKey.equals(oldKey)) {
       s3Service.deleteFile(oldKey);
     }
   }

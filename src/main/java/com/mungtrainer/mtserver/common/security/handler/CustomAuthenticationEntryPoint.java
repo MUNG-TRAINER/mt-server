@@ -19,6 +19,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
   private final JwtTokenProvider jwtTokenProvider;
+  private final ObjectMapper objectMapper;
 
   /**
    * 1) JWT 인증 실패 처리
@@ -39,6 +40,24 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     String code;
     String message;
 
+    String uri = request.getRequestURI();
+
+    log.warn("Authentication failed at {} - reason: {}", uri, authException.getMessage());
+
+    if ("/api/auth/check".equals(uri)) {
+      response.setStatus(HttpServletResponse.SC_OK);
+      response.setContentType("application/json;charset=UTF-8");
+      response.getWriter().write(
+          objectMapper.writeValueAsString(
+              AuthErrorResponse.builder()
+                               .code("ANONYMOUS")
+                               .message("로그인되어 있지 않습니다.")
+                               .build()
+                                         )
+                                );
+      return;
+    }
+
     if (access == null && refresh != null) {
       code = ErrorCode.TOKEN_EXPIRED.name();
       message = ErrorCode.TOKEN_EXPIRED.getMessage();
@@ -49,7 +68,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     response.setContentType("application/json;charset=UTF-8");
     response.getWriter().write(
-        new ObjectMapper().writeValueAsString(
+        objectMapper.writeValueAsString(
             AuthErrorResponse.builder()
                              .code(code)
                              .message(message)

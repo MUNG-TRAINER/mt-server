@@ -6,6 +6,7 @@ import lombok.Setter;
 @Setter
 public class TrainerProfileUpdateRequest {
   // User 영역
+  private String name;
   private String phone;
   private String profileImage;
 

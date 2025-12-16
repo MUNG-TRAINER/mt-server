@@ -39,6 +39,8 @@ public class SecurityConfig {
         .sessionManagement(session ->
             session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
+                                    // 인증 패스
+                                   .requestMatchers(HttpMethod.GET, "/api/users/trainer/**").permitAll()
 
                                     // 인가 검증 절차 받을 api(인증도 함)
                                    .requestMatchers("/api/trainer/**").hasAnyRole("TRAINER","ADMIN")
@@ -50,6 +52,7 @@ public class SecurityConfig {
                                                     "/api/applications/**",
                                                     "/api/dogs/**",
                                                     "/api/auth/password",
+                                                    "/api/auth/logout",
                                                     "/api/presigned-url",
                                                     "/api/auth/check").authenticated()
 
