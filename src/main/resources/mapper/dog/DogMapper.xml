@@ -198,6 +198,7 @@
     <update id="deleteDog">
         UPDATE dog
         SET is_deleted = 1,
+            name = CONCAT(name, '_deleted_', #{dogId}, '_', UNIX_TIMESTAMP(NOW())),
             deleted_at = NOW(),
             updated_by = #{deletedBy},
             updated_at = NOW()

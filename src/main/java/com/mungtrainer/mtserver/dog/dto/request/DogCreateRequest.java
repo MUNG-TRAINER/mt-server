@@ -1,5 +1,6 @@
 package com.mungtrainer.mtserver.dog.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -49,6 +50,7 @@ public class DogCreateRequest {
     private String healthInfo;
 
     // 프로필 이미지 URL (선택)
+    @JsonProperty("profileImage")
     @Size(max = 500, message = "프로필 이미지 URL은 500자 이내로 입력해주세요")
     private String profileImageUrl;
 }
