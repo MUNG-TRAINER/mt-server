@@ -22,10 +22,10 @@ public class S3Controller {
    * @return 업로드 URL
    */
   @PostMapping("/presigned-url")
-  public ResponseEntity<String> generateUploadUrl(
+  public ResponseEntity<UploadUrlResponse> generateUploadUrl(
       @Valid @RequestBody UploadUrlRequest request,
       @AuthenticationPrincipal CustomUserDetails customUserDetails) {
-    String responseUrl = s3UploadService.generateUploadPresignedUrl(request, customUserDetails.getUserId());
-    return ResponseEntity.ok(responseUrl);
+    UploadUrlResponse response = s3UploadService.generateUploadPresignedUrl(request, customUserDetails.getUserId());
+    return ResponseEntity.ok(response);
   }
 }

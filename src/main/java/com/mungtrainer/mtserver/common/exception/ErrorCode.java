@@ -6,6 +6,11 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum ErrorCode {
+  // 토큰 관련
+  TOKEN_EXPIRED(401,"Access 토큰이 만료되었습니다."),
+  UNAUTHORIZED(401, "토큰이 유효하지 않거나 만료되었습니다."),
+  REFRESH_EXPIRED(401, "Refresh 토큰이 만료되었습니다."),
+
   // 회원 관련
   INVALID_REGIST_CODE(400,"등록번호가 존재하지 않습니다"),
   USER_USERNAME_DUPLICATE(400, "이미 사용 중인 아이디입니다."),

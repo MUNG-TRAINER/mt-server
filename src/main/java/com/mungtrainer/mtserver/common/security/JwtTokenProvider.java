@@ -2,6 +2,8 @@ package com.mungtrainer.mtserver.common.security;
 
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.security.core.Authentication;
@@ -11,6 +13,7 @@ import io.jsonwebtoken.security.Keys;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
 
@@ -129,6 +132,29 @@ public class JwtTokenProvider {
                .verifyWith((SecretKey) key)
                .build()
                .parseSignedClaims(token);
+  }
+
+  public String resolveAccessToken(HttpServletRequest request) {
+    return resolveTokenFromCookie(request, "access_token");
+  }
+
+  public String resolveRefreshToken(HttpServletRequest request) {
+    return resolveTokenFromCookie(request, "refresh_token");
+  }
+
+  private String resolveTokenFromCookie(
+      HttpServletRequest request,
+      String cookieName
+                                       ) {
+    if (request.getCookies() == null) {
+      return null;
+    }
+
+    return Arrays.stream(request.getCookies())
+                 .filter(cookie -> cookieName.equals(cookie.getName()))
+                 .map(Cookie::getValue)
+                 .findFirst()
+                 .orElse(null);
   }
 
   public long getAccessTokenValidityInMs() {

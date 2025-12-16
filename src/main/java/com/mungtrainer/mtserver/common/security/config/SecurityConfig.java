@@ -40,13 +40,18 @@ public class SecurityConfig {
             session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
 
-                                    // 인가 검증 절차 받을 api
+                                    // 인가 검증 절차 받을 api(인증도 함)
                                    .requestMatchers("/api/trainer/**").hasAnyRole("TRAINER","ADMIN")
                                    .requestMatchers(HttpMethod.PATCH,"/api/course/**").hasAnyRole("TRAINER","ADMIN")
                                    .requestMatchers(HttpMethod.DELETE,"/api/course/**").hasAnyRole("TRAINER","ADMIN")
 
                                     // User 인증만 받을 api
-                                   .requestMatchers("/api/users/**","/api/applications/**", "/api/dogs/**", "/api/auth/password").authenticated()
+                                   .requestMatchers("/api/users/**",
+                                                    "/api/applications/**",
+                                                    "/api/dogs/**",
+                                                    "/api/auth/password",
+                                                    "/api/presigned-url",
+                                                    "/api/auth/check").authenticated()
 
                                     // 그 외에는 인증 패스
                                    .anyRequest().permitAll()

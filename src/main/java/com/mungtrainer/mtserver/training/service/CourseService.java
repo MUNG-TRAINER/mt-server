@@ -3,7 +3,6 @@ package com.mungtrainer.mtserver.training.service;
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.common.s3.S3Service;
-import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
 import com.mungtrainer.mtserver.training.dao.CourseDAO;
 import com.mungtrainer.mtserver.training.dto.request.*;
 import com.mungtrainer.mtserver.training.dto.response.CourseListResponse;
@@ -103,11 +102,6 @@ public class CourseService {
     String newMainImage = req.getMainImage();
     String newDetailImage = req.getDetailImage();
 
-    // 새 이미지가 있고, 기존 이미지와 다른 경우에만 삭제
-    deleteIfChanged(oldMainImage, newMainImage);
-    deleteIfChanged(oldDetailImage, newDetailImage);
-
-
     course = TrainingCourse.builder()
                            .courseId(courseId)
                            .trainerId(userId)
@@ -131,6 +125,16 @@ public class CourseService {
                            .build();
 
     courseDAO.updateCourse(course);
+    TransactionSynchronizationManager.registerSynchronization(
+        new TransactionSynchronization() {
+          @Override
+          public void afterCommit() {
+            // 새 이미지가 있고, 기존 이미지와 다른 경우에만 삭제
+            deleteIfChanged(oldMainImage, newMainImage);
+            deleteIfChanged(oldDetailImage, newDetailImage);
+          }
+        }
+    );
 
     return CourseResponse.builder()
                          .status("Success")
@@ -165,7 +169,7 @@ public class CourseService {
             s3Service.deleteFile(course.getDetailImage());
           }
         }
-                                                             );
+    );
   }
 
   private void validateOwner(Long userId, Long courseId) {

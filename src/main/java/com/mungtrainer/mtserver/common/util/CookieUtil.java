@@ -2,7 +2,7 @@ package com.mungtrainer.mtserver.common.util;
 
 import jakarta.servlet.http.Cookie;
 
-public class ResponseCookieUtil {
+public class CookieUtil {
 
   public static Cookie createCookie(String name, String value, long maxAgeSeconds) {
 
