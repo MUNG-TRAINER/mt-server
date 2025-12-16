@@ -45,7 +45,7 @@
         WHERE d.user_id = #{userId}
         AND a.is_deleted = 0
 
-        ORDER BY a.created_at DESC
+        ORDER BY a.applied_at DESC
     </select>
 
 
