@@ -20,6 +20,9 @@ public class ApplicationListViewResponse {
     private String tags;
     private String title;
     private String description;
-    private String schedule;
     private String mainImage;
+
+    // 세션 // ex: "2025-12-20 10:00 ~ 12:00"
+    private String sessionSchedule;
+    private String dogName;
 }

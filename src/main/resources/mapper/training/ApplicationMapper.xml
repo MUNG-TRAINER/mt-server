@@ -28,8 +28,11 @@
         c.tags                AS tags,
         c.title               AS title,
         c.description         AS description,
-        c.schedule            AS schedule,
-        c.main_image          AS mainImage
+        c.main_image          AS mainImage,
+
+        CONCAT(s.session_date, ' ', s.start_time, ' ~ ', s.end_time) AS sessionSchedule,
+
+        d.name                AS dogName   -- 여기 추가
 
         FROM training_course_application a
         JOIN training_session s
@@ -45,9 +48,16 @@
         WHERE d.user_id = #{userId}
         AND a.is_deleted = 0
 
-        ORDER BY a.applied_at DESC
+        ORDER BY a.applied_at DESC;
+
     </select>
 
+    <!-- 신청 강아지 변경 -->
+    <update id="updateApplicationDog" parameterType="map">
+        UPDATE training_course_application
+        SET dog_id = #{newDogId}, updated_at = NOW()
+        WHERE application_id = #{applicationId}
+    </update>
 
     <!-- 신청 상세 조회 -->
     <select id="findById" parameterType="long" resultType="com.mungtrainer.mtserver.training.entity.TrainingCourseApplication">
@@ -153,5 +163,6 @@
         updated_at = NOW()
         WHERE wishlist_item_id = #{wishlistItemId}
     </update>
+
 
 </mapper>

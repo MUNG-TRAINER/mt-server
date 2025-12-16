@@ -127,6 +127,39 @@ public class TrainingCourseApplicationService {
         return toResponse(created);
     }
 
+    // 신청 강아지 수정
+    public void updateApplicationDog(Long userId, Long applicationId, Long newDogId) {
+        // 1. 신청 조회
+        TrainingCourseApplication application = applicationDao.findById(applicationId);
+        if (application == null) {
+            throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
+        }
+
+        // 2. 본인 신청인지 확인
+        if (!application.getCreatedBy().equals(userId)) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED_APPLICATION);
+        }
+
+        // 3. 변경하려는 강아지가 동일하면 return
+        if (application.getDogId().equals(newDogId)) return;
+
+        // 4. 강아지 소유권 체크 (본인 강아지인지)
+        Long ownerId = applicationDao.findOwnerByDogId(newDogId);
+        if (ownerId == null || !ownerId.equals(userId)) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED_APPLICATION);
+        }
+
+        // 5. 같은 세션에 이미 신청한 강아지인지 확인 (중복 방지)
+        boolean exists = applicationDao.existsByDogAndSession(newDogId, application.getSessionId());
+        if (exists) {
+            throw new CustomException(ErrorCode.DUPLICATE_APPLICATION);
+        }
+
+        // 6. 업데이트
+        applicationDao.updateApplicationDog(applicationId, newDogId);
+    }
+
+
     // 신청 취소
     public void cancelApplication(Long userId, Long applicationId) {
         TrainingCourseApplication application = applicationDao.findById(applicationId);

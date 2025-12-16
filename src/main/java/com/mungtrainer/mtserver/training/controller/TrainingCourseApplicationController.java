@@ -1,6 +1,7 @@
 package com.mungtrainer.mtserver.training.controller;
 
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
+import com.mungtrainer.mtserver.order.dto.request.WishlistUpdateRequest;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationRequest;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationListViewResponse;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationResponse;
@@ -74,4 +75,11 @@ public class TrainingCourseApplicationController {
         return ResponseEntity.ok(response);
     }
 
+    // 신청 강아지 수정
+    @PatchMapping("/{applicationId}")
+    public ResponseEntity<Void> updateApplicationDog(@PathVariable Long applicationId,@RequestBody WishlistUpdateRequest request, @AuthenticationPrincipal CustomUserDetails principal) {
+        Long userId = principal.getUserId();
+        applicationService.updateApplicationDog(userId, applicationId, request.getDogId());
+        return ResponseEntity.ok().build();
+    }
 }
