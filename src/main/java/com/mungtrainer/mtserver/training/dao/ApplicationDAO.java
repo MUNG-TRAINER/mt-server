@@ -1,5 +1,6 @@
 package com.mungtrainer.mtserver.training.dao;
 
+import com.mungtrainer.mtserver.training.dto.response.ApplicationListViewResponse;
 import com.mungtrainer.mtserver.training.entity.TrainingCourseApplication;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -10,7 +11,8 @@ import java.util.List;
 public interface ApplicationDAO {
     // 유저 Id로 신청 리스트 조회
     List<TrainingCourseApplication> findByUserId(@Param("userId") Long userId);
-
+    // UI 카드용 리스트 조회용
+    List<ApplicationListViewResponse> findApplicationListViewByUserId(Long userId);
     // 훈련신청 상세페이지 조회
     TrainingCourseApplication findById(@Param("applicationId") Long applicationId);
 

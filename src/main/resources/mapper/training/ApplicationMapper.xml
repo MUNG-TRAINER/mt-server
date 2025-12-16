@@ -14,6 +14,41 @@
         ORDER BY a.applied_at DESC
     </select>
 
+        <!-- UI 카드용 리스트 조회용-->
+    <select id="findApplicationListViewByUserId"
+            parameterType="long"
+            resultType="com.mungtrainer.mtserver.training.dto.response.ApplicationListViewResponse">
+
+        SELECT
+        a.application_id      AS applicationId,
+        a.session_id          AS sessionId,
+        a.dog_id              AS dogId,
+        a.status              AS applicationStatus,
+
+        c.tags                AS tags,
+        c.title               AS title,
+        c.description         AS description,
+        c.schedule            AS schedule,
+        c.main_image          AS mainImage
+
+        FROM training_course_application a
+        JOIN training_session s
+        ON a.session_id = s.session_id
+        AND s.is_deleted = 0
+        JOIN training_course c
+        ON s.course_id = c.course_id
+        AND c.is_deleted = 0
+        JOIN dog d
+        ON a.dog_id = d.dog_id
+        AND d.is_deleted = 0
+
+        WHERE d.user_id = #{userId}
+        AND a.is_deleted = 0
+
+        ORDER BY a.created_at DESC
+    </select>
+
+
     <!-- 신청 상세 조회 -->
     <select id="findById" parameterType="long" resultType="com.mungtrainer.mtserver.training.entity.TrainingCourseApplication">
         SELECT *
