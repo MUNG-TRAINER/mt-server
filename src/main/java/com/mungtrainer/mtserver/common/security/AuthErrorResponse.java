@@ -6,6 +6,6 @@ import lombok.Getter;
 @Getter
 @Builder
 public class AuthErrorResponse {
-  String code;
-  String message;
+  private String code;
+  private String message;
 }

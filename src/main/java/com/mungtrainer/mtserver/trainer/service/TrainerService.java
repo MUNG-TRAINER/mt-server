@@ -76,7 +76,7 @@ public class TrainerService {
         String oldProfileImage = user.getProfileImage();
         String newProfileImage = request.getProfileImage();
         String oldCertificationImage = profile.getCertificationImageUrl();
-        String newCertificationImage = request.getProfileImage();
+        String newCertificationImage = request.getCertificationImageUrl();
 
         // user 영역 수정
         if(request.getPhone() != null) user.setPhone(request.getPhone());

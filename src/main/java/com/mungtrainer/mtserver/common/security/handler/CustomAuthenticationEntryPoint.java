@@ -8,7 +8,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.manager.StatusManagerServlet;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
@@ -44,8 +43,8 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
       code = ErrorCode.TOKEN_EXPIRED.name();
       message = ErrorCode.TOKEN_EXPIRED.getMessage();
     } else {
-      code = ErrorCode.UNAUTHORIZE.name();
-      message = ErrorCode.UNAUTHORIZE.getMessage();
+      code = ErrorCode.UNAUTHORIZED.name();
+      message = ErrorCode.UNAUTHORIZED.getMessage();
     }
     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     response.setContentType("application/json;charset=UTF-8");

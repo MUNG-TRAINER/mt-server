@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 public enum ErrorCode {
   // 토큰 관련
   TOKEN_EXPIRED(401,"Access 토큰이 만료되었습니다."),
-  UNAUTHORIZE(401, "토큰이 유효하지 않거나 만료되었습니다."),
+  UNAUTHORIZED(401, "토큰이 유효하지 않거나 만료되었습니다."),
   REFRESH_EXPIRED(401, "Refresh 토큰이 만료되었습니다."),
 
   // 회원 관련

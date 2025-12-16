@@ -16,7 +16,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -152,7 +151,7 @@ public class AuthController {
     response.addCookie(CookieUtil.createCookie("refresh_token", newRT,
                                                jwtTokenProvider.getRefreshTokenValidityInMs() / 1000));
 
-    return ResponseEntity.ok(new LoginResponse(200,"success","토큰 재발급에 성공했습니다."));
+    return ResponseEntity.ok(new LoginResponse(200,"Success","토큰 재발급에 성공했습니다."));
   }
 
   @GetMapping("/check-email")
@@ -169,7 +168,7 @@ public class AuthController {
       @AuthenticationPrincipal CustomUserDetails principal) {
     String userName = principal.getUsername();
     authService.passwordChange(request, userName);
-    return ResponseEntity.ok(new PasswordChangeResponse("success",200,"비밀번호가 성공적으로 변경되었습니다."));
+    return ResponseEntity.ok(new PasswordChangeResponse("Success",200,"비밀번호가 성공적으로 변경되었습니다."));
   }
 
   @GetMapping("/check")
