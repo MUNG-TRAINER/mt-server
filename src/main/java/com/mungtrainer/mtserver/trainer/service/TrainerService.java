@@ -81,6 +81,7 @@ public class TrainerService {
         // user 영역 수정
         if(request.getPhone() != null) user.setPhone(request.getPhone());
         if(request.getProfileImage() != null) user.setProfileImage(request.getProfileImage());
+        if(request.getName() != null) user.setName(request.getName());
 
         userDAO.updateUserProfile(user);
 
