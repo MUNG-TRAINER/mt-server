@@ -11,6 +11,9 @@ import com.mungtrainer.mtserver.user.dao.UserDAO;
 import com.mungtrainer.mtserver.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -58,16 +61,30 @@ public class TrainerService {
                 .build();
     }
 
-     // 로그인한 훈련사 프로필 수정
+    // 로그인한 훈련사 프로필 수정
+    @Transactional
     public TrainerResponse updateTrainerProfile(TrainerProfileUpdateRequest request,  Long userId) {
 
         // DB에 존재하는지 체크
+        User user = userDAO.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         TrainerProfile profile = trainerDao.findById(userId);
         if (profile == null) {
             throw new RuntimeException("훈련사 프로필이 존재하지 않습니다.");
         }
 
-        // 수정
+        // 이미지 삭제
+        String oldProfileImage = user.getProfileImage();
+        String newProfileImage = request.getProfileImage();
+        String oldCertificationImage = profile.getCertificationImageUrl();
+        String newCertificationImage = request.getProfileImage();
+
+        // user 영역 수정
+        if(request.getPhone() != null) user.setPhone(request.getPhone());
+        if(request.getProfileImage() != null) user.setProfileImage(request.getProfileImage());
+
+        userDAO.updateUserProfile(user);
+
+        // Trainer 영역 수정
         if(request.getCareerInfo() != null) profile.setCareerInfo(request.getCareerInfo());
         if(request.getIntroduce() != null) profile.setIntroduce(request.getIntroduce());
         if(request.getDescription() != null) profile.setDescription(request.getDescription());
@@ -77,8 +94,19 @@ public class TrainerService {
 
         trainerDao.updateTrainerProfile(profile);
 
+        TransactionSynchronizationManager.registerSynchronization(
+            new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                  deleteIfChanged(oldProfileImage, newProfileImage);
+                  deleteIfChanged(oldCertificationImage, newCertificationImage);
+                }
+        });
+
         return TrainerResponse.builder()
                 .trainerId(profile.getTrainerId())
+                .profileImage(newProfileImage)
+                .phone(user.getPhone())
                 .careerInfo(profile.getCareerInfo())
                 .introduce(profile.getIntroduce())
                 .description(profile.getDescription())
@@ -97,4 +125,14 @@ public class TrainerService {
         String fileKey = "trainer-certification/" + userId + "/cert-" + System.currentTimeMillis() + extension;
         return s3Service.generateUploadPresignedUrl(fileKey, contentType);
     }
-}
+    private void deleteIfChanged(String oldKey, String newKey) {
+        if (newKey != null
+            && !newKey.isBlank()
+            && oldKey != null
+            && !oldKey.isBlank()
+            && !newKey.equals(oldKey)) {
+
+            s3Service.deleteFile(oldKey);
+        }
+    }
+  }

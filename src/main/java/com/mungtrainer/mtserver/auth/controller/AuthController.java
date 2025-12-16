@@ -175,9 +175,6 @@ public class AuthController {
   @GetMapping("/check")
   public ResponseEntity<CheckResponse> checkAuthentication(
       @AuthenticationPrincipal CustomUserDetails principal) {
-    if (principal == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    }
     return ResponseEntity.ok(CheckResponse.builder()
                                           .userId(principal.getUserId())
                                           .role(principal.getRole())
