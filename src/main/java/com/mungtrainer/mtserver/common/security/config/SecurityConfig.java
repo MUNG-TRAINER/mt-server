@@ -52,6 +52,7 @@ public class SecurityConfig {
                                                     "/api/applications/**",
                                                     "/api/dogs/**",
                                                     "/api/auth/password",
+                                                    "/api/auth/logout",
                                                     "/api/presigned-url",
                                                     "/api/auth/check").authenticated()
 
