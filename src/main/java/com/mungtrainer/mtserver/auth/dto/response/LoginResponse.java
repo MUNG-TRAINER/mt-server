@@ -6,7 +6,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class LoginResponse {
-  private String status;
-  private int code;
+  private int status;
+  private String code;
   private String message;
 }
