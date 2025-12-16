@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 public class S3UploadService {
   private final S3Service s3Service;
 
-  public String generateUploadPresignedUrl(UploadUrlRequest request, Long userId) {
+  public UploadUrlResponse generateUploadPresignedUrl(UploadUrlRequest request, Long userId) {
     if (userId == null ||
         request.getContentType() == null ||
         request.getCategory() == null ||
@@ -25,8 +25,12 @@ public class S3UploadService {
     fileName = "%s-%d%s".formatted(name, timestamp, extension);
 
     String fileKey = "%s/%d/%s".formatted(request.getCategory(), userId, fileName);
+    String url = s3Service.generateUploadPresignedUrl(fileKey, request.getContentType());
 
-    return s3Service.generateUploadPresignedUrl(fileKey, request.getContentType());
+    return UploadUrlResponse.builder()
+                            .uploadUrl(url)
+                            .fileKey(fileKey)
+                            .build();
   }
 
 }
