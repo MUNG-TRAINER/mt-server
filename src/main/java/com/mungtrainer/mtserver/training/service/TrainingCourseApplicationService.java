@@ -4,7 +4,9 @@ import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.training.dao.ApplicationDAO;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationRequest;
+import com.mungtrainer.mtserver.training.dto.response.ApplicationListViewResponse;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationResponse;
+import com.mungtrainer.mtserver.training.dto.response.ApplicationStatusResponse;
 import com.mungtrainer.mtserver.training.entity.TrainingCourseApplication;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,6 +41,11 @@ public class TrainingCourseApplicationService {
                 .collect(Collectors.toList());
     }
 
+    // 신청내역 리스트 (카드용)
+    public List<ApplicationListViewResponse> getApplicationListView(Long userId) {
+        return applicationDao.findApplicationListViewByUserId(userId);
+    }
+
     // 신청 상세 조회
     public ApplicationResponse getApplicationById(Long userId,Long applicationId) {
         TrainingCourseApplication application = applicationDao.findById(applicationId);
@@ -49,6 +56,24 @@ public class TrainingCourseApplicationService {
             throw new CustomException(ErrorCode.UNAUTHORIZED_APPLICATION);
         }
         return toResponse(application);
+    }
+    // 신청내역 상세페이지 (ui용)
+    public ApplicationStatusResponse getApplicationStatus(Long userId, Long applicationId) {
+        TrainingCourseApplication application = applicationDao.findById(applicationId);
+
+        if (application == null) {
+            throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
+        }
+
+        // 본인 신청인지 체크
+        if (!application.getCreatedBy().equals(userId)) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED_APPLICATION);
+        }
+
+        return ApplicationStatusResponse.builder()
+                .applicationId(application.getApplicationId())
+                .status(application.getStatus())
+                .build();
     }
 
     // 신청 생성

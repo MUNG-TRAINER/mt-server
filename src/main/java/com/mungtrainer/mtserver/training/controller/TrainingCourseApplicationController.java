@@ -2,7 +2,9 @@ package com.mungtrainer.mtserver.training.controller;
 
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationRequest;
+import com.mungtrainer.mtserver.training.dto.response.ApplicationListViewResponse;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationResponse;
+import com.mungtrainer.mtserver.training.dto.response.ApplicationStatusResponse;
 import com.mungtrainer.mtserver.training.service.TrainingCourseApplicationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,7 +23,7 @@ public class TrainingCourseApplicationController {
 
     private final TrainingCourseApplicationService applicationService;
 
-    // 훈련과정 신청 리스트
+    // 훈련과정 내역 조회
     @GetMapping
     public ResponseEntity<List<ApplicationResponse>> getApplicationList(@AuthenticationPrincipal CustomUserDetails principal){
         Long userId = principal.getUserId();
@@ -51,6 +53,25 @@ public class TrainingCourseApplicationController {
         Long userId = principal.getUserId();
         applicationService.cancelApplication(userId,applicationId);
         return ResponseEntity.ok().build();
+    }
+
+    // 신청내역 리스트 (UI 카드용)
+    @GetMapping("/list")
+    public ResponseEntity<List<ApplicationListViewResponse>> getApplicationListView(@AuthenticationPrincipal CustomUserDetails principal) {
+        Long userId = principal.getUserId();
+        return ResponseEntity.ok(
+                applicationService.getApplicationListView(userId)
+        );
+    }
+    // 신청 상세페이지 ui용 status 조회
+    @GetMapping("/{applicationId}/status")
+    public ResponseEntity<ApplicationStatusResponse> getApplicationStatus(
+            @PathVariable Long applicationId, @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        Long userId = principal.getUserId();
+        ApplicationStatusResponse response =
+                applicationService.getApplicationStatus(userId, applicationId);
+        return ResponseEntity.ok(response);
     }
 
 }
