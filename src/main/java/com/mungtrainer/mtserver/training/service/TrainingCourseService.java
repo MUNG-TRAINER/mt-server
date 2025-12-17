@@ -4,10 +4,16 @@ import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.training.dao.TrainingCourseDao;
+import com.mungtrainer.mtserver.training.dto.request.CourseSearchRequest;
+import com.mungtrainer.mtserver.training.dto.response.CourseSearchItemDto;
+import com.mungtrainer.mtserver.training.dto.response.CourseSearchResponse;
 import com.mungtrainer.mtserver.training.dto.response.TrainingCourseResponse;
 import com.mungtrainer.mtserver.training.entity.TrainingCourse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -58,5 +64,51 @@ public class TrainingCourseService {
                 .dogSize(trainingCourse.getDogSize())
                 .build();
     }
-}
 
+    /**
+     * 훈련과정 검색
+     */
+    public CourseSearchResponse searchCourses(CourseSearchRequest request) {
+        // 검색 실행
+        List<CourseSearchItemDto> courses = trainingCourseDao.searchCourses(request);
+
+        // S3 Presigned URL 생성
+        List<CourseSearchItemDto> coursesWithPresignedUrl = courses.stream()
+                .map(course -> {
+                    String presignedUrl = course.getMainImage();
+                    if (course.getMainImage() != null && !course.getMainImage().isBlank()) {
+                        presignedUrl = s3Service.generateDownloadPresignedUrl(course.getMainImage());
+                    }
+
+                    return CourseSearchItemDto.builder()
+                            .courseId(course.getCourseId())
+                            .trainerId(course.getTrainerId())
+                            .trainerName(course.getTrainerName())
+                            .title(course.getTitle())
+                            .description(course.getDescription())
+                            .tags(course.getTags())
+                            .mainImage(presignedUrl)
+                            .lessonForm(course.getLessonForm())
+                            .difficulty(course.getDifficulty())
+                            .location(course.getLocation())
+                            .type(course.getType())
+                            .price(course.getPrice())
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        // 전체 개수 조회
+        Integer totalCount = trainingCourseDao.countSearchResults(request);
+
+        // 전체 페이지 수 계산
+        int totalPages = (int) Math.ceil((double) totalCount / request.getSize());
+
+        return CourseSearchResponse.builder()
+                .courses(coursesWithPresignedUrl)
+                .totalCount(totalCount)
+                .currentPage(request.getPage())
+                .totalPages(totalPages)
+                .pageSize(request.getSize())
+                .build();
+    }
+}

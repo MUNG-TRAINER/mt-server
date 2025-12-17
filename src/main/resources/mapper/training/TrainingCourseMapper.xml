@@ -10,4 +10,42 @@
         WHERE course_id = #{courseId}
     </select>
 
+    <!-- 훈련과정 검색 -->
+    <select id="searchCourses" resultType="com.mungtrainer.mtserver.training.dto.response.CourseSearchItemDto">
+        SELECT
+            tc.course_id AS courseId,
+            tc.trainer_id AS trainerId,
+            u.name AS trainerName,
+            tc.title,
+            tc.description,
+            tc.tags,
+            tc.main_image AS mainImage,
+            tc.lesson_form AS lessonForm,
+            tc.difficulty,
+            tc.location,
+            tc.type,
+            MIN(ts.price) AS price
+        FROM training_course tc
+        INNER JOIN user u ON tc.trainer_id = u.user_id AND u.is_deleted = 0
+        LEFT JOIN training_session ts ON tc.course_id = ts.course_id AND ts.is_deleted = 0
+        WHERE tc.is_deleted = 0
+        <if test="request.keyword != null and request.keyword != ''">
+            AND tc.title LIKE CONCAT('%', #{request.keyword}, '%')
+        </if>
+        GROUP BY tc.course_id, tc.trainer_id, u.name, tc.title, tc.description, tc.tags,
+                 tc.main_image, tc.lesson_form, tc.difficulty, tc.location, tc.type
+        ORDER BY tc.created_at DESC
+        LIMIT #{request.size} OFFSET #{request.offset}
+    </select>
+
+    <!-- 검색 결과 전체 개수 조회 -->
+    <select id="countSearchResults" resultType="int">
+        SELECT COUNT(DISTINCT tc.course_id)
+        FROM training_course tc
+        WHERE tc.is_deleted = 0
+        <if test="request.keyword != null and request.keyword != ''">
+            AND tc.title LIKE CONCAT('%', #{request.keyword}, '%')
+        </if>
+    </select>
+
 </mapper>
