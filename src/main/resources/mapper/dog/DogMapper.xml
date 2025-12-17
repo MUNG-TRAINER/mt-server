@@ -16,6 +16,8 @@
         <result property="personality" column="personality"/>
         <result property="habits" column="habits"/>
         <result property="healthInfo" column="health_info"/>
+        <result property="humanSocialization" column="human_socialization"/>
+        <result property="animalSocialization" column="animal_socialization"/>
         <result property="profileImage" column="profile_image"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
@@ -34,6 +36,8 @@
             personality,
             habits,
             health_info,
+            human_socialization,
+            animal_socialization,
             profile_image,
             created_by,
             created_at,
@@ -51,6 +55,8 @@
             #{request.personality},
             #{request.habits},
             #{request.healthInfo},
+            #{request.humanSocialization},
+            #{request.animalSocialization},
             #{request.profileImageUrl},
             #{createdBy},
             NOW(),
@@ -76,6 +82,8 @@
             personality,
             habits,
             health_info,
+            human_socialization,
+            animal_socialization,
             profile_image,
             created_at,
             updated_at
@@ -97,6 +105,8 @@
             personality,
             habits,
             health_info,
+            human_socialization,
+            animal_socialization,
             profile_image,
             created_at,
             updated_at
@@ -119,6 +129,8 @@
             personality,
             habits,
             health_info,
+            human_socialization,
+            animal_socialization,
             profile_image,
             created_at,
             updated_at
@@ -141,6 +153,8 @@
             d.personality,
             d.habits,
             d.health_info,
+            d.human_socialization,
+            d.animal_socialization,
             d.profile_image,
             d.created_at,
             d.updated_at
@@ -156,6 +170,7 @@
     <update id="updateDog">
         UPDATE dog
         <set>
+            <!-- 필수값 (NOT NULL) - 빈 문자열 업데이트 방지 -->
             <if test="request.name != null and request.name != ''">
                 name = #{request.name},
             </if>
@@ -171,20 +186,29 @@
             <if test="request.isNeutered != null">
                 is_neutered = #{request.isNeutered},
             </if>
+            <!-- 선택값 (NULL 허용) - 빈 문자열도 NULL로 업데이트 가능 -->
             <if test="request.weight != null">
                 weight = #{request.weight},
             </if>
-            <if test="request.personality != null and request.personality != ''">
-                personality = #{request.personality},
+            <if test="request.personality != null">
+                personality = <if test="request.personality == ''">NULL</if><if test="request.personality != ''">#{request.personality}</if>,
             </if>
-            <if test="request.habits != null and request.habits != ''">
-                habits = #{request.habits},
+            <if test="request.habits != null">
+                habits = <if test="request.habits == ''">NULL</if><if test="request.habits != ''">#{request.habits}</if>,
             </if>
-            <if test="request.healthInfo != null and request.healthInfo != ''">
-                health_info = #{request.healthInfo},
+            <if test="request.healthInfo != null">
+                health_info = <if test="request.healthInfo == ''">NULL</if><if test="request.healthInfo != ''">#{request.healthInfo}</if>,
             </if>
-            <if test="request.profileImageUrl != null and request.profileImageUrl != ''">
-                profile_image = #{request.profileImageUrl},
+            <!-- 사회화 정보 (NOT NULL이지만 선택값) -->
+            <if test="request.humanSocialization != null">
+                human_socialization = #{request.humanSocialization},
+            </if>
+            <if test="request.animalSocialization != null">
+                animal_socialization = #{request.animalSocialization},
+            </if>
+            <!-- 프로필 이미지 (NULL 허용) -->
+            <if test="request.profileImageUrl != null">
+                profile_image = <if test="request.profileImageUrl == ''">NULL</if><if test="request.profileImageUrl != ''">#{request.profileImageUrl}</if>,
             </if>
             updated_by = #{updatedBy},
             updated_at = NOW()

@@ -1,5 +1,6 @@
 package com.mungtrainer.mtserver.dog.dto.response;
 
+import com.mungtrainer.mtserver.dog.entity.SocializationLevel;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -64,6 +65,16 @@ public class DogResponse {
      * 건강 정보
      */
     private String healthInfo;
+
+    /**
+     * 사람 사회화 수준
+     */
+    private SocializationLevel humanSocialization;
+
+    /**
+     * 동물 사회화 수준
+     */
+    private SocializationLevel animalSocialization;
 
     /**
      * 프로필 이미지 URL
