@@ -24,6 +24,7 @@
         a.session_id          AS sessionId,
         a.dog_id              AS dogId,
         a.status              AS applicationStatus,
+        a.reject_reason       AS rejectReason,
 
         c.tags                AS tags,
         c.title               AS title,
@@ -32,7 +33,7 @@
 
         CONCAT(s.session_date, ' ', s.start_time, ' ~ ', s.end_time) AS sessionSchedule,
 
-        d.name                AS dogName   -- 여기 추가
+        d.name                AS dogName
 
         FROM training_course_application a
         JOIN training_session s
@@ -164,5 +165,23 @@
         WHERE wishlist_item_id = #{wishlistItemId}
     </update>
 
-
+    <!--  전체 취소  -->
+    <update id="updateApplicationStatusBatch" parameterType="map">
+        UPDATE training_course_application
+        SET status = #{status},
+        updated_at = NOW()
+        WHERE application_id IN
+        <foreach collection="applicationIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+    <!--  전체 취소시 웨이팅  -->
+    <update id="updateWaitingStatusBatch" parameterType="map">
+        UPDATE waiting
+        SET status = #{status}, updated_at = NOW()
+        WHERE application_id IN
+        <foreach collection="applicationIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
 </mapper>

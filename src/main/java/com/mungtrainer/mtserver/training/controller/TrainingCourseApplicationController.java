@@ -1,7 +1,9 @@
 package com.mungtrainer.mtserver.training.controller;
 
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
+import com.mungtrainer.mtserver.order.dto.request.WishlistDeleteRequest;
 import com.mungtrainer.mtserver.order.dto.request.WishlistUpdateRequest;
+import com.mungtrainer.mtserver.training.dto.request.ApplicationCancelRequest;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationRequest;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationListViewResponse;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationResponse;
@@ -48,6 +50,7 @@ public class TrainingCourseApplicationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+
     // 훈련과정 신청 취소
     @DeleteMapping("/{applicationId}")
     public ResponseEntity<Void> deleteApplication(@AuthenticationPrincipal CustomUserDetails principal, @PathVariable Long applicationId){
@@ -55,6 +58,15 @@ public class TrainingCourseApplicationController {
         applicationService.cancelApplication(userId,applicationId);
         return ResponseEntity.ok().build();
     }
+
+    // 훈련과정 신청 삭제 (여러 개)
+    @DeleteMapping
+    public ResponseEntity<Void> deleteApplicationList( @AuthenticationPrincipal CustomUserDetails principal,@RequestBody ApplicationCancelRequest request) {
+        Long userId = principal.getUserId();
+        applicationService.deleteApplicationList(userId, request);
+        return ResponseEntity.ok().build();
+    }
+
 
     // 신청내역 리스트 (UI 카드용)
     @GetMapping("/list")
@@ -64,20 +76,22 @@ public class TrainingCourseApplicationController {
                 applicationService.getApplicationListView(userId)
         );
     }
-    // 신청 상세페이지 ui용 status 조회
+
     @GetMapping("/{applicationId}/status")
     public ResponseEntity<ApplicationStatusResponse> getApplicationStatus(
-            @PathVariable Long applicationId, @AuthenticationPrincipal CustomUserDetails principal
+            @PathVariable Long applicationId,
+            @AuthenticationPrincipal CustomUserDetails principal
     ) {
-        Long userId = principal.getUserId();
-        ApplicationStatusResponse response =
-                applicationService.getApplicationStatus(userId, applicationId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                applicationService.getApplicationStatus(
+                        principal.getUserId(), applicationId
+                )
+        );
     }
 
     // 신청 강아지 수정
     @PatchMapping("/{applicationId}")
-    public ResponseEntity<Void> updateApplicationDog(@PathVariable Long applicationId,@RequestBody WishlistUpdateRequest request, @AuthenticationPrincipal CustomUserDetails principal) {
+    public ResponseEntity<Void> updateApplicationDog(@PathVariable Long applicationId, @RequestBody WishlistUpdateRequest request, @AuthenticationPrincipal CustomUserDetails principal) {
         Long userId = principal.getUserId();
         applicationService.updateApplicationDog(userId, applicationId, request.getDogId());
         return ResponseEntity.ok().build();

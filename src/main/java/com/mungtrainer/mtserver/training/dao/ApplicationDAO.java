@@ -49,4 +49,7 @@ public interface ApplicationDAO {
     void updateApplicationDog(@Param("applicationId") Long applicationId,
                               @Param("newDogId") Long newDogId);
 
+    void updateApplicationStatusBatch(@Param("applicationIds") List<Long> applicationIds, @Param("status") String status);
+
+    void updateWaitingStatusBatch(@Param("applicationIds") List<Long> applicationIds, @Param("status") String status);
 }

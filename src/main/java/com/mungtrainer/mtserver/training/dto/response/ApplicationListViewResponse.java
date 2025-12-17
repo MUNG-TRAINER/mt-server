@@ -15,6 +15,7 @@ public class ApplicationListViewResponse {
 
     // 신청 상태
     private String applicationStatus;
+    private String rejectReason;
 
     // 코스 정보 (리스트 UI)
     private String tags;

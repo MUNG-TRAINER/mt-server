@@ -3,6 +3,7 @@ package com.mungtrainer.mtserver.training.service;
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.training.dao.ApplicationDAO;
+import com.mungtrainer.mtserver.training.dto.request.ApplicationCancelRequest;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationRequest;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationListViewResponse;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationResponse;
@@ -12,7 +13,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,15 +61,17 @@ public class TrainingCourseApplicationService {
         }
         return toResponse(application);
     }
-    // 신청내역 상세페이지 (ui용)
-    public ApplicationStatusResponse getApplicationStatus(Long userId, Long applicationId) {
-        TrainingCourseApplication application = applicationDao.findById(applicationId);
+    // status 조회 ui용
+    public ApplicationStatusResponse getApplicationStatus(
+            Long userId, Long applicationId
+    ) {
+        TrainingCourseApplication application =
+                applicationDao.findById(applicationId);
 
         if (application == null) {
             throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
         }
 
-        // 본인 신청인지 체크
         if (!application.getCreatedBy().equals(userId)) {
             throw new CustomException(ErrorCode.UNAUTHORIZED_APPLICATION);
         }
@@ -75,7 +81,6 @@ public class TrainingCourseApplicationService {
                 .status(application.getStatus())
                 .build();
     }
-
     // 신청 생성
     public ApplicationResponse createApplication(Long userId,ApplicationRequest request,Long wishlistItemId) {
         // 해당 사용자 인증
@@ -197,4 +202,54 @@ public class TrainingCourseApplicationService {
             applicationDao.updateWaitingStatus(nextApplicationId, "ENTERED");
         }
         }
+    // 여러 신청 취소
+    public void deleteApplicationList(Long userId, ApplicationCancelRequest request) {
+        List<Long> applicationIds = request.getApplicationId();
+        if(applicationIds == null || applicationIds.isEmpty()){
+            throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
+        }
+
+        // 모든 신청 조회 후, 세션별로 그룹화
+        Map<Long, List<Long>> sessionToApplicationIds = new HashMap<>();
+        for (Long applicationId : applicationIds) {
+            TrainingCourseApplication app = applicationDao.findById(applicationId);
+            if (app == null) {
+                throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
+            }
+            if (!app.getCreatedBy().equals(userId)) {
+                throw new CustomException(ErrorCode.UNAUTHORIZED_APPLICATION);
+            }
+
+            sessionToApplicationIds
+                    .computeIfAbsent(app.getSessionId(), k -> new ArrayList<>())
+                    .add(applicationId);
+        }
+
+        // 세션별 취소 처리 + 대기자 승격
+        for (Map.Entry<Long, List<Long>> entry : sessionToApplicationIds.entrySet()) {
+            Long sessionId = entry.getKey();
+            List<Long> idsToCancel = entry.getValue();
+
+            // 취소 처리
+            for (Long id : idsToCancel) {
+                TrainingCourseApplication app = applicationDao.findById(id);
+                if ("WAITING".equals(app.getStatus())) {
+                    applicationDao.updateWaitingStatus(id, "CANCELLED");
+                } else {
+                    applicationDao.updateApplicationStatus(id, "CANCELLED");
+                }
+            }
+
+            // 대기자 승격 처리 (취소한 수만큼 승격)
+            List<Long> waitingList = applicationDao.findWaitingBySessionId(sessionId);
+            if (waitingList != null && !waitingList.isEmpty()) {
+                int cancelCount = idsToCancel.size(); // 이번 세션에서 취소한 신청 수
+                for (int i = 0; i < cancelCount && i < waitingList.size(); i++) {
+                    Long nextApplicationId = waitingList.get(i);
+                    applicationDao.updateApplicationStatus(nextApplicationId, "APPLIED");
+                    applicationDao.updateWaitingStatus(nextApplicationId, "ENTERED");
+                }
+            }
+        }
     }
+}
