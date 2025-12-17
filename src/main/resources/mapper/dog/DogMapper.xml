@@ -187,10 +187,15 @@
                 is_neutered = #{request.isNeutered},
             </if>
             <!-- 선택값 (NULL 허용) - null 또는 빈 문자열을 NULL로 업데이트 -->
-            <!-- weight: 숫자 타입이므로 빈 문자열 케이스 없음, null만 체크 -->
-            <if test="request.weight != null">
-                weight = #{request.weight},
-            </if>
+            <!-- weight: clearWeight 플래그로 삭제 처리 -->
+            <choose>
+                <when test="request.clearWeight != null and request.clearWeight == true">
+                    weight = NULL,
+                </when>
+                <when test="request.weight != null">
+                    weight = #{request.weight},
+                </when>
+            </choose>
             <choose>
                 <when test="request.personality != null and request.personality != ''">
                     personality = #{request.personality},

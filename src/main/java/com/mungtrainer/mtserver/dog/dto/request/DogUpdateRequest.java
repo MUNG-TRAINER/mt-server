@@ -111,4 +111,11 @@ public class DogUpdateRequest {
     @JsonProperty("profileImage")
     @Size(max = 500, message = "프로필 이미지 URL은 500자 이내로 입력해주세요")
     private String profileImageUrl;
+
+    /**
+     * 체중 삭제 플래그 (선택)
+     * true: 체중을 NULL로 설정
+     */
+    @JsonProperty("clearWeight")
+    private Boolean clearWeight;
 }
