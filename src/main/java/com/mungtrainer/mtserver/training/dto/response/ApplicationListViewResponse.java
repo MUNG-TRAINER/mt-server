@@ -15,11 +15,15 @@ public class ApplicationListViewResponse {
 
     // 신청 상태
     private String applicationStatus;
+    private String rejectReason;
 
     // 코스 정보 (리스트 UI)
     private String tags;
     private String title;
     private String description;
-    private String schedule;
     private String mainImage;
+
+    // 세션 // ex: "2025-12-20 10:00 ~ 12:00"
+    private String sessionSchedule;
+    private String dogName;
 }

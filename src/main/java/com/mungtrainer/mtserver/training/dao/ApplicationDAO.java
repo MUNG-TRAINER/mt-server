@@ -45,4 +45,11 @@ public interface ApplicationDAO {
 
     // wishlist_detail 상태 업데이트
     void updateWishlistDetailStatus(@Param("wishlistItemId") Long wishlistItemId, @Param("status") String status);
+    // 신청 강아지 변경
+    void updateApplicationDog(@Param("applicationId") Long applicationId,
+                              @Param("newDogId") Long newDogId);
+
+    void updateApplicationStatusBatch(@Param("applicationIds") List<Long> applicationIds, @Param("status") String status);
+
+    void updateWaitingStatusBatch(@Param("applicationIds") List<Long> applicationIds, @Param("status") String status);
 }
