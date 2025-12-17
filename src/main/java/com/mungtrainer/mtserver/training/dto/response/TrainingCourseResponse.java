@@ -13,6 +13,7 @@ public class TrainingCourseResponse {
     private String description;
     private String type;
     private String status;
+    private String lessonForm;
     private Boolean isFree;
     private String difficulty;
     private String location;
