@@ -19,7 +19,9 @@ public class TrainingCourseResponse {
     private String schedule;
     private String refundPolicy;
     private String mainImage;
+    private String mainImageKey;
     private String detailImage;
+    private String detailImageKey;
     private String items;
     private String dogSize;
 }
