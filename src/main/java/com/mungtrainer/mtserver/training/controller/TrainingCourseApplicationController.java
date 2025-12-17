@@ -67,7 +67,6 @@ public class TrainingCourseApplicationController {
         return ResponseEntity.ok().build();
     }
 
-
     // 신청내역 리스트 (UI 카드용)
     @GetMapping("/list")
     public ResponseEntity<List<ApplicationListViewResponse>> getApplicationListView(@AuthenticationPrincipal CustomUserDetails principal) {
