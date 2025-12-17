@@ -70,7 +70,7 @@ public class DogUpdateRequest {
     /**
      * 성격 (선택, 입력 시 255자 이내)
      * DB: NULL 허용
-     * 삭제 방법: 빈 문자열("") 또는 필드를 보내지 않음 → DB에 NULL로 저장됨
+     * 삭제 방법: 빈 문자열("") 전송 → DB에 NULL로 저장됨 (필드를 보내지 않으면 기존 값 유지)
      */
     @Size(max = 255, message = "성격은 255자 이내로 입력해주세요")
     private String personality;
@@ -78,7 +78,7 @@ public class DogUpdateRequest {
     /**
      * 습관 (선택, 입력 시 255자 이내)
      * DB: NULL 허용
-     * 삭제 방법: 빈 문자열("") 또는 필드를 보내지 않음 → DB에 NULL로 저장됨
+     * 삭제 방법: 빈 문자열("") 전송 → DB에 NULL로 저장됨 (필드를 보내지 않으면 기존 값 유지)
      */
     @Size(max = 255, message = "습관은 255자 이내로 입력해주세요")
     private String habits;
@@ -86,7 +86,7 @@ public class DogUpdateRequest {
     /**
      * 건강 정보 (선택, 입력 시 255자 이내)
      * DB: NULL 허용
-     * 삭제 방법: 빈 문자열("") 또는 필드를 보내지 않음 → DB에 NULL로 저장됨
+     * 삭제 방법: 빈 문자열("") 전송 → DB에 NULL로 저장됨 (필드를 보내지 않으면 기존 값 유지)
      */
     @Size(max = 255, message = "건강 정보는 255자 이내로 입력해주세요")
     private String healthInfo;
@@ -106,7 +106,7 @@ public class DogUpdateRequest {
     /**
      * 프로필 이미지 URL (선택, 입력 시 500자 이내)
      * DB: NULL 허용
-     * 삭제 방법: 빈 문자열("") 또는 필드를 보내지 않음 → DB에 NULL로 저장됨
+     * 삭제 방법: 빈 문자열("") 전송 → DB에 NULL로 저장됨 (필드를 보내지 않으면 기존 값 유지)
      */
     @JsonProperty("profileImage")
     @Size(max = 500, message = "프로필 이미지 URL은 500자 이내로 입력해주세요")

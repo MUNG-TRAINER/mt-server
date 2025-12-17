@@ -187,11 +187,10 @@
                 is_neutered = #{request.isNeutered},
             </if>
             <!-- 선택값 (NULL 허용) - null 또는 빈 문자열을 NULL로 업데이트 -->
-            <choose>
-                <when test="request.weight != null">
-                    weight = #{request.weight},
-                </when>
-            </choose>
+            <!-- weight: 숫자 타입이므로 빈 문자열 케이스 없음, null만 체크 -->
+            <if test="request.weight != null">
+                weight = #{request.weight},
+            </if>
             <choose>
                 <when test="request.personality != null and request.personality != ''">
                     personality = #{request.personality},
@@ -216,7 +215,7 @@
                     health_info = NULL,
                 </when>
             </choose>
-            <!-- 사회화 정보 (NOT NULL이므로 선택값) -->
+            <!-- 사회화 정보 (NOT NULL) -->
             <if test="request.humanSocialization != null">
                 human_socialization = #{request.humanSocialization},
             </if>
