@@ -72,6 +72,16 @@ public class Dog extends BaseEntity {
     private String healthInfo;
 
     /**
+     * 사람 사회화 수준
+     */
+    private SocializationLevel humanSocialization;
+
+    /**
+     * 동물 사회화 수준
+     */
+    private SocializationLevel animalSocialization;
+
+    /**
      * 프로필 이미지
      */
     private String profileImage;

@@ -144,14 +144,29 @@ public class DogService {
         String oldImageKey = dog.getProfileImage();
         String newImageKey = request.getProfileImageUrl();
 
-        // 새 이미지가 있고, 기존 이미지와 다른 경우에만 삭제
-        if (newImageKey != null
-            && !newImageKey.isBlank()
-            && oldImageKey != null
-            && !oldImageKey.isBlank()
-            && !newImageKey.equals(oldImageKey)) {
-          s3Service.deleteFile(oldImageKey);
+        // profileImageUrl 필드가 요청에 포함된 경우에만 처리
+        if (newImageKey != null && oldImageKey != null && !oldImageKey.isBlank()) {
+            // Case 1: 빈 문자열("")로 이미지 삭제 요청
+            if (newImageKey.isBlank()) {
+                try {
+                    s3Service.deleteFile(oldImageKey);
+                    log.info("S3 프로필 이미지 삭제 완료. dogId: {}, imageKey: {}", dogId, oldImageKey);
+                } catch (Exception e) {
+                    log.warn("S3 프로필 이미지 삭제 실패 (계속 진행). dogId: {}, imageKey: {}", dogId, oldImageKey, e);
+                }
+            }
+            // Case 2: 새 이미지로 변경 (기존 이미지와 다른 경우)
+            else if (!newImageKey.equals(oldImageKey)) {
+                try {
+                    s3Service.deleteFile(oldImageKey);
+                    log.info("S3 프로필 이미지 교체 완료. dogId: {}, oldKey: {}, newKey: {}", dogId, oldImageKey, newImageKey);
+                } catch (Exception e) {
+                    log.warn("S3 프로필 이미지 삭제 실패 (계속 진행). dogId: {}, imageKey: {}", dogId, oldImageKey, e);
+                }
+            }
+            // Case 3: 같은 이미지면 아무것도 안 함
         }
+        // profileImageUrl 필드가 없으면 (null) 이미지 유지
 
         // 반려견 정보 수정 (프로필 이미지 URL 포함)
         int result = dogDAO.updateDog(dogId, userId, request, userId);
