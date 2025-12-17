@@ -30,6 +30,7 @@
         c.title               AS title,
         c.description         AS description,
         c.main_image          AS mainImage,
+        c.location            AS location,
 
         CONCAT(s.session_date, ' ', s.start_time, ' ~ ', s.end_time) AS sessionSchedule,
 

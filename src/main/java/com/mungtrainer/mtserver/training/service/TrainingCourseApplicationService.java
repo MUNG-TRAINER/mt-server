@@ -2,6 +2,7 @@ package com.mungtrainer.mtserver.training.service;
 
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
+import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.training.dao.ApplicationDAO;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationCancelRequest;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationRequest;
@@ -13,10 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,6 +22,7 @@ import java.util.stream.Collectors;
 public class TrainingCourseApplicationService {
 
     private final ApplicationDAO applicationDao;
+    private final S3Service s3Service;
 
     // 엔티티를 dto로 변환
     private ApplicationResponse toResponse(TrainingCourseApplication application) {
@@ -47,14 +46,48 @@ public class TrainingCourseApplicationService {
 
     // 신청내역 리스트 (카드용)
     public List<ApplicationListViewResponse> getApplicationListView(Long userId) {
-        return applicationDao.findApplicationListViewByUserId(userId);
+        // 1. DAO에서 리스트 조회
+        List<ApplicationListViewResponse> list = applicationDao.findApplicationListViewByUserId(userId);
+
+        if (list == null || list.isEmpty()) return Collections.emptyList();
+
+        // 2. S3 key 수집
+        List<String> imageKeys = list.stream()
+                .map(ApplicationListViewResponse::getMainImage)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 3~4. Presigned URL 발급 + key → URL 매핑 안전하게
+        Map<String, String> imageUrlMap = new HashMap<>();
+        if (!imageKeys.isEmpty()) {
+            for (String key : imageKeys) {
+                List<String> urls = s3Service.generateDownloadPresignedUrls(Collections.singletonList(key));
+                if (urls != null && !urls.isEmpty() && urls.get(0) != null && !urls.get(0).isEmpty()) {
+                    imageUrlMap.put(key, urls.get(0));
+                }
+            }
+        }
+        // 5. toBuilder() 사용해서 새 DTO 생성 + URL 매핑
+        List<ApplicationListViewResponse> mappedList = list.stream()
+                .map(dto -> {
+                    if (dto.getMainImage() != null) {
+                        return dto.toBuilder()
+                                .mainImage(imageUrlMap.get(dto.getMainImage()))
+                                .build();
+                    }
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        return mappedList;
     }
 
     // 신청 상세 조회
     public ApplicationResponse getApplicationById(Long userId,Long applicationId) {
         TrainingCourseApplication application = applicationDao.findById(applicationId);
         if (application == null){
-              throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
+            throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
         }
         if (!application.getCreatedBy().equals(userId)) {
             throw new CustomException(ErrorCode.UNAUTHORIZED_APPLICATION);
@@ -134,6 +167,11 @@ public class TrainingCourseApplicationService {
 
     // 신청 강아지 수정
     public void updateApplicationDog(Long userId, Long applicationId, Long newDogId) {
+        // newDogId null 체크
+        if (newDogId == null) {
+            throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
+        }
+
         // 1. 신청 조회
         TrainingCourseApplication application = applicationDao.findById(applicationId);
         if (application == null) {
@@ -146,7 +184,9 @@ public class TrainingCourseApplicationService {
         }
 
         // 3. 변경하려는 강아지가 동일하면 return
-        if (application.getDogId().equals(newDogId)) return;
+        if (application.getDogId() != null && application.getDogId().equals(newDogId)) {
+            return;
+        }
 
         // 4. 강아지 소유권 체크 (본인 강아지인지)
         Long ownerId = applicationDao.findOwnerByDogId(newDogId);
@@ -201,7 +241,7 @@ public class TrainingCourseApplicationService {
             // waiting 테이블 상태 변경 (WAITING → ENTERED)
             applicationDao.updateWaitingStatus(nextApplicationId, "ENTERED");
         }
-        }
+    }
     // 여러 신청 취소
     public void deleteApplicationList(Long userId, ApplicationCancelRequest request) {
         List<Long> applicationIds = request.getApplicationId();
@@ -234,7 +274,10 @@ public class TrainingCourseApplicationService {
             for (Long id : idsToCancel) {
                 TrainingCourseApplication app = applicationDao.findById(id);
                 if ("WAITING".equals(app.getStatus())) {
+                    // 대기 테이블 상태 변경
                     applicationDao.updateWaitingStatus(id, "CANCELLED");
+                    // application 테이블 상태도 CANCELLED로 변경
+                    applicationDao.updateApplicationStatus(id, "CANCELLED");
                 } else {
                     applicationDao.updateApplicationStatus(id, "CANCELLED");
                 }
@@ -246,7 +289,9 @@ public class TrainingCourseApplicationService {
                 int cancelCount = idsToCancel.size(); // 이번 세션에서 취소한 신청 수
                 for (int i = 0; i < cancelCount && i < waitingList.size(); i++) {
                     Long nextApplicationId = waitingList.get(i);
+                    // 신청 테이블 상태 변경 (대기 → 신청됨)
                     applicationDao.updateApplicationStatus(nextApplicationId, "APPLIED");
+                    // waiting 테이블 상태 변경 (WAITING → ENTERED)
                     applicationDao.updateWaitingStatus(nextApplicationId, "ENTERED");
                 }
             }
