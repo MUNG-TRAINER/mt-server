@@ -58,17 +58,16 @@ public class TrainingCourseApplicationService {
                 .distinct()
                 .collect(Collectors.toList());
 
-        // 3. Presigned URL 발급
-        List<String> presignedUrls = imageKeys.isEmpty()
-                ? Collections.emptyList()
-                : s3Service.generateDownloadPresignedUrls(imageKeys);
-
-        // 4. key → URL 매핑
+        // 3~4. Presigned URL 발급 + key → URL 매핑 안전하게
         Map<String, String> imageUrlMap = new HashMap<>();
-        for (int i = 0; i < imageKeys.size(); i++) {
-            imageUrlMap.put(imageKeys.get(i), presignedUrls.get(i));
+        if (!imageKeys.isEmpty()) {
+            for (String key : imageKeys) {
+                List<String> urls = s3Service.generateDownloadPresignedUrls(Collections.singletonList(key));
+                if (urls != null && !urls.isEmpty() && urls.get(0) != null && !urls.get(0).isEmpty()) {
+                    imageUrlMap.put(key, urls.get(0));
+                }
+            }
         }
-
         // 5. toBuilder() 사용해서 새 DTO 생성 + URL 매핑
         List<ApplicationListViewResponse> mappedList = list.stream()
                 .map(dto -> {
