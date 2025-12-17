@@ -44,6 +44,7 @@ public class TrainingCourseService {
                 .title(trainingCourse.getTitle())
                 .description(trainingCourse.getDescription())
                 .type(trainingCourse.getType())
+                .lessonForm(trainingCourse.getLessonForm())
                 .status(trainingCourse.getStatus())
                 .isFree(trainingCourse.getIsFree())
                 .difficulty(trainingCourse.getDifficulty())
