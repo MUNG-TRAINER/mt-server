@@ -186,20 +186,37 @@
             <if test="request.isNeutered != null">
                 is_neutered = #{request.isNeutered},
             </if>
-            <!-- 선택값 (NULL 허용) - 빈 문자열도 NULL로 업데이트 가능 -->
-            <if test="request.weight != null">
-                weight = #{request.weight},
-            </if>
-            <if test="request.personality != null">
-                personality = <if test="request.personality == ''">NULL</if><if test="request.personality != ''">#{request.personality}</if>,
-            </if>
-            <if test="request.habits != null">
-                habits = <if test="request.habits == ''">NULL</if><if test="request.habits != ''">#{request.habits}</if>,
-            </if>
-            <if test="request.healthInfo != null">
-                health_info = <if test="request.healthInfo == ''">NULL</if><if test="request.healthInfo != ''">#{request.healthInfo}</if>,
-            </if>
-            <!-- 사회화 정보 (NOT NULL이지만 선택값) -->
+            <!-- 선택값 (NULL 허용) - null 또는 빈 문자열을 NULL로 업데이트 -->
+            <choose>
+                <when test="request.weight != null">
+                    weight = #{request.weight},
+                </when>
+            </choose>
+            <choose>
+                <when test="request.personality != null and request.personality != ''">
+                    personality = #{request.personality},
+                </when>
+                <when test="request.personality != null and request.personality == ''">
+                    personality = NULL,
+                </when>
+            </choose>
+            <choose>
+                <when test="request.habits != null and request.habits != ''">
+                    habits = #{request.habits},
+                </when>
+                <when test="request.habits != null and request.habits == ''">
+                    habits = NULL,
+                </when>
+            </choose>
+            <choose>
+                <when test="request.healthInfo != null and request.healthInfo != ''">
+                    health_info = #{request.healthInfo},
+                </when>
+                <when test="request.healthInfo != null and request.healthInfo == ''">
+                    health_info = NULL,
+                </when>
+            </choose>
+            <!-- 사회화 정보 (NOT NULL이므로 선택값) -->
             <if test="request.humanSocialization != null">
                 human_socialization = #{request.humanSocialization},
             </if>
@@ -207,9 +224,14 @@
                 animal_socialization = #{request.animalSocialization},
             </if>
             <!-- 프로필 이미지 (NULL 허용) -->
-            <if test="request.profileImageUrl != null">
-                profile_image = <if test="request.profileImageUrl == ''">NULL</if><if test="request.profileImageUrl != ''">#{request.profileImageUrl}</if>,
-            </if>
+            <choose>
+                <when test="request.profileImageUrl != null and request.profileImageUrl != ''">
+                    profile_image = #{request.profileImageUrl},
+                </when>
+                <when test="request.profileImageUrl != null and request.profileImageUrl == ''">
+                    profile_image = NULL,
+                </when>
+            </choose>
             updated_by = #{updatedBy},
             updated_at = NOW()
         </set>

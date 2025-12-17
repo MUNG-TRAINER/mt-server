@@ -61,6 +61,7 @@ public class DogUpdateRequest {
     /**
      * 몸무게 (선택, 입력 시 0~100 사이)
      * DB: NULL 허용
+     * 삭제 방법: 필드를 보내지 않거나(부분 수정), 빈 값 전달 불가 (숫자 타입)
      */
     @DecimalMin(value = "0.0", message = "몸무게는 0 이상이어야 합니다")
     @DecimalMax(value = "100.0", message = "몸무게는 100 이하여야 합니다")
@@ -68,21 +69,24 @@ public class DogUpdateRequest {
 
     /**
      * 성격 (선택, 입력 시 255자 이내)
-     * DB: NULL 허용, 빈 문자열("")을 보내면 NULL로 업데이트됨
+     * DB: NULL 허용
+     * 삭제 방법: 빈 문자열("") 또는 필드를 보내지 않음 → DB에 NULL로 저장됨
      */
     @Size(max = 255, message = "성격은 255자 이내로 입력해주세요")
     private String personality;
 
     /**
      * 습관 (선택, 입력 시 255자 이내)
-     * DB: NULL 허용, 빈 문자열("")을 보내면 NULL로 업데이트됨
+     * DB: NULL 허용
+     * 삭제 방법: 빈 문자열("") 또는 필드를 보내지 않음 → DB에 NULL로 저장됨
      */
     @Size(max = 255, message = "습관은 255자 이내로 입력해주세요")
     private String habits;
 
     /**
      * 건강 정보 (선택, 입력 시 255자 이내)
-     * DB: NULL 허용, 빈 문자열("")을 보내면 NULL로 업데이트됨
+     * DB: NULL 허용
+     * 삭제 방법: 빈 문자열("") 또는 필드를 보내지 않음 → DB에 NULL로 저장됨
      */
     @Size(max = 255, message = "건강 정보는 255자 이내로 입력해주세요")
     private String healthInfo;
@@ -101,7 +105,8 @@ public class DogUpdateRequest {
 
     /**
      * 프로필 이미지 URL (선택, 입력 시 500자 이내)
-     * DB: NULL 허용, 빈 문자열("")을 보내면 NULL로 업데이트됨
+     * DB: NULL 허용
+     * 삭제 방법: 빈 문자열("") 또는 필드를 보내지 않음 → DB에 NULL로 저장됨
      */
     @JsonProperty("profileImage")
     @Size(max = 500, message = "프로필 이미지 URL은 500자 이내로 입력해주세요")
