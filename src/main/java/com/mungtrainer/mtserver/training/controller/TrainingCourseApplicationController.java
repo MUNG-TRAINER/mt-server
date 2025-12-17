@@ -68,10 +68,19 @@ public class TrainingCourseApplicationController {
     }
 
 
+//    // 신청내역 리스트 (UI 카드용)
+//    @GetMapping("/list")
+//    public ResponseEntity<List<ApplicationListViewResponse>> getApplicationListView(@AuthenticationPrincipal CustomUserDetails principal) {
+//        Long userId = principal.getUserId();
+//        return ResponseEntity.ok(
+//                applicationService.getApplicationListView(userId)
+//        );
+//    }
+
     // 신청내역 리스트 (UI 카드용)
     @GetMapping("/list")
-    public ResponseEntity<List<ApplicationListViewResponse>> getApplicationListView(@AuthenticationPrincipal CustomUserDetails principal) {
-        Long userId = principal.getUserId();
+    public ResponseEntity<List<ApplicationListViewResponse>> getApplicationListView() {
+        Long userId = 4L;
         return ResponseEntity.ok(
                 applicationService.getApplicationListView(userId)
         );

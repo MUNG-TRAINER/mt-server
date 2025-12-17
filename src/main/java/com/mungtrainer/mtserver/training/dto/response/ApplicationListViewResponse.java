@@ -4,7 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 public class ApplicationListViewResponse {
 // 리스트 조회 전용
 
@@ -22,6 +22,7 @@ public class ApplicationListViewResponse {
     private String title;
     private String description;
     private String mainImage;
+    private String location;
 
     // 세션 // ex: "2025-12-20 10:00 ~ 12:00"
     private String sessionSchedule;
