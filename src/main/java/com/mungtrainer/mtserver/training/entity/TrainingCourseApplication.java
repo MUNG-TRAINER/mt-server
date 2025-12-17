@@ -39,10 +39,10 @@ public class TrainingCourseApplication extends BaseEntity {
     private LocalDateTime appliedAt;
 
     /**
-     * 상태 (APPLIED, PAID, CANCELLED, WAITING, REJECTED, NO_SHOW, EXPIRED, REFUNDED, REFUND_REQUESTED)
+     * 상태 (APPLIED, PAID, CANCELLED, WAITING, REJECTED, ACCEPT, NO_SHOW, EXPIRED, REFUNDED, REFUND_REQUESTED)
      */
     @NotNull
-    @Pattern(regexp = "APPLIED|PAID|CANCELLED|WAITING|REJECTED|NO_SHOW|EXPIRED|REFUNDED|REFUND_REQUESTED",
+    @Pattern(regexp = "APPLIED|PAID|CANCELLED|WAITING|REJECTED|ACCEPT|NO_SHOW|EXPIRED|REFUNDED|REFUND_REQUESTED",
             message = "유효하지 않은 상태입니다.")
     private String status;
 
