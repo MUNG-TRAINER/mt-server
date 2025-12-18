@@ -5,6 +5,8 @@ import com.mungtrainer.mtserver.training.dto.request.CourseSearchRequest;
 import com.mungtrainer.mtserver.training.dto.response.CourseSearchResponse;
 import com.mungtrainer.mtserver.training.dto.response.TrainingCourseResponse;
 import com.mungtrainer.mtserver.training.service.TrainingCourseService;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -36,7 +38,7 @@ public class TrainingCourseController {
     public ResponseEntity<CourseSearchResponse> searchCourses(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long lastCourseId,
-            @RequestParam(defaultValue = "20") Integer size,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) Integer size,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         CourseSearchRequest request = CourseSearchRequest.builder()

@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class CourseSearchRequest {
 
     /**
-     * 검색 키워드 (제목으로 검색)
+     * 검색 키워드 (제목 또는 태그로 검색)
      */
     private String keyword;
 

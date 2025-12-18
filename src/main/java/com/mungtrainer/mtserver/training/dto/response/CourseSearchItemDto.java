@@ -1,9 +1,6 @@
 package com.mungtrainer.mtserver.training.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
@@ -11,6 +8,7 @@ import java.util.List;
  * 훈련과정 검색 결과 아이템 DTO
  */
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

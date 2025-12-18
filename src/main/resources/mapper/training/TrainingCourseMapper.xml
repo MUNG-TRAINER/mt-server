@@ -82,11 +82,13 @@
             SELECT ts1.*
             FROM training_session ts1
             INNER JOIN (
-                SELECT course_id, MIN(price) AS min_price
-                FROM training_session
-                WHERE is_deleted = 0
-                GROUP BY course_id
-            ) ts2 ON ts1.course_id = ts2.course_id AND ts1.price = ts2.min_price
+        SELECT course_id, MIN(price) AS min_price, MIN(session_id) AS min_session_id
+        FROM training_session
+        WHERE is_deleted = 0
+        GROUP BY course_id
+        ) ts2 ON ts1.course_id = ts2.course_id
+        AND ts1.price = ts2.min_price
+        AND ts1.session_id = ts2.min_session_id
             WHERE ts1.is_deleted = 0
         ) ts ON tc.course_id = ts.course_id
         ORDER BY tc.course_id DESC

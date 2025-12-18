@@ -96,34 +96,15 @@ public class TrainingCourseService {
             courses = courses.subList(0, request.getSize());
         }
 
-        // S3 Presigned URL 생성
-        List<CourseSearchItemDto> coursesWithPresignedUrl = courses.stream()
-                .map(course -> {
-                    String presignedUrl = course.getMainImage();
-                    if (course.getMainImage() != null && !course.getMainImage().isBlank()) {
-                        presignedUrl = s3Service.generateDownloadPresignedUrl(course.getMainImage());
-                    }
-
-                    return CourseSearchItemDto.builder()
-                            .courseId(course.getCourseId())
-                            .trainerId(course.getTrainerId())
-                            .trainerName(course.getTrainerName())
-                            .title(course.getTitle())
-                            .description(course.getDescription())
-                            .tags(course.getTags())
-                            .mainImage(presignedUrl)
-                            .type(course.getType())
-                            .lessonForm(course.getLessonForm())
-                            .status(course.getStatus())
-                            .difficulty(course.getDifficulty())
-                            .isFree(course.getIsFree())
-                            .location(course.getLocation())
-                            .schedule(course.getSchedule())
-                            .dogSize(course.getDogSize())
-                            .session(course.getSession())
-                            .build();
-                })
-                .collect(Collectors.toList());
+      // S3 Presigned URL 생성 (기존 DTO를 재사용하면서 mainImage만 수정)
+      for (CourseSearchItemDto course : courses) {
+        String presignedUrl = course.getMainImage();
+        if (course.getMainImage() != null && !course.getMainImage().isBlank()) {
+          presignedUrl = s3Service.generateDownloadPresignedUrl(course.getMainImage());
+        }
+        course.setMainImage(presignedUrl);
+      }
+      List<CourseSearchItemDto> coursesWithPresignedUrl = courses;
 
         // 마지막 courseId 추출
         Long lastCourseId = coursesWithPresignedUrl.isEmpty()
