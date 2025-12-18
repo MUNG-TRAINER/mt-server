@@ -17,5 +17,6 @@ public class TrainerResponse {
     private String description;
     private String style;
     private String tag;
+    private String registCode;
     private String certificationImageUrl;
 }
