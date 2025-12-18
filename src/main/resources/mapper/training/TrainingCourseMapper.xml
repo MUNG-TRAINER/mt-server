@@ -10,4 +10,88 @@
         WHERE course_id = #{courseId}
     </select>
 
+    <!-- 훈련과정 검색 (무한 스크롤 - 커서 기반) -->
+    <resultMap id="CourseSearchResultMap" type="com.mungtrainer.mtserver.training.dto.response.CourseSearchItemDto">
+        <id property="courseId" column="course_id"/>
+        <result property="trainerId" column="trainer_id"/>
+        <result property="trainerName" column="trainer_name"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="tags" column="tags"/>
+        <result property="mainImage" column="main_image"/>
+        <result property="type" column="type"/>
+        <result property="lessonForm" column="lesson_form"/>
+        <result property="status" column="status"/>
+        <result property="difficulty" column="difficulty"/>
+        <result property="isFree" column="is_free"/>
+        <result property="location" column="location"/>
+        <result property="schedule" column="schedule"/>
+        <result property="dogSize" column="dog_size"/>
+        <association property="session" javaType="com.mungtrainer.mtserver.training.dto.response.SessionSummaryDto">
+            <id property="sessionId" column="session_id"/>
+            <result property="startTime" column="start_time"/>
+            <result property="endTime" column="end_time"/>
+            <result property="locationDetail" column="location_detail"/>
+            <result property="maxStudents" column="max_students"/>
+            <result property="price" column="price"/>
+        </association>
+    </resultMap>
+
+    <select id="searchCourses" resultMap="CourseSearchResultMap">
+        SELECT
+            tc.course_id,
+            tc.trainer_id,
+            u.name AS trainer_name,
+            tc.title,
+            tc.description,
+            tc.tags,
+            tc.main_image,
+            tc.type,
+            tc.lesson_form,
+            tc.status,
+            tc.difficulty,
+            tc.is_free,
+            tc.location,
+            tc.schedule,
+            tc.dog_size,
+            ts.session_id,
+            ts.start_time,
+            ts.end_time,
+            ts.location_detail,
+            ts.max_students,
+            ts.price
+        FROM (
+            SELECT tc_sub.*
+            FROM training_course tc_sub
+            WHERE tc_sub.is_deleted = 0
+            <if test="request.trainerId != null">
+                AND tc_sub.trainer_id = #{request.trainerId}
+            </if>
+            <if test="request.keyword != null and request.keyword != ''">
+                AND (tc_sub.title LIKE CONCAT('%', #{request.keyword}, '%')
+                     OR tc_sub.tags LIKE CONCAT('%', #{request.keyword}, '%'))
+            </if>
+            <if test="request.lastCourseId != null">
+                AND tc_sub.course_id &lt; #{request.lastCourseId}
+            </if>
+            ORDER BY tc_sub.course_id DESC
+            LIMIT #{request.size}
+        ) tc
+        INNER JOIN user u ON tc.trainer_id = u.user_id AND u.is_deleted = 0
+        LEFT JOIN (
+            SELECT ts1.*
+            FROM training_session ts1
+            INNER JOIN (
+        SELECT course_id, MIN(price) AS min_price, MIN(session_id) AS min_session_id
+        FROM training_session
+        WHERE is_deleted = 0
+        GROUP BY course_id
+        ) ts2 ON ts1.course_id = ts2.course_id
+        AND ts1.price = ts2.min_price
+        AND ts1.session_id = ts2.min_session_id
+            WHERE ts1.is_deleted = 0
+        ) ts ON tc.course_id = ts.course_id
+        ORDER BY tc.course_id DESC
+    </select>
+
 </mapper>
