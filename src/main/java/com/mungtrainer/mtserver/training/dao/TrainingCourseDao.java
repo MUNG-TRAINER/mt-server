@@ -13,12 +13,7 @@ public interface TrainingCourseDao {
     TrainingCourse findByCourseId(@Param("courseId")Long courseId);
 
     /**
-     * 훈련과정 검색
+     * 훈련과정 검색 (무한 스크롤 - 커서 기반)
      */
     List<CourseSearchItemDto> searchCourses(@Param("request") CourseSearchRequest request);
-
-    /**
-     * 검색 결과 전체 개수 조회
-     */
-    Integer countSearchResults(@Param("request") CourseSearchRequest request);
 }

@@ -10,7 +10,7 @@
         WHERE course_id = #{courseId}
     </select>
 
-    <!-- 훈련과정 검색 -->
+    <!-- 훈련과정 검색 (무한 스크롤 - 커서 기반) -->
     <select id="searchCourses" resultType="com.mungtrainer.mtserver.training.dto.response.CourseSearchItemDto">
         SELECT
             tc.course_id AS courseId,
@@ -32,20 +32,13 @@
         <if test="request.keyword != null and request.keyword != ''">
             AND tc.title LIKE CONCAT('%', #{request.keyword}, '%')
         </if>
+        <if test="request.lastCourseId != null">
+            AND tc.course_id &lt; #{request.lastCourseId}
+        </if>
         GROUP BY tc.course_id, tc.trainer_id, u.name, tc.title, tc.description, tc.tags,
                  tc.main_image, tc.lesson_form, tc.difficulty, tc.location, tc.type
-        ORDER BY tc.created_at DESC
-        LIMIT #{request.size} OFFSET #{request.offset}
-    </select>
-
-    <!-- 검색 결과 전체 개수 조회 -->
-    <select id="countSearchResults" resultType="int">
-        SELECT COUNT(DISTINCT tc.course_id)
-        FROM training_course tc
-        WHERE tc.is_deleted = 0
-        <if test="request.keyword != null and request.keyword != ''">
-            AND tc.title LIKE CONCAT('%', #{request.keyword}, '%')
-        </if>
+        ORDER BY tc.course_id DESC
+        LIMIT #{request.size}
     </select>
 
 </mapper>

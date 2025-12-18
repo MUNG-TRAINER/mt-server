@@ -19,18 +19,22 @@ public class TrainingCourseController {
     private final TrainingCourseService courseService;
 
     /**
-     * 훈련과정 검색
-     * GET /api/course/search?keyword=기초&page=1&size=20
+     * 훈련과정 검색 (무한 스크롤)
+     * GET /api/course/search?keyword=기초&lastCourseId=123&size=20
+     *
+     * @param keyword 검색 키워드
+     * @param lastCourseId 마지막으로 조회한 courseId (다음 페이지 조회 시 사용)
+     * @param size 조회할 항목 수
      */
     @GetMapping("/search")
     public ResponseEntity<CourseSearchResponse> searchCourses(
             @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(required = false) Long lastCourseId,
             @RequestParam(defaultValue = "20") Integer size) {
 
         CourseSearchRequest request = CourseSearchRequest.builder()
                 .keyword(keyword)
-                .page(page)
+                .lastCourseId(lastCourseId)
                 .size(size)
                 .build();
 

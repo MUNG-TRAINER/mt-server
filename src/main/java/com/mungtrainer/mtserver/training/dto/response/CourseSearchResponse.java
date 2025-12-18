@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * 훈련과정 검색 결과 응답 DTO
+ * 훈련과정 검색 결과 응답 DTO (무한 스크롤용)
  */
 @Getter
 @Builder
@@ -22,23 +22,18 @@ public class CourseSearchResponse {
     private List<CourseSearchItemDto> courses;
 
     /**
-     * 전체 결과 개수
+     * 다음 페이지 존재 여부
      */
-    private Integer totalCount;
+    private Boolean hasMore;
 
     /**
-     * 현재 페이지 번호
+     * 마지막 courseId (다음 요청 시 사용할 커서)
      */
-    private Integer currentPage;
+    private Long lastCourseId;
 
     /**
-     * 전체 페이지 수
+     * 현재 조회된 항목 수
      */
-    private Integer totalPages;
-
-    /**
-     * 페이지당 항목 수
-     */
-    private Integer pageSize;
+    private Integer size;
 }
 

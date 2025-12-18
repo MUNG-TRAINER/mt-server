@@ -67,11 +67,23 @@ public class TrainingCourseService {
     }
 
     /**
-     * 훈련과정 검색
+     * 훈련과정 검색 (무한 스크롤)
      */
     public CourseSearchResponse searchCourses(CourseSearchRequest request) {
-        // 검색 실행
-        List<CourseSearchItemDto> courses = trainingCourseDao.searchCourses(request);
+        // size + 1개 조회하여 다음 페이지 존재 여부 확인
+        CourseSearchRequest searchRequest = CourseSearchRequest.builder()
+                .keyword(request.getKeyword())
+                .lastCourseId(request.getLastCourseId())
+                .size(request.getSize() + 1)
+                .build();
+
+        List<CourseSearchItemDto> courses = trainingCourseDao.searchCourses(searchRequest);
+
+        // 다음 페이지 존재 여부 확인
+        boolean hasMore = courses.size() > request.getSize();
+        if (hasMore) {
+            courses = courses.subList(0, request.getSize());
+        }
 
         // S3 Presigned URL 생성
         List<CourseSearchItemDto> coursesWithPresignedUrl = courses.stream()
@@ -98,18 +110,16 @@ public class TrainingCourseService {
                 })
                 .collect(Collectors.toList());
 
-        // 전체 개수 조회
-        Integer totalCount = trainingCourseDao.countSearchResults(request);
-
-        // 전체 페이지 수 계산
-        int totalPages = (int) Math.ceil((double) totalCount / request.getSize());
+        // 마지막 courseId 추출
+        Long lastCourseId = coursesWithPresignedUrl.isEmpty()
+                ? null
+                : coursesWithPresignedUrl.get(coursesWithPresignedUrl.size() - 1).getCourseId();
 
         return CourseSearchResponse.builder()
                 .courses(coursesWithPresignedUrl)
-                .totalCount(totalCount)
-                .currentPage(request.getPage())
-                .totalPages(totalPages)
-                .pageSize(request.getSize())
+                .hasMore(hasMore)
+                .lastCourseId(lastCourseId)
+                .size(coursesWithPresignedUrl.size())
                 .build();
     }
 }

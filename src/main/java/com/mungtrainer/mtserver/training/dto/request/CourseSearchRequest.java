@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 훈련과정 검색 요청 DTO
+ * 훈련과정 검색 요청 DTO (무한 스크롤용 커서 기반 페이지네이션)
  */
 @Getter
 @Builder
@@ -20,22 +20,15 @@ public class CourseSearchRequest {
     private String keyword;
 
     /**
-     * 페이지 번호 (1부터 시작)
+     * 마지막으로 조회한 courseId (커서)
+     * null이면 첫 페이지 조회
      */
-    @Builder.Default
-    private Integer page = 1;
+    private Long lastCourseId;
 
     /**
-     * 페이지당 항목 수
+     * 조회할 항목 수
      */
     @Builder.Default
     private Integer size = 20;
-
-    /**
-     * 오프셋 계산
-     */
-    public Integer getOffset() {
-        return (page - 1) * size;
-    }
 }
 
