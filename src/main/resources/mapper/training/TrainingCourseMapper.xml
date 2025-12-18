@@ -11,34 +11,82 @@
     </select>
 
     <!-- 훈련과정 검색 (무한 스크롤 - 커서 기반) -->
-    <select id="searchCourses" resultType="com.mungtrainer.mtserver.training.dto.response.CourseSearchItemDto">
+    <resultMap id="CourseSearchResultMap" type="com.mungtrainer.mtserver.training.dto.response.CourseSearchItemDto">
+        <id property="courseId" column="course_id"/>
+        <result property="trainerId" column="trainer_id"/>
+        <result property="trainerName" column="trainer_name"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="tags" column="tags"/>
+        <result property="mainImage" column="main_image"/>
+        <result property="type" column="type"/>
+        <result property="lessonForm" column="lesson_form"/>
+        <result property="status" column="status"/>
+        <result property="difficulty" column="difficulty"/>
+        <result property="isFree" column="is_free"/>
+        <result property="location" column="location"/>
+        <result property="schedule" column="schedule"/>
+        <result property="dogSize" column="dog_size"/>
+        <association property="session" javaType="com.mungtrainer.mtserver.training.dto.response.SessionSummaryDto">
+            <id property="sessionId" column="session_id"/>
+            <result property="startTime" column="start_time"/>
+            <result property="endTime" column="end_time"/>
+            <result property="locationDetail" column="location_detail"/>
+            <result property="maxStudents" column="max_students"/>
+            <result property="price" column="price"/>
+        </association>
+    </resultMap>
+
+    <select id="searchCourses" resultMap="CourseSearchResultMap">
         SELECT
-            tc.course_id AS courseId,
-            tc.trainer_id AS trainerId,
-            u.name AS trainerName,
+            tc.course_id,
+            tc.trainer_id,
+            u.name AS trainer_name,
             tc.title,
             tc.description,
             tc.tags,
-            tc.main_image AS mainImage,
-            tc.lesson_form AS lessonForm,
-            tc.difficulty,
-            tc.location,
+            tc.main_image,
             tc.type,
-            MIN(ts.price) AS price
-        FROM training_course tc
+            tc.lesson_form,
+            tc.status,
+            tc.difficulty,
+            tc.is_free,
+            tc.location,
+            tc.schedule,
+            tc.dog_size,
+            ts.session_id,
+            ts.start_time,
+            ts.end_time,
+            ts.location_detail,
+            ts.max_students,
+            ts.price
+        FROM (
+            SELECT tc_sub.*
+            FROM training_course tc_sub
+            WHERE tc_sub.is_deleted = 0
+            <if test="request.keyword != null and request.keyword != ''">
+                AND (tc_sub.title LIKE CONCAT('%', #{request.keyword}, '%')
+                     OR tc_sub.tags LIKE CONCAT('%', #{request.keyword}, '%'))
+            </if>
+            <if test="request.lastCourseId != null">
+                AND tc_sub.course_id &lt; #{request.lastCourseId}
+            </if>
+            ORDER BY tc_sub.course_id DESC
+            LIMIT #{request.size}
+        ) tc
         INNER JOIN user u ON tc.trainer_id = u.user_id AND u.is_deleted = 0
-        LEFT JOIN training_session ts ON tc.course_id = ts.course_id AND ts.is_deleted = 0
-        WHERE tc.is_deleted = 0
-        <if test="request.keyword != null and request.keyword != ''">
-            AND tc.title LIKE CONCAT('%', #{request.keyword}, '%')
-        </if>
-        <if test="request.lastCourseId != null">
-            AND tc.course_id &lt; #{request.lastCourseId}
-        </if>
-        GROUP BY tc.course_id, tc.trainer_id, u.name, tc.title, tc.description, tc.tags,
-                 tc.main_image, tc.lesson_form, tc.difficulty, tc.location, tc.type
+        LEFT JOIN (
+            SELECT ts1.*
+            FROM training_session ts1
+            INNER JOIN (
+                SELECT course_id, MIN(price) AS min_price
+                FROM training_session
+                WHERE is_deleted = 0
+                GROUP BY course_id
+            ) ts2 ON ts1.course_id = ts2.course_id AND ts1.price = ts2.min_price
+            WHERE ts1.is_deleted = 0
+        ) ts ON tc.course_id = ts.course_id
         ORDER BY tc.course_id DESC
-        LIMIT #{request.size}
     </select>
 
 </mapper>

@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * 훈련과정 검색 결과 아이템 DTO
  */
@@ -50,9 +52,19 @@ public class CourseSearchItemDto {
     private String mainImage;
 
     /**
+     * 훈련 유형 (ONCE, MULTI)
+     */
+    private String type;
+
+    /**
      * 수업 형태 (WALK, GROUP, PRIVATE 등)
      */
     private String lessonForm;
+
+    /**
+     * 상태 (SCHEDULED, CANCELLED, DONE)
+     */
+    private String status;
 
     /**
      * 난이도
@@ -60,18 +72,28 @@ public class CourseSearchItemDto {
     private String difficulty;
 
     /**
-     * 위치
+     * 무료 여부
+     */
+    private Boolean isFree;
+
+    /**
+     * 위치 (시/도)
      */
     private String location;
 
     /**
-     * 훈련 유형 (ONCE, MULTI)
+     * 일정 정보
      */
-    private String type;
+    private String schedule;
 
     /**
-     * 최소 가격
+     * 대상 강아지 크기
      */
-    private Integer price;
+    private String dogSize;
+
+    /**
+     * 세션 정보 (최저가 세션)
+     */
+    private SessionSummaryDto session;
 }
 
