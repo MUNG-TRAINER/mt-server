@@ -57,6 +57,7 @@ public class TrainerService {
                 .description(profile.getDescription())
                 .style(profile.getStyle())
                 .tag(profile.getTag())
+                .registCode(profile.getRegistCode())
                 .certificationImageUrl(presignedUrl)
                 .build();
     }
