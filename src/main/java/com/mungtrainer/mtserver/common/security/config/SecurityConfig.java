@@ -54,7 +54,8 @@ public class SecurityConfig {
                                                     "/api/auth/password",
                                                     "/api/auth/logout",
                                                     "/api/presigned-url",
-                                                    "/api/auth/check").authenticated()
+                                                    "/api/auth/check",
+                                                    "/api/course/search").authenticated()
 
                                     // 그 외에는 인증 패스
                                    .anyRequest().permitAll()
