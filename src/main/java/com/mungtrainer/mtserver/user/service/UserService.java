@@ -79,14 +79,19 @@ public class UserService {
         String oldImageKey = user.getProfileImage();
         String newImageKey = request.getProfileImage();
 
-        // 새 이미지가 있고, 기존 이미지와 다른 경우에만 삭제
-        if (newImageKey != null
-                && !newImageKey.isBlank()
-                && oldImageKey != null
-                && !oldImageKey.isBlank()
-                && !newImageKey.equals(oldImageKey)) {
-            s3Service.deleteFile(oldImageKey);
+        // profileImage 필드가 요청에 포함된 경우에만 처리
+        if (newImageKey != null && oldImageKey != null && !oldImageKey.isBlank()) {
+            // Case 1: 빈 문자열("")로 이미지 삭제 요청
+            if (newImageKey.isBlank()) {
+                s3Service.deleteFile(oldImageKey);
+            }
+            // Case 2: 새 이미지로 변경 (기존 이미지와 다른 경우)
+            else if (!newImageKey.equals(oldImageKey)) {
+                s3Service.deleteFile(oldImageKey);
+            }
+            // Case 3: 같은 이미지면 아무것도 안 함
         }
+        // profileImage 필드가 없으면 (null) 이미지 유지
 
         updateUserFields(user, request);
 

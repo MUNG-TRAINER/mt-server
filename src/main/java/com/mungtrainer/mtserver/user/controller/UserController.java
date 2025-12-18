@@ -53,7 +53,7 @@ public class UserController {
      * 사용자 프로필 수정
      * PUT /api/users
      */
-    @PatchMapping
+    @PutMapping("/me")
     public ResponseEntity<UserProfileResponse> updateUserProfile(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @Valid @RequestBody UserProfileUpdateRequest request) {
