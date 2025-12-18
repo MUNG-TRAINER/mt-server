@@ -29,10 +29,7 @@ public class TrainingSessionController {
     public ResponseEntity<List<TrainingSessionResponse>> getSessionList(
             @PathVariable Long courseId
     ) {
-        log.info("세션 목록 조회 요청 - courseId: {}", courseId);
-
         List<TrainingSessionResponse> sessions = trainingSessionService.getSessionsByCourseId(courseId);
-
         return ResponseEntity.ok(sessions);
     }
 
@@ -45,10 +42,7 @@ public class TrainingSessionController {
             @PathVariable Long courseId,
             @PathVariable Long sessionId
     ) {
-        log.info("세션 상세 조회 요청 - courseId: {}, sessionId: {}", courseId, sessionId);
-
         TrainingSessionResponse session = trainingSessionService.getSessionById(courseId, sessionId);
-
         return ResponseEntity.ok(session);
     }
 

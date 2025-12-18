@@ -64,6 +64,9 @@
             SELECT tc_sub.*
             FROM training_course tc_sub
             WHERE tc_sub.is_deleted = 0
+            <if test="request.trainerId != null">
+                AND tc_sub.trainer_id = #{request.trainerId}
+            </if>
             <if test="request.keyword != null and request.keyword != ''">
                 AND (tc_sub.title LIKE CONCAT('%', #{request.keyword}, '%')
                      OR tc_sub.tags LIKE CONCAT('%', #{request.keyword}, '%'))

@@ -30,5 +30,11 @@ public class CourseSearchRequest {
      */
     @Builder.Default
     private Integer size = 20;
-}
 
+    /**
+     * 훈련사 ID (역할 기반 필터링용)
+     * - USER: 자신이 속한 훈련사의 과정만 조회
+     * - TRAINER: 자신이 등록한 과정만 조회
+     */
+    private Long trainerId;
+}
