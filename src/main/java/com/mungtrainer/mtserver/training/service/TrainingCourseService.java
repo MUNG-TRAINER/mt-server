@@ -40,7 +40,10 @@ public class TrainingCourseService {
         List<String> detailPresignedUrls = List.of();
 
         if (detailFileKey != null && !detailFileKey.isBlank()) {
-          detailPresignedUrls = Arrays.stream(detailFileKey.split(",")).toList();
+          detailPresignedUrls = Arrays.stream(detailFileKey.split(","))
+                                      .map(String::trim)
+                                      .filter(s -> !s.isEmpty())
+                                      .toList();
         }
 
         if (mainFileKey != null && !mainFileKey.isBlank()) {
