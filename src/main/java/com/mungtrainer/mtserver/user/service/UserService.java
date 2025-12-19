@@ -125,19 +125,15 @@ public class UserService {
     }
 
     /**
-     * 반려견 프로필 공개 여부 변경
+     * 사용자 반려견 프로필 공개 여부 변경
      * @param userId 사용자 ID
      * @param isPublic 공개 여부
      */
     @Transactional
     public void updatePublicStatus(Long userId, Boolean isPublic) {
-        // 사용자 존재 여부 확인
-        userMapper.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        int result = userMapper.updatePublicStatus(userId, isPublic);
-        if (result == 0) {
-            throw new CustomException(ErrorCode.PROFILE_UPDATE_FAILED);
+      int result = userMapper.updatePublicStatus(userId, isPublic);
+      if (result == 0) {
+        throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }
     }
 

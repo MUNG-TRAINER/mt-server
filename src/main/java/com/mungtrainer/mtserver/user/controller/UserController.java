@@ -82,7 +82,7 @@ public class UserController {
     }
 
     /**
-     * 반려견 프로필 공개 여부 변경
+     * 사용자 반려견 프로필 공개 여부 변경
      * PATCH /api/users/me/public-status
      */
     @PatchMapping("/me/public-status")
