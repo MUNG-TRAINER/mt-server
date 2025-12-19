@@ -168,7 +168,11 @@ public class CourseService {
           @Override
           public void afterCommit() {
             s3Service.deleteFile(mainImage);
-            s3Service.deleteFile(detailImage);
+            if(detailImage != null && !detailImage.isBlank()){
+              for(String splitDetailImage : detailImage.split(",")){
+                s3Service.deleteFile(splitDetailImage);
+              }
+            }
           }
         }
     );
@@ -188,7 +192,11 @@ public class CourseService {
 
   private void deleteIfChanged(String oldKey, String newKey) {
     if (!newKey.equals(oldKey)) {
-      s3Service.deleteFile(oldKey);
+      if(oldKey != null && !oldKey.isBlank()){
+        for(String splitDetailImage : oldKey.split(",")){
+          s3Service.deleteFile(splitDetailImage);
+        }
+      }
     }
   }
 

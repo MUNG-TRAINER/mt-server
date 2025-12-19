@@ -37,9 +37,11 @@ public class TrainingCourseService {
 
        // presigned URL 생성
         String mainPresignedUrl = null;
-        List<String> detailPresignedUrls;
+        List<String> detailPresignedUrls = List.of();
 
-        detailPresignedUrls = Arrays.stream(detailFileKey.split(",")).toList();
+        if (detailFileKey != null && !detailFileKey.isBlank()) {
+          detailPresignedUrls = Arrays.stream(detailFileKey.split(",")).toList();
+        }
 
         if (mainFileKey != null && !mainFileKey.isBlank()) {
             mainPresignedUrl = s3Service.generateDownloadPresignedUrl(mainFileKey);
