@@ -15,5 +15,6 @@ public class UserCourseSessionResponse {
     private LocalTime startTime;
     private LocalTime endTime;
     private String sessionStatus;
-    private String applicationStatus;
+    private String orderStatus;
+    private String dogName;
 }
