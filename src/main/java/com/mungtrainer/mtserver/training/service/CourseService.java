@@ -152,6 +152,9 @@ public class CourseService {
       throw new CustomException(ErrorCode.COURSE_HAS_PAID_APPLICATIONS);
     }
 
+    TrainingCourse course = courseDAO.getCourseById(courseId);
+    String mainImage = course.getMainImage();
+    String detailImage = course.getDetailImage();
     courseDAO.cancelSessionsAndApplications(courseId, userId);
     courseDAO.cancelCourse(courseId, userId);
     courseDAO.softDeleteByApplication(courseId, userId);
@@ -164,9 +167,8 @@ public class CourseService {
         new TransactionSynchronization() {
           @Override
           public void afterCommit() {
-            TrainingCourse course = courseDAO.getCourseById(courseId);
-            s3Service.deleteFile(course.getMainImage());
-            s3Service.deleteFile(course.getDetailImage());
+            s3Service.deleteFile(mainImage);
+            s3Service.deleteFile(detailImage);
           }
         }
     );

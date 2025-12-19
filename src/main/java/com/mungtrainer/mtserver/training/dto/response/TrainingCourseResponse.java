@@ -3,6 +3,8 @@ package com.mungtrainer.mtserver.training.dto.response;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 @Builder
 public class TrainingCourseResponse {
@@ -21,7 +23,7 @@ public class TrainingCourseResponse {
     private String refundPolicy;
     private String mainImage;
     private String mainImageKey;
-    private String detailImage;
+    private List<String> detailImageUrls;
     private String detailImageKey;
     private String items;
     private String dogSize;
