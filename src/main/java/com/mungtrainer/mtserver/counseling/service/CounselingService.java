@@ -117,7 +117,8 @@ public class CounselingService {
                             dog.getDogId(),
                             dog.getDogName(),
                             dog.getOwnerName(),
-                            presignedUrl
+                            presignedUrl,
+                            dog.getContent()
                     );
                 })
                 .collect(Collectors.toList());

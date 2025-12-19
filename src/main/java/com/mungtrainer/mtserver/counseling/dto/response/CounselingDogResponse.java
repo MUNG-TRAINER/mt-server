@@ -11,4 +11,5 @@ public class CounselingDogResponse {
     private String dogName;       // 반려견 이름
     private String ownerName;     // 보호자 이름
     private String dogImage;      // 반려견 프로필 이미지
+    private String content;       // 상담 내용 (상담 완료 시에만 존재)
 }
