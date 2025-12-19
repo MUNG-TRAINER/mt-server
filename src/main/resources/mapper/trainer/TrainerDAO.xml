@@ -13,6 +13,7 @@
         description,
         style,
         tag,
+        regist_code,
         certification_image_url,
         created_at,
         updated_at
