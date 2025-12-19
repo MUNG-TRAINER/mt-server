@@ -65,4 +65,11 @@
         WHERE user_id = #{userId}
     </update>
 
+    <!-- 사용자 반려견 프로필 공개 여부 변경 -->
+    <update id="updatePublicStatus">
+        UPDATE user
+        SET is_public = #{isPublic}
+        WHERE user_id = #{userId}
+    </update>
+
 </mapper>

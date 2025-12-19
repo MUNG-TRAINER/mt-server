@@ -29,6 +29,11 @@ public interface UserDAO {
      */
     boolean isConnectedToTrainer(@Param("userId") Long userId, @Param("trainerId") Long trainerId);
 
+    /**
+     * 사용자 반려견 프로필 공개 여부 변경
+     */
+    int updatePublicStatus(@Param("userId") Long userId, @Param("isPublic") Boolean isPublic);
+
 
 
 }

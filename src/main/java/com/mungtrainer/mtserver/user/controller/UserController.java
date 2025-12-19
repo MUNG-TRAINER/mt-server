@@ -3,6 +3,7 @@ package com.mungtrainer.mtserver.user.controller;
 import com.mungtrainer.mtserver.trainer.dto.response.TrainerResponse;
 import com.mungtrainer.mtserver.trainer.service.TrainerService;
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
+import com.mungtrainer.mtserver.user.dto.request.UpdatePublicStatusRequest;
 import com.mungtrainer.mtserver.user.dto.request.UserImageUploadRequest;
 import com.mungtrainer.mtserver.user.dto.request.UserProfileUpdateRequest;
 import com.mungtrainer.mtserver.user.dto.response.UserImageUploadResponse;
@@ -53,7 +54,7 @@ public class UserController {
      * 사용자 프로필 수정
      * PUT /api/users
      */
-    @PatchMapping
+    @PutMapping("/me")
     public ResponseEntity<UserProfileResponse> updateUserProfile(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @Valid @RequestBody UserProfileUpdateRequest request) {
@@ -78,6 +79,18 @@ public class UserController {
     public ResponseEntity<TrainerResponse> getTrainerProfileById(@PathVariable Long trainerId){
         TrainerResponse profile = trainerService.getTrainerProfileById(trainerId);
         return ResponseEntity.ok(profile);
+    }
+
+    /**
+     * 사용자 반려견 프로필 공개 여부 변경
+     * PATCH /api/users/me/public-status
+     */
+    @PatchMapping("/me/public-status")
+    public ResponseEntity<Void> updatePublicStatus(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @Valid @RequestBody UpdatePublicStatusRequest request) {
+        userService.updatePublicStatus(customUserDetails.getUserId(), request.getIsPublic());
+        return ResponseEntity.ok().build();
     }
 
 
