@@ -26,4 +26,5 @@ public class UserCourseController {
         Long userId = userDetails.getUserId();
         return userCourseService.getUserCourses(userId, status);
     }
+
 }

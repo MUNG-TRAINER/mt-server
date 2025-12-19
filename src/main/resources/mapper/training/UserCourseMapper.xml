@@ -13,7 +13,8 @@
             tc.title            AS title,
             tc.main_image       AS mainImage,
             tc.lesson_form      AS lessonForm,
-            tc.difficulty       AS difficulty,
+            tc.tags      AS tags,
+            tc.description      AS description,
             tc.location         AS location,
             tc.type             AS type,
 
@@ -25,8 +26,11 @@
             ts.end_time         AS endTime,
             ts.status           AS sessionStatus,
 
-            -- application
-            tca.status          AS applicationStatus
+            -- order
+            om.order_status AS orderStatus,
+
+            -- dog
+            d.name              AS dogName
 
         FROM training_course_application tca
                  JOIN training_session ts
@@ -38,6 +42,13 @@
                  JOIN dog d
                       ON tca.dog_id = d.dog_id
                           AND d.is_deleted = 0
+                JOIN order_item oi
+                    ON oi.application_id = tca.application_id
+                         AND oi.is_deleted = 0
+                JOIN order_master om
+                    ON om.order_id = oi.order_id
+                             AND om.order_status = 'PAID'
+                            AND om.is_deleted = 0
 
         WHERE d.user_id = #{userId}
           AND tca.is_deleted = 0

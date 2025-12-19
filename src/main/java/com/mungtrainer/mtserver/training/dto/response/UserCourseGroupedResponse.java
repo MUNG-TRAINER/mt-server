@@ -13,9 +13,10 @@ public class UserCourseGroupedResponse {
     private String title;
     private String mainImage;
     private String lessonForm;
-    private String difficulty;
     private String location;
     private String type;
+    private String tags;
+    private String description;
 
     private List<UserCourseSessionResponse> sessions = new ArrayList<>();
 }

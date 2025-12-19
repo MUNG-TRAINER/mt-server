@@ -39,7 +39,6 @@ public class UserCourseService {
                 .distinct()
                 .toList();
 
-
         // 2. Presigned URL 일괄 발급
         List<String> presignedUrls;
         if (imageKeys.isEmpty()) {
@@ -72,9 +71,10 @@ public class UserCourseService {
                         );
 
                         c.setLessonForm(row.getLessonForm());
-                        c.setDifficulty(row.getDifficulty());
                         c.setLocation(row.getLocation());
                         c.setType(row.getType());
+                        c.setTags(row.getTags());
+                        c.setDescription(row.getDescription());
                         c.setSessions(new ArrayList<>());
                         return c;
                     });
@@ -87,7 +87,8 @@ public class UserCourseService {
             session.setStartTime(row.getStartTime());
             session.setEndTime(row.getEndTime());
             session.setSessionStatus(row.getSessionStatus());
-            session.setApplicationStatus(row.getApplicationStatus());
+            session.setOrderStatus(row.getOrderStatus());
+            session.setDogName(row.getDogName());
 
             course.getSessions().add(session);
         }

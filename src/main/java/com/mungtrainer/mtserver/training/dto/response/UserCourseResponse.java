@@ -17,6 +17,8 @@ public class UserCourseResponse {
     private String difficulty;
     private String location;
     private String type;
+    private String tags;
+    private String description;
 
     // session
     private Long sessionId;
@@ -26,6 +28,9 @@ public class UserCourseResponse {
     private LocalTime endTime;
     private String sessionStatus;
 
-    // application
-    private String applicationStatus;
+    // order
+    private String orderStatus;
+
+    // dog
+    private String dogName;
 }
