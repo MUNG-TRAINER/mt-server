@@ -14,7 +14,6 @@ public class UserCourseResponse {
     private String title;
     private String mainImage;
     private String lessonForm;
-    private String difficulty;
     private String location;
     private String type;
     private String tags;
