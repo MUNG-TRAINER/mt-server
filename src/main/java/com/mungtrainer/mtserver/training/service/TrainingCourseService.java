@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Arrays;
 
 @Service
 @RequiredArgsConstructor
@@ -37,15 +37,21 @@ public class TrainingCourseService {
 
        // presigned URL 생성
         String mainPresignedUrl = null;
-        String detailPresignedUrl = null;
+        List<String> detailPresignedUrls = List.of();
+
+        if (detailFileKey != null && !detailFileKey.isBlank()) {
+          detailPresignedUrls = Arrays.stream(detailFileKey.split(","))
+                                      .map(String::trim)
+                                      .filter(s -> !s.isEmpty())
+                                      .toList();
+        }
 
         if (mainFileKey != null && !mainFileKey.isBlank()) {
             mainPresignedUrl = s3Service.generateDownloadPresignedUrl(mainFileKey);
         }
 
-        if (detailFileKey != null && !detailFileKey.isBlank()) {
-            detailPresignedUrl = s3Service.generateDownloadPresignedUrl(detailFileKey);
-        }
+        List<String> afterDetailPresignedUrls = s3Service.generateDownloadPresignedUrls(detailPresignedUrls);
+
 
         return TrainingCourseResponse.builder()
                 .trainerId(trainingCourse.getTrainerId())
@@ -63,7 +69,7 @@ public class TrainingCourseService {
                 .mainImageKey(trainingCourse.getMainImage())
                 .mainImage(mainPresignedUrl)
                 .detailImageKey(trainingCourse.getDetailImage())
-                .detailImage(detailPresignedUrl)
+                .detailImageUrls(afterDetailPresignedUrls)
                 .items(trainingCourse.getItems())
                 .dogSize(trainingCourse.getDogSize())
                 .build();

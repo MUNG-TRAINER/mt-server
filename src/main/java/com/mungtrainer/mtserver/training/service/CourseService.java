@@ -17,6 +17,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -152,6 +153,9 @@ public class CourseService {
       throw new CustomException(ErrorCode.COURSE_HAS_PAID_APPLICATIONS);
     }
 
+    TrainingCourse course = courseDAO.getCourseById(courseId);
+    String mainImage = course.getMainImage();
+    String detailImage = course.getDetailImage();
     courseDAO.cancelSessionsAndApplications(courseId, userId);
     courseDAO.cancelCourse(courseId, userId);
     courseDAO.softDeleteByApplication(courseId, userId);
@@ -164,9 +168,15 @@ public class CourseService {
         new TransactionSynchronization() {
           @Override
           public void afterCommit() {
-            TrainingCourse course = courseDAO.getCourseById(courseId);
-            s3Service.deleteFile(course.getMainImage());
-            s3Service.deleteFile(course.getDetailImage());
+            s3Service.deleteFile(mainImage);
+            if(detailImage != null && !detailImage.isBlank()){
+              for(String splitDetailImage : Arrays.stream(detailImage.split(","))
+                                                  .map(String::trim)
+                                                  .filter(s -> !s.isEmpty())
+                                                  .toList()){
+                s3Service.deleteFile(splitDetailImage);
+              }
+            }
           }
         }
     );
@@ -186,7 +196,14 @@ public class CourseService {
 
   private void deleteIfChanged(String oldKey, String newKey) {
     if (!newKey.equals(oldKey)) {
-      s3Service.deleteFile(oldKey);
+      if(oldKey != null && !oldKey.isBlank()){
+        for(String splitDetailImage : Arrays.stream(oldKey.split(","))
+                                            .map(String::trim)
+                                            .filter(s -> !s.isEmpty())
+                                            .toList()){
+          s3Service.deleteFile(splitDetailImage);
+        }
+      }
     }
   }
 
