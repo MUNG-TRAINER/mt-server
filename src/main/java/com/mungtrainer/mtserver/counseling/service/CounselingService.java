@@ -1,6 +1,7 @@
 package com.mungtrainer.mtserver.counseling.service;
 
 import com.mungtrainer.mtserver.common.exception.InvalidInputException;
+import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.counseling.dao.CounselingDAO;
 import com.mungtrainer.mtserver.counseling.dto.request.CounselingPostRequest;
 import com.mungtrainer.mtserver.counseling.dto.request.CreateCounselingRequest;
@@ -11,15 +12,19 @@ import com.mungtrainer.mtserver.counseling.dto.response.CreateCounselingResponse
 import com.mungtrainer.mtserver.counseling.entity.Counseling;
 import com.mungtrainer.mtserver.common.exception.CounselingCreateException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CounselingService {
     private final CounselingDAO counselingDao;
+    private final S3Service s3Service;
 //    private final DogDao dogDao; // 반려견 DAO 주입
 
     public CreateCounselingResponse createCounseling(CreateCounselingRequest requestDto, Long userId){
@@ -91,8 +96,31 @@ public class CounselingService {
     }
 
     // <============ (훈련사) 상담 완료 전 후 반려견 리스트 조회 ==============>
-    public List<CounselingDogResponse> getDogsByCompleted(boolean completed){
-        return counselingDao.findDogsByCompleted(completed);
+    public List<CounselingDogResponse> getDogsByCompleted(boolean completed) {
+        List<CounselingDogResponse> dogs = counselingDao.findDogsByCompleted(completed);
+
+        // S3 키를 Presigned URL로 변환
+        return dogs.stream()
+                .map(dog -> {
+                    String presignedUrl = null;
+                    if (dog.getDogImage() != null && !dog.getDogImage().isEmpty()) {
+                        try {
+                            presignedUrl = s3Service.generateDownloadPresignedUrl(dog.getDogImage());
+                            log.debug("Presigned URL 생성 완료 - key: {}", dog.getDogImage());
+                        } catch (Exception e) {
+                            log.error("Presigned URL 생성 실패 - key: {}, error: {}", dog.getDogImage(), e.getMessage());
+                            // 실패해도 null로 처리하여 다른 데이터는 정상 반환
+                        }
+                    }
+                    return new CounselingDogResponse(
+                            dog.getCounselingId(),
+                            dog.getDogId(),
+                            dog.getDogName(),
+                            dog.getOwnerName(),
+                            presignedUrl
+                    );
+                })
+                .collect(Collectors.toList());
     }
 
 

@@ -41,8 +41,10 @@
     <select id="findDogsByCompleted" resultType="com.mungtrainer.mtserver.counseling.dto.response.CounselingDogResponse">
         SELECT
         c.counseling_id AS counselingId,
+        d.dog_id AS dogId,
         d.name AS dogName,
-        u.name AS ownerName
+        u.name AS ownerName,
+        d.profile_image AS dogImage
         FROM counseling c
         JOIN dog d ON c.dog_id = d.dog_id
         JOIN user u ON d.user_id = u.user_id
