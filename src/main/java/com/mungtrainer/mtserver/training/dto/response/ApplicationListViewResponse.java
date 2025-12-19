@@ -12,6 +12,7 @@ public class ApplicationListViewResponse {
     private Long applicationId;
     private Long sessionId;
     private Long dogId;
+    private Long courseId;
 
     // 신청 상태
     private String applicationStatus;

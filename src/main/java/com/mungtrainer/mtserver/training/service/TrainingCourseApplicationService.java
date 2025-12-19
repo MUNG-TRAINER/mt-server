@@ -10,6 +10,7 @@ import com.mungtrainer.mtserver.training.dto.response.ApplicationListViewRespons
 import com.mungtrainer.mtserver.training.dto.response.ApplicationResponse;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationStatusResponse;
 import com.mungtrainer.mtserver.training.entity.TrainingCourseApplication;
+import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -36,9 +37,32 @@ public class TrainingCourseApplicationService {
                 .build();
     }
 
+    // 상태 갱신용 private 메서드
+    private void updateApplicationStatusIfExpired(TrainingCourseApplication app) {
+        TrainingSession session = applicationDao.findSessionById(app.getSessionId());
+        LocalDateTime sessionEnd = LocalDateTime.of(session.getSessionDate(), session.getEndTime());
+
+        // 세션 종료 체크
+        if (sessionEnd.isBefore(LocalDateTime.now()) && !"DONE".equals(session.getStatus())) {
+            applicationDao.updateSessionStatus(session.getSessionId(), "DONE");
+            session.setStatus("DONE");
+        }
+
+        // 신청 상태 만료 처리
+        if ("DONE".equals(session.getStatus()) &&
+                Arrays.asList("APPLIED", "WAITING", "COUNSELING_REQUIRED","ACCEPT").contains(app.getStatus())) {
+            applicationDao.updateApplicationStatus(app.getApplicationId(), "EXPIRED");
+            app.setStatus("EXPIRED");
+        }
+    }
+
     // 신청 리스트 조회
     public List<ApplicationResponse> getApplicationsByUserId(Long userId) {
         List<TrainingCourseApplication> applicationList = applicationDao.findByUserId(userId);
+        // 상태 갱신
+        for (TrainingCourseApplication app : applicationList) {
+            updateApplicationStatusIfExpired(app);
+        }
         return applicationList.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -46,9 +70,15 @@ public class TrainingCourseApplicationService {
 
     // 신청내역 리스트 (카드용)
     public List<ApplicationListViewResponse> getApplicationListView(Long userId) {
+        // 상태 갱신
+        List<TrainingCourseApplication> applications = applicationDao.findByUserId(userId);
+
+        for (TrainingCourseApplication app : applications) {
+            updateApplicationStatusIfExpired(app);
+        }
+
         // 1. DAO에서 리스트 조회
         List<ApplicationListViewResponse> list = applicationDao.findApplicationListViewByUserId(userId);
-
         if (list == null || list.isEmpty()) return Collections.emptyList();
 
         // 2. S3 key 수집
@@ -131,9 +161,12 @@ public class TrainingCourseApplicationService {
         // 세션 정원조회 및 상태 변경
         int maxStudent = applicationDao.getMaxStudentsBySessionId(request.getSessionId());
         int currentCount = applicationDao.countApplicationBySessionId(request.getSessionId());
+        boolean isCounseling = applicationDao.findCounselingByDogID(request.getDogId());
         String status;
         if(currentCount>=maxStudent){
             status="WAITING";
+        }else if(!isCounseling){
+            status="COUNSELING_REQUIRED";
         }else {
             status="APPLIED";
         }

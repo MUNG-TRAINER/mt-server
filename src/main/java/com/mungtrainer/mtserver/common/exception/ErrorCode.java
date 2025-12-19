@@ -30,7 +30,7 @@ public enum ErrorCode {
   TRAINER_NOT_FOUND(404, "연결된 훈련사를 찾을 수 없습니다."),
 
   // 신청 관련
-  DUPLICATE_APPLICATION(409, "이미 신청한 세션입니다.(APPLIED 상태)"),
+  DUPLICATE_APPLICATION(409, "이미 신청한 세션입니다."),
   APPLICATION_NOT_FOUND(404, "신청 정보를 찾을 수 없습니다."),
   UNAUTHORIZED_APPLICATION(403, "본인만 신청 가능합니다."),
   APPLICATION_CREATION_FAILED(500, "신청 생성 실패"),

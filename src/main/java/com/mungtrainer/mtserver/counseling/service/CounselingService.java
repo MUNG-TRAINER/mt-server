@@ -12,6 +12,7 @@ import com.mungtrainer.mtserver.counseling.entity.Counseling;
 import com.mungtrainer.mtserver.common.exception.CounselingCreateException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -95,7 +96,7 @@ public class CounselingService {
         return counselingDao.findDogsByCompleted(completed);
     }
 
-
+    @Transactional
     // <============ (훈련사) 상담 내용 작성 ==============>
     public CounselingPostResponse addCounselingContent(
             Long counselingId,
@@ -113,8 +114,9 @@ public class CounselingService {
             return new CounselingPostResponse(false, "이미 완료된 상담입니다.");
         }
 
-        // 2. 상담 내용 업데이트 + 완료 처리
+        // 2. 상담 내용 업데이트 + 완료 처리 + 신청 status 변경
         int updatedRows = counselingDao.updateContentAndComplete(counselingId, requestDto.getContent(), trainerId);
+        counselingDao.updateApplicationStatusAfterCounseling(trainerId, counseling.getDogId());
         if (updatedRows == 0) {
             return new CounselingPostResponse(false, "상담 내용 저장에 실패했습니다.");
         }

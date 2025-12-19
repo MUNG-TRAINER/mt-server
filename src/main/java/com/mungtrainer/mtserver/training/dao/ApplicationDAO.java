@@ -2,6 +2,7 @@ package com.mungtrainer.mtserver.training.dao;
 
 import com.mungtrainer.mtserver.training.dto.response.ApplicationListViewResponse;
 import com.mungtrainer.mtserver.training.entity.TrainingCourseApplication;
+import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -49,7 +50,18 @@ public interface ApplicationDAO {
     void updateApplicationDog(@Param("applicationId") Long applicationId,
                               @Param("newDogId") Long newDogId);
 
+    // 전체취소
     void updateApplicationStatusBatch(@Param("applicationIds") List<Long> applicationIds, @Param("status") String status);
-
+    // 전체취소시 웨이팅 처리
     void updateWaitingStatusBatch(@Param("applicationIds") List<Long> applicationIds, @Param("status") String status);
+
+    // 해당 강아지 상담 여부 가져오기
+    boolean findCounselingByDogID(@Param("dogId") Long dogId);
+
+    // 세션 status 확인용
+    TrainingSession findSessionById(Long sessionId);
+    // 새션 스테이터스 업데이트?
+    void updateSessionStatus(@Param("sessionId") Long sessionId, @Param("status") String status);
+
+
 }
