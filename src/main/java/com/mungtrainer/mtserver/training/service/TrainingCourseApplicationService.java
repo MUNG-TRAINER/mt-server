@@ -13,6 +13,7 @@ import com.mungtrainer.mtserver.training.entity.TrainingCourseApplication;
 import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -50,13 +51,13 @@ public class TrainingCourseApplicationService {
 
         // 신청 상태 만료 처리
         if ("DONE".equals(session.getStatus()) &&
-                Arrays.asList("APPLIED", "WAITING", "COUNSELING_REQUIRED","ACCEPT").contains(app.getStatus()) &&
+                Arrays.asList("APPLIED", "WAITING", "COUNSELING_REQUIRED", "ACCEPT").contains(app.getStatus()) &&
                 !"EXPIRED".equals(app.getStatus())) {   // 이미 EXPIRED면 건너뜀
             applicationDao.updateApplicationStatusIfNotExpired(app.getApplicationId(), "EXPIRED");
             app.setStatus("EXPIRED");
         }
     }
-
+    @Transactional
     // 신청 리스트 조회
     public List<ApplicationResponse> getApplicationsByUserId(Long userId) {
         List<TrainingCourseApplication> applicationList = applicationDao.findByUserId(userId);
@@ -162,11 +163,11 @@ public class TrainingCourseApplicationService {
         // 세션 정원조회 및 상태 변경
         int maxStudent = applicationDao.getMaxStudentsBySessionId(request.getSessionId());
         int currentCount = applicationDao.countApplicationBySessionId(request.getSessionId());
-        boolean isCounseling = applicationDao.findCounselingByDogID(request.getDogId());
+        boolean hasCounselingCompleted = applicationDao.findCounselingByDogID(request.getDogId());
         String status;
         if(currentCount>=maxStudent){
             status="WAITING";
-        }else if(!isCounseling){
+        }else if(!hasCounselingCompleted){
             status="COUNSELING_REQUIRED";
         }else {
             status="APPLIED";
