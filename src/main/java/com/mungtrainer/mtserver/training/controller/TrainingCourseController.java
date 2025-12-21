@@ -1,6 +1,8 @@
 package com.mungtrainer.mtserver.training.controller;
 
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
+import com.mungtrainer.mtserver.common.exception.CustomException;
+import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.training.dto.request.CourseSearchRequest;
 import com.mungtrainer.mtserver.training.dto.response.CourseSearchResponse;
 import com.mungtrainer.mtserver.training.dto.response.TrainingCourseResponse;
@@ -45,7 +47,7 @@ public class TrainingCourseController {
 
         // lessonForm validation
         if (lessonForm != null && !isValidLessonForm(lessonForm)) {
-            throw new IllegalArgumentException("Invalid lessonForm value. Allowed values: WALK, GROUP, PRIVATE");
+            throw new CustomException(ErrorCode.INVALID_LESSON_FORM);
         }
 
         CourseSearchRequest request = CourseSearchRequest.builder()

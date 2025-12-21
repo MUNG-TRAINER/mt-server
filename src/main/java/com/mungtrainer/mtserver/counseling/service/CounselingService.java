@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CounselingService {
@@ -97,31 +96,31 @@ public class CounselingService {
 
     // <============ (훈련사) 상담 완료 전 후 반려견 리스트 조회 ==============>
     public List<CounselingDogResponse> getDogsByCompleted(boolean completed) {
+        // 1. DB에서 반려견 리스트 조회
         List<CounselingDogResponse> dogs = counselingDao.findDogsByCompleted(completed);
 
-        // S3 키를 Presigned URL로 변환
-        return dogs.stream()
-                .map(dog -> {
-                    String presignedUrl = null;
-                    if (dog.getDogImage() != null && !dog.getDogImage().isEmpty()) {
-                        try {
-                            presignedUrl = s3Service.generateDownloadPresignedUrl(dog.getDogImage());
-                            log.debug("Presigned URL 생성 완료 - key: {}", dog.getDogImage());
-                        } catch (Exception e) {
-                            log.error("Presigned URL 생성 실패 - key: {}, error: {}", dog.getDogImage(), e.getMessage());
-                            // 실패해도 null로 처리하여 다른 데이터는 정상 반환
-                        }
-                    }
-                    return new CounselingDogResponse(
-                            dog.getCounselingId(),
-                            dog.getDogId(),
-                            dog.getDogName(),
-                            dog.getOwnerName(),
-                            presignedUrl,
-                            dog.getContent()
-                    );
-                })
+        if (dogs.isEmpty()) {
+            return List.of();
+        }
+
+        // 2. 모든 반려견의 S3 키 추출 (null이나 빈 문자열 제외)
+        List<String> imageKeys = dogs.stream()
+                .map(CounselingDogResponse::getDogImage)
+                .filter(key -> key != null && !key.isEmpty())
                 .collect(Collectors.toList());
+
+        // 3. S3 Presigned URL 일괄 발급
+        List<String> presignedUrls = s3Service.generateDownloadPresignedUrls(imageKeys);
+
+        // 4. 각 반려견 객체에 URL 매핑
+        int urlIndex = 0;
+        for (CounselingDogResponse dog : dogs) {
+            if (dog.getDogImage() != null && !dog.getDogImage().isEmpty()) {
+                dog.setDogImage(presignedUrls.get(urlIndex++));
+            }
+        }
+
+        return dogs;
     }
 
 

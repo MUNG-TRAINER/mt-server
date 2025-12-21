@@ -28,6 +28,7 @@ public enum ErrorCode {
   // 훈련 과정
   INTERNAL_SERVER_ERROR(500, "고유 tags 생성에 실패했습니다."),
   TRAINER_NOT_FOUND(404, "연결된 훈련사를 찾을 수 없습니다."),
+  INVALID_LESSON_FORM(400, "훈련 형태가 유효하지 않습니다. 허용된 값: WALK, GROUP, PRIVATE"),
 
   // 신청 관련
   DUPLICATE_APPLICATION(409, "이미 신청한 세션입니다.(APPLIED 상태)"),
