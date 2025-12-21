@@ -9,6 +9,7 @@ import java.time.LocalTime;
 @Getter
 @Setter
 public class AppliedWaitingResponse {
+    private Long applicationId;
     private String dogName;
     private String ownerName;
     private String courseTitle;

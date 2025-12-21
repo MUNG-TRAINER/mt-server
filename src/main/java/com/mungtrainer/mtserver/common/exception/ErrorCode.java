@@ -36,6 +36,15 @@ public enum ErrorCode {
   UNAUTHORIZED_APPLICATION(403, "본인만 신청 가능합니다."),
   APPLICATION_CREATION_FAILED(500, "신청 생성 실패"),
 
+  // 신청 승인/거절 관련
+  APPLICATION_STATUS_REQUEST_EMPTY(400, "요청 데이터가 존재하지 않습니다."),
+  APPLICATION_STATUS_REQUIRED(400, "status 값은 필수입니다."),
+  APPLICATION_STATUS_INVALID(400, "잘못된 status 값입니다. (ACCEPT 또는 REJECTED)"),
+  APPLICATION_REJECT_REASON_REQUIRED(400, "거절 사유(rejectReason)는 필수입니다."),
+  APPLICATION_ALREADY_PROCESSED(400, "APPLIED 상태일 때만 승인/거절이 가능합니다."),
+  APPLICATION_NO_MATCHING_RECORD(404, "승인/거절할 수 있는 신청이 없습니다. (이미 처리되었거나 존재하지 않는 신청입니다.)"),
+  APPLICATION_DETAIL_NOT_FOUND(404, "해당 신청 정보를 찾을 수 없거나 접근 권한이 없습니다."),
+
   // 코스 상세페이지
   COURSE_NOT_FOUND(404, "존재하지 않는 훈련과정입니다."),
 

@@ -1,10 +1,13 @@
 package com.mungtrainer.mtserver.counseling.service;
 
 
+import com.mungtrainer.mtserver.common.exception.CustomException;
+import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.counseling.dao.CounselingDAO;
 import com.mungtrainer.mtserver.counseling.dao.TrainerUserDAO;
 import com.mungtrainer.mtserver.counseling.dto.request.ApplicationStatusUpdateRequest;
+import com.mungtrainer.mtserver.counseling.dto.request.BulkApplicationStatusRequest;
 import com.mungtrainer.mtserver.counseling.dto.response.*;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
 import com.mungtrainer.mtserver.dog.dao.DogDAO;
@@ -167,62 +170,168 @@ public class TrainerUserService {
     }
 
 
-
-    public List<AppliedWaitingResponse> getWaitingApplications() {
-        return trainerUserDao.selectWaitingApplications();
+  /**
+   * 특정 훈련사의 승인 대기 신청 목록을 조회합니다.
+   *
+   * <p>trainerId를 기준으로 해당 훈련사에게 들어온 신청 중,
+   * 아직 승인 또는 거절 처리되지 않은 신청만 조회합니다.
+   *
+   * @param trainerId 승인 대기 신청을 조회할 훈련사의 식별자. 이 ID에 해당하는 훈련사의 신청만 조회됩니다.
+   * @return 승인 대기 상태의 신청 목록
+   */
+    public List<AppliedWaitingResponse> getWaitingApplications(Long trainerId) {
+        return trainerUserDao.selectWaitingApplications(trainerId);
     }
 
+    /**
+     * 코스별로 그룹핑된 승인 대기 목록 조회
+     * 다회차 훈련의 경우 일괄 승인/거절할 수 있도록 개선
+     */
+    @Transactional(readOnly = true)
+    public List<GroupedApplicationResponse> getGroupedWaitingApplications(Long trainerId) {
+        return trainerUserDao.selectGroupedWaitingApplications(trainerId);
+    }
 
-    public void updateApplicationStatus(Long applicationId,
+    /**
+     * 신청 반려견 상세 정보 조회
+     * 훈련사가 승인 대기 목록에서 상세 모달을 볼 때 사용
+     */
+    @Transactional(readOnly = true)
+    public ApplicationDogDetailResponse getApplicationDogDetail(Long applicationId, Long trainerId) {
+        // 1. 신청 반려견 정보 조회
+        ApplicationDogDetailResponse detail = trainerUserDao.selectApplicationDogDetail(applicationId, trainerId);
+
+        if (detail == null) {
+            throw new CustomException(ErrorCode.APPLICATION_DETAIL_NOT_FOUND);
+        }
+
+        // 2. 프로필 이미지 Presigned URL 발급
+        if (detail.getProfileImageUrl() != null && !detail.getProfileImageUrl().isBlank()) {
+            String presignedUrl = s3Service.generateDownloadPresignedUrl(detail.getProfileImageUrl());
+            detail.setProfileImageUrl(presignedUrl);
+        }
+
+        return detail;
+    }
+
+  @Transactional
+  public void updateApplicationStatus(Long applicationId,
                                         ApplicationStatusUpdateRequest req,
                                         Long trainerId) {
 
-        // ===== 1. 기본 검증 =====
+        // 기본 검증
         if (req == null) {
-            throw new RuntimeException("요청 데이터가 존재하지 않습니다.");
+            throw new CustomException(ErrorCode.APPLICATION_STATUS_REQUEST_EMPTY);
         }
 
-        String status = req.getStatus();
+        // 상태 및 거절 사유 검증
+        String status = validateApplicationStatusRequest(req.getStatus(), req.getRejectReason());
+
+        // DB 반영
+        int updated = executeStatusUpdate(status, applicationId, null, null, trainerId, req.getRejectReason());
+
+        // DB 반영 결과 검증
+        if (updated == 0) {
+            throw new CustomException(ErrorCode.APPLICATION_ALREADY_PROCESSED);
+        }
+    }
+
+    /**
+     * 코스별 일괄 승인/거절 처리
+     * 다회차 훈련의 모든 회차를 한 번에 승인/거절
+     */
+    @Transactional
+    public void updateBulkApplicationStatus(Long courseId,
+                                           Long dogId,
+                                           BulkApplicationStatusRequest req,
+                                           Long trainerId) {
+        // 기본 검증
+        if (req == null) {
+            throw new CustomException(ErrorCode.APPLICATION_STATUS_REQUEST_EMPTY);
+        }
+
+        // 상태 및 거절 사유 검증
+        String status = validateApplicationStatusRequest(req.getStatus(), req.getRejectReason());
+
+        // DB 일괄 반영
+        int updated = executeStatusUpdate(status, null, courseId, dogId, trainerId, req.getRejectReason());
+
+        // DB 반영 결과 검증
+        if (updated == 0) {
+            throw new CustomException(ErrorCode.APPLICATION_NO_MATCHING_RECORD);
+        }
+    }
+
+    /**
+     * 신청 승인/거절 요청의 status와 거절 사유를 검증합니다.
+     *
+     * @param status 승인/거절 상태 (ACCEPT, REJECTED)
+     * @param rejectReason 거절 사유
+     * @return 검증된 status 값
+     * @throws CustomException 검증 실패 시
+     */
+    private String validateApplicationStatusRequest(String status, String rejectReason) {
+        // status 필수 검증
         if (status == null || status.isBlank()) {
-            throw new RuntimeException("status 값은 필수입니다.");
+            throw new CustomException(ErrorCode.APPLICATION_STATUS_REQUIRED);
         }
 
-        // ===== 2. 상태별 추가 검증 =====
-        // 승인/거절 외 다른 값이 들어올 때 차단
+        // status 값 검증 (ACCEPT 또는 REJECTED만 허용)
         if (!status.equals("ACCEPT") && !status.equals("REJECTED")) {
-            throw new RuntimeException("잘못된 status 값입니다. (ACCEPT 또는 REJECTED)");
+            throw new CustomException(ErrorCode.APPLICATION_STATUS_INVALID);
         }
 
-        // 거절일 경우 rejectReason 필수
+        // 거절 시 거절 사유 필수 검증
         if (status.equals("REJECTED")) {
-            if (req.getRejectReason() == null || req.getRejectReason().isBlank()) {
-                throw new RuntimeException("거절 사유(rejectReason)는 필수입니다.");
+            if (rejectReason == null || rejectReason.isBlank()) {
+                throw new CustomException(ErrorCode.APPLICATION_REJECT_REASON_REQUIRED);
             }
         }
 
-        // ===== 3. DB 반영 =====
+        return status;
+    }
+
+    /**
+     * 승인/거절 상태 업데이트를 실행합니다.
+     * 개별 승인/거절과 일괄 승인/거절 모두에서 사용됩니다.
+     *
+     * @param status 승인/거절 상태
+     * @param applicationId 개별 신청 ID (개별 처리 시)
+     * @param courseId 코스 ID (일괄 처리 시)
+     * @param dogId 반려견 ID (일괄 처리 시)
+     * @param trainerId 훈련사 ID
+     * @param rejectReason 거절 사유
+     * @return 업데이트된 행 수
+     */
+    private int executeStatusUpdate(String status, Long applicationId, Long courseId, Long dogId,
+                                    Long trainerId, String rejectReason) {
         int updated;
-        switch (status) {
-            case "ACCEPT":
+
+        if ("ACCEPT".equals(status)) {
+            // 일괄 승인
+            if (courseId != null && dogId != null) {
+                updated = trainerUserDao.updateBulkStatusApproved(courseId, dogId, trainerId);
+            }
+            // 개별 승인
+            else {
                 updated = trainerUserDao.updateStatusApproved(applicationId, trainerId);
-                break;
-
-            case "REJECTED":
-                updated = trainerUserDao.updateStatusRejected(
-                        applicationId,
-                        trainerId,
-                        req.getRejectReason()
-                );
-                break;
-
-            default:
-                throw new IllegalStateException("예상치 못한 상태 값입니다.");  // 이 경우는 절대 올 수 없음
+            }
+        }
+        else if ("REJECTED".equals(status)) {
+            // 일괄 거절
+            if (courseId != null && dogId != null) {
+                updated = trainerUserDao.updateBulkStatusRejected(courseId, dogId, trainerId, rejectReason);
+            }
+            // 개별 거절
+            else {
+                updated = trainerUserDao.updateStatusRejected(applicationId, trainerId, rejectReason);
+            }
+        }
+        else {
+            throw new CustomException(ErrorCode.APPLICATION_STATUS_INVALID);
         }
 
-        // ===== 4. DB 반영 결과 검증 =====
-        if (updated == 0) {
-            throw new IllegalStateException("APPLIED 상태일 때만 승인/거절이 가능합니다.");
-        }
+        return updated;
     }
 
 

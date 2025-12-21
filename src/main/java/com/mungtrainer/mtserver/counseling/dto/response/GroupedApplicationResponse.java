@@ -1,0 +1,36 @@
+package com.mungtrainer.mtserver.counseling.dto.response;
+
+import lombok.Getter;
+import lombok.Setter;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+
+/**
+ * 코스별로 그룹핑된 승인 대기 목록 응답 DTO
+ */
+@Getter
+@Setter
+public class GroupedApplicationResponse {
+    private Long courseId;
+    private String courseTitle;
+    private String courseType; // SINGLE, MULTI, GROUP
+    private Long dogId;
+    private String dogName;
+    private String ownerName;
+    private Integer totalSessions; // 해당 코스의 총 회차 수
+    private List<SessionInfo> sessions; // 각 회차 정보
+
+    @Getter
+    @Setter
+    public static class SessionInfo {
+        private Long applicationId;
+        private Long sessionId;
+        private Integer sessionNo;
+        private LocalDate sessionDate;
+        private LocalTime startTime;
+        private LocalTime endTime;
+    }
+}
+
