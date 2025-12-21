@@ -11,10 +11,7 @@ import java.util.List;
 @Getter
 @Setter
 public class BulkApplicationStatusRequest {
-    private Long courseId; // 코스 ID
-    private Long dogId; // 반려견 ID
     private String status; // ACCEPT, REJECTED
     private String rejectReason; // 거절 시 필수
-    private List<Long> applicationIds; // 직접 applicationId 목록을 받을 수도 있음 (optional)
 }
 

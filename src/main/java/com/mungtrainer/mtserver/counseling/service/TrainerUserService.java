@@ -170,7 +170,15 @@ public class TrainerUserService {
     }
 
 
-
+  /**
+   * 특정 훈련사의 승인 대기 신청 목록을 조회합니다.
+   *
+   * <p>trainerId를 기준으로 해당 훈련사에게 들어온 신청 중,
+   * 아직 승인 또는 거절 처리되지 않은 신청만 조회합니다.
+   *
+   * @param trainerId 승인 대기 신청을 조회할 훈련사의 식별자. 이 ID에 해당하는 훈련사의 신청만 조회됩니다.
+   * @return 승인 대기 상태의 신청 목록
+   */
     public List<AppliedWaitingResponse> getWaitingApplications(Long trainerId) {
         return trainerUserDao.selectWaitingApplications(trainerId);
     }
@@ -206,8 +214,8 @@ public class TrainerUserService {
         return detail;
     }
 
-
-    public void updateApplicationStatus(Long applicationId,
+  @Transactional
+  public void updateApplicationStatus(Long applicationId,
                                         ApplicationStatusUpdateRequest req,
                                         Long trainerId) {
 
