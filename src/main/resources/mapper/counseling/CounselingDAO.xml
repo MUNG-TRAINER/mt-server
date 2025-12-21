@@ -67,5 +67,16 @@
         AND is_deleted = 0;
     </update>
 
+    <!-- 상담 완료 시 신청 상태 변경 -->
+    <update id="updateApplicationStatusAfterCounseling">
+        UPDATE training_course_application
+        SET
+        status = 'APPLIED',
+        updated_by = #{trainerId},
+        updated_at = NOW()
+        WHERE dog_id = #{dogId}
+        AND status = 'COUNSELING_REQUIRED'
+        AND is_deleted = 0
+    </update>
 
 </mapper>
