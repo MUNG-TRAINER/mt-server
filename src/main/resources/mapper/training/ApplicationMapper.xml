@@ -36,7 +36,7 @@
         c.type           AS type,
 
         CONCAT(s.session_date, ' ', s.start_time, ' ~ ', s.end_time) AS sessionSchedule,
-
+        s.session_no AS sessionNumber,
         d.name                AS dogName
 
         FROM training_course_application a
@@ -206,15 +206,22 @@
         AND is_deleted = 0
     </select>
 
-    <!-- 세션 상태 업데이트 -->
-    <update id="updateSessionStatus">
+    <!-- 세션 상태 업데이트 - 이미 DONE이면 건너뜀 -->
+    <update id="updateSessionStatusIfNotDone">
         UPDATE training_session
         SET status = #{status},
         updated_at = NOW()
         WHERE session_id = #{sessionId}
         AND is_deleted = 0
+        AND status != #{status}
     </update>
 
-
-
+    <!-- 신청 상태 업데이트 - 이미 EXPIRED이면 건너뜀 -->
+    <update id="updateApplicationStatusIfNotExpired">
+        UPDATE training_course_application
+        SET status = #{status},
+        updated_at = NOW()
+        WHERE application_id = #{applicationId}
+        AND status != #{status}
+    </update>
 </mapper>

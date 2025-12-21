@@ -44,14 +44,15 @@ public class TrainingCourseApplicationService {
 
         // 세션 종료 체크
         if (sessionEnd.isBefore(LocalDateTime.now()) && !"DONE".equals(session.getStatus())) {
-            applicationDao.updateSessionStatus(session.getSessionId(), "DONE");
+            applicationDao.updateSessionStatusIfNotDone(session.getSessionId(), "DONE");
             session.setStatus("DONE");
         }
 
         // 신청 상태 만료 처리
         if ("DONE".equals(session.getStatus()) &&
-                Arrays.asList("APPLIED", "WAITING", "COUNSELING_REQUIRED","ACCEPT").contains(app.getStatus())) {
-            applicationDao.updateApplicationStatus(app.getApplicationId(), "EXPIRED");
+                Arrays.asList("APPLIED", "WAITING", "COUNSELING_REQUIRED","ACCEPT").contains(app.getStatus()) &&
+                !"EXPIRED".equals(app.getStatus())) {   // 이미 EXPIRED면 건너뜀
+            applicationDao.updateApplicationStatusIfNotExpired(app.getApplicationId(), "EXPIRED");
             app.setStatus("EXPIRED");
         }
     }

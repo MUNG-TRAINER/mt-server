@@ -60,8 +60,10 @@ public interface ApplicationDAO {
 
     // 세션 status 확인용
     TrainingSession findSessionById(Long sessionId);
-    // 새션 스테이터스 업데이트?
-    void updateSessionStatus(@Param("sessionId") Long sessionId, @Param("status") String status);
+    // 새션 스테이터스 업데이트
+    void updateSessionStatusIfNotDone(@Param("sessionId") Long sessionId, @Param("status") String status);
+
+    void updateApplicationStatusIfNotExpired(@Param("applicationId") Long applicationId, @Param("status") String status);
 
 
 }

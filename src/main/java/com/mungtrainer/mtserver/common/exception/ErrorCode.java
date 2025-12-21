@@ -42,6 +42,7 @@ public enum ErrorCode {
   ATTENDANCE_UPDATE_FAILED(500,"출석 상태 변경에 실패했습니다"),
 
   // 반려견 관련
+
   DOG_NOT_FOUND(404, "존재하지 않는 반려견입니다."),
   DOG_NO_PERMISSION(403, "해당 반려견에 대한 권한이 없습니다."),
   DOG_NAME_DUPLICATE(400, "이미 등록된 반려견 이름입니다."),
