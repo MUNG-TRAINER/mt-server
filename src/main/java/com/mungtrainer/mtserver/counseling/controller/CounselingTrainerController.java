@@ -2,6 +2,7 @@ package com.mungtrainer.mtserver.counseling.controller;
 
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
 import com.mungtrainer.mtserver.counseling.dto.request.ApplicationStatusUpdateRequest;
+import com.mungtrainer.mtserver.counseling.dto.request.BulkApplicationStatusRequest;
 import com.mungtrainer.mtserver.counseling.dto.request.CounselingPostRequest;
 import com.mungtrainer.mtserver.counseling.dto.response.*;
 import com.mungtrainer.mtserver.counseling.service.CounselingService;
@@ -84,6 +85,16 @@ public class CounselingTrainerController {
         return trainerService.getWaitingApplications(trainerId);
     }
 
+    // 승인 대기 중인 신청 목록 (코스별 그룹핑) - 다회차 일괄 승인용
+    @GetMapping("/applications/grouped")
+    public ResponseEntity<List<GroupedApplicationResponse>> getGroupedWaitingApplications(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long trainerId = userDetails.getUserId();
+        List<GroupedApplicationResponse> groupedList = trainerService.getGroupedWaitingApplications(trainerId);
+        return ResponseEntity.ok(groupedList);
+    }
+
     // 신청 반려견 상세 정보 조회 (모달용)
     @GetMapping("/applications/{applicationId}/dog-detail")
     public ResponseEntity<ApplicationDogDetailResponse> getApplicationDogDetail(
@@ -106,6 +117,19 @@ public class CounselingTrainerController {
         Long trainerId = userDetails.getUserId();
         trainerService.updateApplicationStatus(application_id,request,trainerId);
         return "훈련 신청 상태가 변경되었습니다.";
+    }
+
+    // 코스별 일괄 승인 or 거절 (다회차 훈련용)
+    @PatchMapping("/applications/bulk/{courseId}/dog/{dogId}")
+    public ResponseEntity<String> bulkApplicationUpdateStatus(
+            @PathVariable Long courseId,
+            @PathVariable Long dogId,
+            @RequestBody BulkApplicationStatusRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long trainerId = userDetails.getUserId();
+        trainerService.updateBulkApplicationStatus(courseId, dogId, request, trainerId);
+        return ResponseEntity.ok("훈련 신청이 일괄 처리되었습니다.");
     }
 
 
