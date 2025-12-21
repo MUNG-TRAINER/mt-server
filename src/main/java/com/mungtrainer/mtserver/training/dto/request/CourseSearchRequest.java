@@ -37,4 +37,12 @@ public class CourseSearchRequest {
      * - TRAINER: 자신이 등록한 과정만 조회
      */
     private Long trainerId;
+
+    /**
+     * 훈련 형태 필터 (선택적)
+     * - WALK: 무료 산책모임
+     * - GROUP: 그룹 레슨
+     * - PRIVATE: 개인(1:1) 레슨
+     */
+    private String lessonForm;
 }

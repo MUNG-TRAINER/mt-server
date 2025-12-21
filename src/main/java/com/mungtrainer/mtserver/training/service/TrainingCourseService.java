@@ -92,6 +92,7 @@ public class TrainingCourseService {
                 .lastCourseId(request.getLastCourseId())
                 .size(request.getSize() + 1)
                 .trainerId(trainerId)
+                .lessonForm(request.getLessonForm())
                 .build();
 
         List<CourseSearchItemDto> courses = trainingCourseDao.searchCourses(searchRequest);

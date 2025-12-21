@@ -71,6 +71,9 @@
                 AND (tc_sub.title LIKE CONCAT('%', #{request.keyword}, '%')
                      OR tc_sub.tags LIKE CONCAT('%', #{request.keyword}, '%'))
             </if>
+            <if test="request.lessonForm != null and request.lessonForm != ''">
+                AND tc_sub.lesson_form = #{request.lessonForm}
+            </if>
             <if test="request.lastCourseId != null">
                 AND tc_sub.course_id &lt; #{request.lastCourseId}
             </if>
