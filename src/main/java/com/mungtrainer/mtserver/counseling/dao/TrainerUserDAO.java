@@ -35,6 +35,11 @@ public interface TrainerUserDAO {
 
     List<AppliedWaitingResponse> selectWaitingApplications(@Param("trainerId") Long trainerId);
 
+    ApplicationDogDetailResponse selectApplicationDogDetail(
+            @Param("applicationId") Long applicationId,
+            @Param("trainerId") Long trainerId
+    );
+
     int updateStatusApproved(@Param("applicationId") Long applicationId,
                              @Param("trainerId") Long trainerId);
 

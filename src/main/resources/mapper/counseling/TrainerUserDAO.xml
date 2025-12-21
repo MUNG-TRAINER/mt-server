@@ -261,6 +261,30 @@
         ORDER BY ts.session_date, ts.start_time;
     </select>
 
+<!--    신청 반려견 상세 정보 조회 (훈련사용 - 승인 대기 모달)-->
+    <select id="selectApplicationDogDetail" resultType="com.mungtrainer.mtserver.counseling.dto.response.ApplicationDogDetailResponse">
+        SELECT
+            d.dog_id AS dogId,
+            d.name AS name,
+            d.profile_image AS profileImageUrl,
+            d.age AS age,
+            d.gender AS gender,
+            d.breed AS breed,
+            u.name AS ownerName,
+            u.phone AS ownerPhone
+        FROM training_course_application tca
+        JOIN dog d ON tca.dog_id = d.dog_id
+        JOIN user u ON d.user_id = u.user_id
+        JOIN training_session ts ON tca.session_id = ts.session_id
+        JOIN training_course tc ON ts.course_id = tc.course_id
+        WHERE tca.application_id = #{applicationId}
+        AND tc.trainer_id = #{trainerId}
+        AND tca.is_deleted = 0
+        AND d.is_deleted = 0
+        AND u.is_deleted = 0
+        LIMIT 1;
+    </select>
+
 <!--    승인, 거절(거절사유)-->
 <!--    승인-->
     <update id="updateStatusApproved">

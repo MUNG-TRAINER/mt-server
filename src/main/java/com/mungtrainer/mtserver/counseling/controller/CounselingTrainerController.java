@@ -84,6 +84,17 @@ public class CounselingTrainerController {
         return trainerService.getWaitingApplications(trainerId);
     }
 
+    // 신청 반려견 상세 정보 조회 (모달용)
+    @GetMapping("/applications/{applicationId}/dog-detail")
+    public ResponseEntity<ApplicationDogDetailResponse> getApplicationDogDetail(
+            @PathVariable Long applicationId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long trainerId = userDetails.getUserId();
+        ApplicationDogDetailResponse detail = trainerService.getApplicationDogDetail(applicationId, trainerId);
+        return ResponseEntity.ok(detail);
+    }
+
     // 승인 or 거절
     @PatchMapping("/applications/{application_id}")
     public String applicationUpdateStatus(

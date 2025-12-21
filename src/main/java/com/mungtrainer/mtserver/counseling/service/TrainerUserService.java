@@ -172,6 +172,28 @@ public class TrainerUserService {
         return trainerUserDao.selectWaitingApplications(trainerId);
     }
 
+    /**
+     * 신청 반려견 상세 정보 조회
+     * 훈련사가 승인 대기 목록에서 상세 모달을 볼 때 사용
+     */
+    @Transactional(readOnly = true)
+    public ApplicationDogDetailResponse getApplicationDogDetail(Long applicationId, Long trainerId) {
+        // 1. 신청 반려견 정보 조회
+        ApplicationDogDetailResponse detail = trainerUserDao.selectApplicationDogDetail(applicationId, trainerId);
+
+        if (detail == null) {
+            throw new RuntimeException("해당 신청 정보를 찾을 수 없거나 접근 권한이 없습니다.");
+        }
+
+        // 2. 프로필 이미지 Presigned URL 발급
+        if (detail.getProfileImageUrl() != null && !detail.getProfileImageUrl().isBlank()) {
+            String presignedUrl = s3Service.generateDownloadPresignedUrl(detail.getProfileImageUrl());
+            detail.setProfileImageUrl(presignedUrl);
+        }
+
+        return detail;
+    }
+
 
     public void updateApplicationStatus(Long applicationId,
                                         ApplicationStatusUpdateRequest req,
