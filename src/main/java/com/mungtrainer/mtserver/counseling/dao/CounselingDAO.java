@@ -27,6 +27,9 @@ public interface CounselingDAO {
                                  @Param("content") String content,
                                  @Param("trainerId") Long trainerId);
 
+    // 상담 완료 시 신청 status 변경
+    int updateApplicationStatusAfterCounseling(@Param("trainerId") Long trainerId, @Param("dogId") Long dogId);
+
     /**
      * 특정 반려견과 훈련사 기준 상담 내역 조회
      */

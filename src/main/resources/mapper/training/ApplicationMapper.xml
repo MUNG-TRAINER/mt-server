@@ -26,6 +26,7 @@
         a.status              AS applicationStatus,
         a.reject_reason       AS rejectReason,
 
+        c.course_id           AS courseId,
         c.tags                AS tags,
         c.title               AS title,
         c.description         AS description,
@@ -35,7 +36,7 @@
         c.type           AS type,
 
         CONCAT(s.session_date, ' ', s.start_time, ' ~ ', s.end_time) AS sessionSchedule,
-
+        s.session_no AS sessionNumber,
         d.name                AS dogName
 
         FROM training_course_application a
@@ -84,7 +85,7 @@
       FROM training_course_application
       WHERE dog_id = #{dogId}
       AND session_id = #{sessionId}
-      AND status = 'APPLIED'   <!-- 상태가 APPLIED인 경우만 중복 체크 -->
+      AND status IN ('COUNSELING_REQUIRED','APPLIED','WAITING','ACCEPT')
         AND is_deleted = 0
     </select>
 
@@ -100,7 +101,7 @@
         SELECT COUNT(*)
         FROM training_course_application
         WHERE session_id = #{sessionId}
-            AND status = 'APPLIED'
+            AND status IN  ('APPLIED','ACCEPT')
             AND is_deleted = 0
     </select>
 
@@ -135,7 +136,7 @@
         )
     </insert>
 
-    <!-- 신청 취소 (상태 업데이트) -->
+    <!-- 상태 업데이트 -->
     <update id="updateApplicationStatus" parameterType="map">
         UPDATE training_course_application
         SET status = #{status},
@@ -186,5 +187,41 @@
         <foreach collection="applicationIds" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
+    </update>
+
+    <!--  해당 강아지 상담 여부 가져오기 -->
+    <select id="findCounselingByDogID" parameterType="long" resultType="boolean">
+        SELECT
+        IF(COUNT(*) > 0 AND MAX(is_completed) = 1, TRUE, FALSE)
+        FROM counseling
+        WHERE dog_id = #{dogId}
+        AND is_deleted = 0
+    </select>
+
+    <!-- 세션 조회 -->
+    <select id="findSessionById" resultType="com.mungtrainer.mtserver.training.entity.TrainingSession">
+        SELECT *
+        FROM training_session
+        WHERE session_id = #{sessionId}
+        AND is_deleted = 0
+    </select>
+
+    <!-- 세션 상태 업데이트 - 이미 DONE이면 건너뜀 -->
+    <update id="updateSessionStatusIfNotDone">
+        UPDATE training_session
+        SET status = #{status},
+        updated_at = NOW()
+        WHERE session_id = #{sessionId}
+        AND is_deleted = 0
+        AND status != #{status}
+    </update>
+
+    <!-- 신청 상태 업데이트 - 이미 EXPIRED이면 건너뜀 -->
+    <update id="updateApplicationStatusIfNotExpired">
+        UPDATE training_course_application
+        SET status = #{status},
+        updated_at = NOW()
+        WHERE application_id = #{applicationId}
+        AND status != #{status}
     </update>
 </mapper>
