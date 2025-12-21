@@ -7,17 +7,31 @@
     <!-- 장바구니 리스트 조회 -->
     <select id="findWishlistResponsesByUserId" parameterType="long" resultType="com.mungtrainer.mtserver.order.dto.response.WishlistResponse">
         SELECT
-        w.user_id AS userId,
-        wd.wishlist_item_id AS wishlistItemId,
-        wd.wishlist_id AS wishlistId,
-        wd.course_id AS courseId,
-        wdd.dog_id AS dogId,
-        wd.price AS price,
-        wd.status AS status
+            w.user_id AS userId,
+            wd.wishlist_item_id AS wishlistItemId,
+            wd.wishlist_id AS wishlistId,
+            wd.course_id AS courseId,
+            wd.price AS price,
+            wd.status AS status,
+            wdd.dog_id AS dogId,
+            d.name AS dogName,
+            tc.title AS title,
+            tc.type AS type,
+            tc.schedule AS schedule,
+            tc.location AS location
         FROM wishlist w
-        JOIN wishlist_detail wd ON w.wishlist_id = wd.wishlist_id
-        LEFT JOIN wishlist_detail_dog wdd ON wd.wishlist_item_id = wdd.wishlist_item_id
+            JOIN wishlist_detail wd
+            ON w.wishlist_id = wd.wishlist_id
+            LEFT JOIN wishlist_detail_dog wdd
+            ON wd.wishlist_item_id = wdd.wishlist_item_id
+            LEFT JOIN dog d
+            ON wdd.dog_id = d.dog_id
+            LEFT JOIN training_course tc
+            ON wd.course_id = tc.course_id
         WHERE w.user_id = #{userId}
+            AND w.is_deleted = 0
+            AND wd.is_deleted = 0
+            AND (wdd.is_deleted = 0 OR wdd.is_deleted IS NULL)
     </select>
 
     <!-- userId로 wishlistId 리스트 가져오기 -->

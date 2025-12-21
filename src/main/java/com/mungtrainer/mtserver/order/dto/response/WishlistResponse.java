@@ -14,8 +14,12 @@ public class WishlistResponse {
     private Long wishlistItemId;
     private Long wishlistId;
     private Long courseId;
-    private Long dogId;
     private Integer price;
     private String status;
-
+    private Long dogId;
+    private String dogName;
+    private String title;
+    private String type;
+    private String schedule;
+    private String location;
 }
