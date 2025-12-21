@@ -168,8 +168,8 @@ public class TrainerUserService {
 
 
 
-    public List<AppliedWaitingResponse> getWaitingApplications() {
-        return trainerUserDao.selectWaitingApplications();
+    public List<AppliedWaitingResponse> getWaitingApplications(Long trainerId) {
+        return trainerUserDao.selectWaitingApplications(trainerId);
     }
 
 

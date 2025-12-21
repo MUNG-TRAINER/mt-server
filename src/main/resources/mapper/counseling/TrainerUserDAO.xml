@@ -236,9 +236,10 @@
     </select>
 
 
-<!--    승인 대기 목록-->
+<!--    승인 대기 목록 (특정 훈련사의 과정만 조회)-->
     <select id="selectWaitingApplications" resultType="com.mungtrainer.mtserver.counseling.dto.response.AppliedWaitingResponse">
         SELECT
+        tca.application_id AS applicationId,
         d.name AS dogName,
         u.name AS ownerName,
         tc.title AS courseTitle,
@@ -251,6 +252,7 @@
         JOIN training_session ts ON tca.session_id = ts.session_id
         JOIN training_course tc ON ts.course_id = tc.course_id
         WHERE tca.status = 'APPLIED'
+        AND tc.trainer_id = #{trainerId}
         AND tca.is_deleted = 0
         AND d.is_deleted = 0
         AND u.is_deleted = 0

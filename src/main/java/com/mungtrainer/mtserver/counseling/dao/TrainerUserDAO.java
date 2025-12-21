@@ -33,7 +33,7 @@ public interface TrainerUserDAO {
             @Param("courseId") Long courseId
     );
 
-    List<AppliedWaitingResponse> selectWaitingApplications();
+    List<AppliedWaitingResponse> selectWaitingApplications(@Param("trainerId") Long trainerId);
 
     int updateStatusApproved(@Param("applicationId") Long applicationId,
                              @Param("trainerId") Long trainerId);

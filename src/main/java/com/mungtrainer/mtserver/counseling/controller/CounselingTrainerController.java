@@ -77,8 +77,11 @@ public class CounselingTrainerController {
 
     // 승인 대기 중인 신청 목록
     @GetMapping("/applications")
-    public List<AppliedWaitingResponse> getWaitingApplications(){
-        return trainerService.getWaitingApplications();
+    public List<AppliedWaitingResponse> getWaitingApplications(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long trainerId = userDetails.getUserId();
+        return trainerService.getWaitingApplications(trainerId);
     }
 
     // 승인 or 거절
