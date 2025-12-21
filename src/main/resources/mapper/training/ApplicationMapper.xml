@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mungtrainer.mtserver.training.dao.ApplicationDAO">
+
+    <!-- 유저 Id로 신청 리스트 조회 -->
+    <select id="findByUserId" parameterType="long" resultType="com.mungtrainer.mtserver.training.entity.TrainingCourseApplication">
+        SELECT a.*
+        FROM training_course_application a
+                 JOIN dog d ON a.dog_id = d.dog_id
+        WHERE d.user_id = #{userId}
+          AND a.is_deleted = 0
+        ORDER BY a.applied_at DESC
+    </select>
+
+        <!-- UI 카드용 리스트 조회용-->
+    <select id="findApplicationListViewByUserId"
+            parameterType="long"
+            resultType="com.mungtrainer.mtserver.training.dto.response.ApplicationListViewResponse">
+
+        SELECT
+        a.application_id      AS applicationId,
+        a.session_id          AS sessionId,
+        a.dog_id              AS dogId,
+        a.status              AS applicationStatus,
+        a.reject_reason       AS rejectReason,
+
+        c.tags                AS tags,
+        c.title               AS title,
+        c.description         AS description,
+        c.main_image          AS mainImage,
+        c.location            AS location,
+        c.lesson_form            AS lessonForm,
+        c.type           AS type,
+
+        CONCAT(s.session_date, ' ', s.start_time, ' ~ ', s.end_time) AS sessionSchedule,
+
+        d.name                AS dogName
+
+        FROM training_course_application a
+        JOIN training_session s
+        ON a.session_id = s.session_id
+        AND s.is_deleted = 0
+        JOIN training_course c
+        ON s.course_id = c.course_id
+        AND c.is_deleted = 0
+        JOIN dog d
+        ON a.dog_id = d.dog_id
+        AND d.is_deleted = 0
+
+        WHERE d.user_id = #{userId}
+        AND a.is_deleted = 0
+
+        ORDER BY a.applied_at DESC;
+
+    </select>
+
+    <!-- 신청 강아지 변경 -->
+    <update id="updateApplicationDog" parameterType="map">
+        UPDATE training_course_application
+        SET dog_id = #{newDogId}, updated_at = NOW()
+        WHERE application_id = #{applicationId}
+    </update>
+
+    <!-- 신청 상세 조회 -->
+    <select id="findById" parameterType="long" resultType="com.mungtrainer.mtserver.training.entity.TrainingCourseApplication">
+        SELECT *
+        FROM training_course_application
+        WHERE application_id = #{applicationId}
+          AND is_deleted = 0
+    </select>
+
+    <!-- 생성 사용자 인증 -->
+  <select id="findOwnerByDogId" parameterType="long" resultType="long">
+      SELECT user_id
+      FROM dog
+      WHERE dog_id = #{dogId}
+  </select>
+
+    <!--  생성 중복 체크 -->
+  <select id="existsByDogAndSession" resultType="boolean" parameterType="map">
+      SELECT COUNT(*) > 0
+      FROM training_course_application
+      WHERE dog_id = #{dogId}
+      AND session_id = #{sessionId}
+      AND status = 'APPLIED'   <!-- 상태가 APPLIED인 경우만 중복 체크 -->
+        AND is_deleted = 0
+    </select>
+
+    <!-- 세션 정원 조회 -->
+    <select id="getMaxStudentsBySessionId" parameterType="long" resultType="int">
+        SELECT max_students
+        FROM training_session
+        WHERE session_id = #{sessionId}
+    </select>
+
+    <!-- 현재 신청 인원수 조회 -->
+    <select id="countApplicationBySessionId" parameterType="long" resultType="int">
+        SELECT COUNT(*)
+        FROM training_course_application
+        WHERE session_id = #{sessionId}
+            AND status = 'APPLIED'
+            AND is_deleted = 0
+    </select>
+
+    <!--  대기테이블에 추가  -->
+    <insert id="insertWaiting" parameterType="map">
+        INSERT INTO waiting (application_id, status, created_by, updated_by, created_at, updated_at)
+        VALUES (#{applicationId}, 'WAITING',#{userId},#{userId}, NOW(), NOW())
+    </insert>
+
+    <!-- 신청 생성 -->
+    <insert id="insertApplication" parameterType="com.mungtrainer.mtserver.training.entity.TrainingCourseApplication" useGeneratedKeys="true" keyProperty="applicationId">
+        INSERT INTO training_course_application (
+        session_id,
+        dog_id,
+        applied_at,
+        status,
+        reject_reason,
+        created_by,
+        created_at,
+        updated_by,
+        updated_at
+        ) VALUES (
+        #{sessionId},
+        #{dogId},
+        #{appliedAt},
+        #{status},
+        #{rejectReason},
+        #{createdBy},
+        #{createdAt},
+        #{updatedBy},
+        #{updatedAt}
+        )
+    </insert>
+
+    <!-- 신청 취소 (상태 업데이트) -->
+    <update id="updateApplicationStatus" parameterType="map">
+        UPDATE training_course_application
+        SET status = #{status},
+            updated_at = NOW()
+        WHERE application_id = #{applicationId}
+    </update>
+
+    <!--  세션별 대기자 조회  -->
+    <select id="findWaitingBySessionId" resultType="long" parameterType="long">
+        SELECT w.application_id
+        FROM waiting w
+        JOIN training_course_application a ON w.application_id = a.application_id
+        WHERE a.session_id = #{sessionId}
+        AND w.status = 'WAITING'
+        ORDER BY w.created_at ASC
+    </select>
+
+    <!--  대기테이블 상태 업데이트  -->
+    <update id="updateWaitingStatus" parameterType="map">
+        UPDATE waiting
+        SET status = #{status}, updated_at = NOW()
+        WHERE application_id = #{applicationId}
+    </update>
+
+    <!--  장바구니 상태 업데이트  -->
+    <update id="updateWishlistDetailStatus">
+        UPDATE wishlist_detail
+        SET status = #{status},
+        updated_at = NOW()
+        WHERE wishlist_item_id = #{wishlistItemId}
+    </update>
+
+    <!--  전체 취소  -->
+    <update id="updateApplicationStatusBatch" parameterType="map">
+        UPDATE training_course_application
+        SET status = #{status},
+        updated_at = NOW()
+        WHERE application_id IN
+        <foreach collection="applicationIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+    <!--  전체 취소시 웨이팅  -->
+    <update id="updateWaitingStatusBatch" parameterType="map">
+        UPDATE waiting
+        SET status = #{status}, updated_at = NOW()
+        WHERE application_id IN
+        <foreach collection="applicationIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+</mapper>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mungtrainer.mtserver.order.dao.OrderDAO">
+
+    <!-- OrderMaster Result Map -->
+    <resultMap id="orderMasterResultMap" type="com.mungtrainer.mtserver.order.entity.OrderMaster">
+        <id property="orderId" column="order_id"/>
+        <result property="wishlistId" column="wishlist_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="orderStatus" column="order_status"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="paidAmount" column="paid_amount"/>
+        <result property="paidAt" column="paid_at"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- OrderItem Result Map -->
+    <resultMap id="orderItemResultMap" type="com.mungtrainer.mtserver.order.entity.OrderItem">
+        <id property="orderItemId" column="order_item_id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="applicationId" column="application_id"/>
+        <result property="price" column="price"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- 주문 생성 -->
+    <insert id="insertOrder" parameterType="com.mungtrainer.mtserver.order.entity.OrderMaster"
+            useGeneratedKeys="true" keyProperty="orderId">
+        INSERT INTO order_master (
+            wishlist_id,
+            user_id,
+            order_status,
+            total_amount,
+            paid_amount,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{wishlistId},
+            #{userId},
+            #{orderStatus},
+            #{totalAmount},
+            #{paidAmount},
+            NOW(),
+            NOW()
+        )
+    </insert>
+
+    <!-- 주문 항목 생성 -->
+    <insert id="insertOrderItem" parameterType="com.mungtrainer.mtserver.order.entity.OrderItem"
+            useGeneratedKeys="true" keyProperty="orderItemId">
+        INSERT INTO order_item (
+            order_id,
+            application_id,
+            price,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{orderId},
+            #{applicationId},
+            #{price},
+            NOW(),
+            NOW()
+        )
+    </insert>
+
+    <!-- 주문 상태 업데이트 -->
+    <update id="updateOrderStatus" parameterType="com.mungtrainer.mtserver.order.entity.OrderMaster">
+        UPDATE order_master
+        SET order_status = #{orderStatus},
+            paid_at = #{paidAt},
+            updated_at = NOW()
+        WHERE order_id = #{orderId}
+    </update>
+
+</mapper>

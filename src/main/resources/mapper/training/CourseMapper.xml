@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mungtrainer.mtserver.training.dao.CourseDAO">
+    <select id="findCourses" resultType="com.mungtrainer.mtserver.training.dto.response.CourseListResponse">
+        SELECT
+        c.course_id,
+        c.trainer_id,
+        c.title,
+        c.type,
+        c.status,
+        c.lesson_form,
+        c.is_free,
+        c.difficulty,
+        c.schedule,
+        c.main_image
+        FROM training_course c
+        WHERE c.trainer_id = #{userId}
+        AND c.is_deleted = 0
+
+        <if test="statuses != null and statuses.size() > 0">
+            AND c.status IN
+            <foreach collection="statuses"
+                     item="status"
+                     open="("
+                     separator=","
+                     close=")">
+                #{status}
+            </foreach>
+
+        </if>
+        <if test="types != null and types.size() > 0">
+            AND c.type IN
+            <foreach collection="types"
+                     item="type"
+                     open="("
+                     separator=","
+                     close=")">
+                #{type}
+            </foreach>
+
+        </if>
+        <if test="lessonForms != null and lessonForms.size() > 0">
+            AND c.lesson_form IN
+            <foreach collection="lessonForms"
+                     item="lessonForm"
+                     open="("
+                     separator=","
+                     close=")">
+                #{lessonForm}
+            </foreach>
+
+        </if>
+
+        ORDER BY c.created_at DESC
+    </select>
+    <select id="hasPaidApplications" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM training_course_application a
+                 JOIN training_session s ON a.session_id = s.session_id
+        WHERE a.status = 'PAID'
+          AND s.course_id = #{courseId}
+    </select>
+    <select id="isOwnerCourse" resultType="boolean">
+        select count(*) > 0
+        from training_course
+        where course_id = #{courseId}
+          and trainer_id = #{userId}
+    </select>
+    <select id="existsTags" resultType="boolean">
+        select count(*) > 0
+        from training_course
+        where tags = #{tags}
+    </select>
+    <select id="getCourseById">
+        select *
+        from training_course
+        where course_id = #{courseId}
+    </select>
+    <insert id="insertSessions">
+        INSERT INTO training_session (
+        course_id, session_no, session_date, start_time, end_time,
+        location_detail, status, max_students, content, price,
+        created_by, created_at, updated_by, updated_at
+        )
+        VALUES
+        <foreach collection="list" item="s" separator=",">
+            (
+            #{s.courseId},
+            #{s.sessionNo},
+            #{s.sessionDate},
+            #{s.startTime},
+            #{s.endTime},
+            #{s.locationDetail},
+            #{s.status},
+            #{s.maxStudents},
+            #{s.content},
+            #{s.price},
+            #{s.createdBy},
+            NOW(),
+            #{s.updatedBy},
+            NOW()
+            )
+        </foreach>
+    </insert>
+    <insert id="insertCourse" useGeneratedKeys="true" keyProperty="courseId">
+        INSERT INTO training_course (
+            trainer_id,
+            tags,
+            title,
+            description,
+            type,
+            lesson_form,
+            status,
+            is_free,
+            difficulty,
+            location,
+            schedule,
+            refund_policy,
+            main_image,
+            detail_image,
+            items,
+            dog_size,
+            created_by,
+            created_at,
+            updated_by,
+            updated_at
+        )
+        VALUES (
+                   #{trainerId},
+                   #{tags},
+                   #{title},
+                   #{description},
+                   #{type},
+                   #{lessonForm},
+                   #{status},
+                   #{isFree},
+                   #{difficulty},
+                   #{location},
+                   #{schedule},
+                   #{refundPolicy},
+                   #{mainImage},
+                   #{detailImage},
+                   #{items},
+                   #{dogSize},
+                   #{createdBy},
+                   NOW(),
+                   #{updatedBy},
+                   NOW()
+               )
+    </insert>
+
+    <update id="updateCourse">
+        UPDATE training_course
+        SET
+            tags = #{tags},
+            type = #{type},
+            lesson_form = #{lessonForm},
+            title = #{title},
+            description = #{description},
+            status = #{status},
+            is_free = #{isFree},
+            location = #{location},
+            main_image = #{mainImage},
+            detail_image = #{detailImage},
+            refund_policy = #{refundPolicy},
+            schedule = #{schedule},
+            dog_size = #{dogSize},
+            items = #{items},
+            difficulty = #{difficulty},
+            updated_by = #{updatedBy},
+            updated_at = #{updatedAt}
+        WHERE course_id = #{courseId}
+          AND is_deleted = 0
+    </update>
+
+    <!-- 삭제 -->
+    <!-- 상태: 캔슬 변경 -->
+    <!-- session, application 상태 CANCELLED -->
+    <update id="cancelSessionsAndApplications">
+        UPDATE training_session s
+            LEFT JOIN training_course_application a
+        ON a.session_id = s.session_id
+            AND a.is_deleted = 0
+            SET
+                s.status = 'CANCELLED',
+                s.updated_by = #{userId},
+                s.updated_at = NOW(),
+
+                a.status = 'CANCELLED',
+                a.updated_by = #{userId},
+                a.updated_at = NOW()
+        WHERE s.course_id = #{courseId}
+          AND s.is_deleted = 0
+    </update>
+
+    <!-- course 상태 CANCELLED -->
+    <update id="cancelCourse">
+        UPDATE training_course
+        SET
+            status = 'CANCELLED',
+            updated_by = #{userId},
+            updated_at = NOW()
+        WHERE course_id = #{courseId}
+          AND is_deleted = 0
+    </update>
+
+    <!--  소프트 딜리트  -->
+    <!-- application 하위 엔티티 (waiting / attendance / feedback) -->
+    <update id="softDeleteByApplication">
+        UPDATE training_course_application a
+            JOIN training_session s
+        ON a.session_id = s.session_id
+            LEFT JOIN waiting w
+            ON w.application_id = a.application_id
+            AND w.is_deleted = 0
+            LEFT JOIN training_attendance ta
+            ON ta.application_id = a.application_id
+            AND ta.is_deleted = 0
+            LEFT JOIN feedback f
+            ON f.application_id = a.application_id
+            AND f.is_deleted = 0
+            SET
+                w.is_deleted = 1,
+                w.deleted_at = NOW(),
+                w.updated_by = #{userId},
+                w.updated_at = NOW(),
+
+                ta.is_deleted = 1,
+                ta.deleted_at = NOW(),
+                ta.updated_by = #{userId},
+                ta.updated_at = NOW(),
+
+                f.is_deleted = 1,
+                f.deleted_at = NOW(),
+                f.updated_by = #{userId},
+                f.updated_at = NOW()
+        WHERE s.course_id = #{courseId}
+          AND a.is_deleted = 0
+    </update>
+
+    <!-- feedback_attachment -->
+    <update id="softDeleteFeedbackAttachments">
+        UPDATE feedback_attachment fa
+            JOIN feedback f
+        ON fa.feedback_id = f.feedback_id
+            JOIN training_course_application a
+            ON f.application_id = a.application_id
+            JOIN training_session s
+            ON a.session_id = s.session_id
+            SET
+                fa.is_deleted = 1,
+                fa.deleted_at = NOW(),
+                fa.updated_by = #{userId},
+                fa.updated_at = NOW()
+        WHERE s.course_id = #{courseId}
+          AND fa.is_deleted = 0
+    </update>
+
+    <!-- session 하위 엔티티 (session_change / notice) -->
+    <update id="softDeleteBySession">
+        UPDATE training_session s
+            LEFT JOIN training_session_change sc
+        ON sc.session_id = s.session_id
+            AND sc.is_deleted = 0
+            LEFT JOIN training_course_notice n
+            ON n.session_id = s.session_id
+            AND n.is_deleted = 0
+            SET
+                sc.is_deleted = 1,
+                sc.deleted_at = NOW(),
+                sc.updated_by = #{userId},
+                sc.updated_at = NOW(),
+
+                n.is_deleted = 1,
+                n.deleted_at = NOW(),
+                n.updated_by = #{userId},
+                n.updated_at = NOW()
+        WHERE s.course_id = #{courseId}
+          AND s.is_deleted = 0
+    </update>
+
+    <!-- 물리 딜리트 -->
+    <!-- wishlist_detail_dog -->
+    <delete id="deleteWishlistDetailDog">
+        DELETE wdd
+        FROM wishlist_detail_dog wdd
+                 JOIN wishlist_detail wd
+                      ON wdd.wishlist_item_id = wd.wishlist_item_id
+        WHERE wd.course_id = #{courseId}
+    </delete>
+
+    <!-- wishlist_detail -->
+    <delete id="deleteWishlistDetail">
+        DELETE FROM wishlist_detail
+        WHERE course_id = #{courseId}
+    </delete>
+</mapper>

@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mungtrainer.mtserver.training.dao.TrainingSessionDAO">
+
+    <resultMap id="sessionResultMap" type="com.mungtrainer.mtserver.training.dto.response.TrainingSessionResponse">
+        <id property="sessionId" column="session_id"/>
+        <result property="sessionNo" column="session_no"/>
+        <result property="sessionDate" column="session_date"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="locationDetail" column="location_detail"/>
+        <result property="status" column="status"/>
+        <result property="maxStudents" column="max_students"/>
+        <result property="currentStudents" column="current_students"/>
+        <result property="content" column="content"/>
+        <result property="price" column="price"/>
+    </resultMap>
+
+    <resultMap id="trainingSessionResultMap" type="com.mungtrainer.mtserver.training.entity.TrainingSession">
+        <id property="sessionId" column="session_id"/>
+        <result property="courseId" column="course_id"/>
+        <result property="sessionNo" column="session_no"/>
+        <result property="sessionDate" column="session_date"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="locationDetail" column="location_detail"/>
+        <result property="status" column="status"/>
+        <result property="maxStudents" column="max_students"/>
+        <result property="content" column="content"/>
+        <result property="price" column="price"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findSessionsByCourseId" parameterType="long" resultMap="sessionResultMap">
+        SELECT
+            ts.session_id,
+            ts.session_no,
+            ts.session_date,
+            ts.start_time,
+            ts.end_time,
+            ts.location_detail,
+            ts.status,
+            ts.max_students,
+            ts.content,
+            ts.price,
+            COALESCE(COUNT(tca.application_id), 0) AS current_students
+        FROM training_session ts
+        LEFT JOIN training_course_application tca
+            ON ts.session_id = tca.session_id
+            AND tca.is_deleted = 0
+            AND tca.status != 'CANCELLED'
+        WHERE ts.course_id = #{courseId}
+          AND ts.is_deleted = 0
+        GROUP BY ts.session_id
+        ORDER BY ts.session_no ASC
+    </select>
+
+    <select id="findSessionById" resultMap="sessionResultMap">
+        SELECT
+            ts.session_id,
+            ts.session_no,
+            ts.session_date,
+            ts.start_time,
+            ts.end_time,
+            ts.location_detail,
+            ts.status,
+            ts.max_students,
+            ts.content,
+            ts.price,
+            COALESCE(COUNT(tca.application_id), 0) AS current_students
+        FROM training_session ts
+        LEFT JOIN training_course_application tca
+            ON ts.session_id = tca.session_id
+            AND tca.is_deleted = 0
+            AND tca.status != 'CANCELLED'
+        WHERE ts.course_id = #{courseId}
+          AND ts.session_id = #{sessionId}
+          AND ts.is_deleted = 0
+        GROUP BY ts.session_id
+    </select>
+
+    <select id="isSessionOwnedByTrainer" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM training_session ts
+            INNER JOIN training_course tc ON ts.course_id = tc.course_id
+            WHERE ts.session_id = #{sessionId}
+              AND tc.trainer_id = #{trainerId}
+              AND ts.is_deleted = 0
+              AND tc.is_deleted = 0
+        )
+    </select>
+
+    <update id="updateSession">
+        UPDATE training_session
+        <set>
+            <if test="request.sessionDate != null">
+                session_date = #{request.sessionDate},
+            </if>
+            <if test="request.startTime != null">
+                start_time = #{request.startTime},
+            </if>
+            <if test="request.endTime != null">
+                end_time = #{request.endTime},
+            </if>
+            <if test="request.locationDetail != null and request.locationDetail != ''">
+                location_detail = #{request.locationDetail},
+            </if>
+            <if test="request.status != null and request.status != ''">
+                status = #{request.status},
+            </if>
+            <if test="request.maxStudents != null">
+                max_students = #{request.maxStudents},
+            </if>
+            <if test="request.content != null and request.content != ''">
+                content = #{request.content},
+            </if>
+            <if test="request.price != null">
+                price = #{request.price},
+            </if>
+            updated_at = CURRENT_TIMESTAMP
+        </set>
+        WHERE session_id = #{sessionId}
+          AND is_deleted = 0
+    </update>
+
+    <select id="hasActiveApplications" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM training_course_application
+            WHERE session_id = #{sessionId}
+              AND is_deleted = 0
+              AND status != 'CANCELLED'
+        )
+    </select>
+
+    <update id="deleteSession">
+        UPDATE training_session
+        SET is_deleted = 1,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE session_id = #{sessionId}
+          AND is_deleted = 0
+    </update>
+
+    <select id="findById" parameterType="long" resultMap="trainingSessionResultMap">
+        SELECT session_id,
+               course_id,
+               session_no,
+               session_date,
+               start_time,
+               end_time,
+               location_detail,
+               status,
+               max_students,
+               content,
+               price,
+               created_at,
+               updated_at
+        FROM training_session
+        WHERE session_id = #{sessionId}
+          AND is_deleted = 0
+    </select>
+
+    <select id="hasPaidApplications" resultType="Boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM training_course_application tca
+            INNER JOIN order_item oi ON tca.application_id = oi.application_id
+                AND oi.is_deleted = 0
+            INNER JOIN order_master om ON oi.order_id = om.order_id
+                AND om.is_deleted = 0
+            WHERE tca.session_id = #{sessionId}
+              AND tca.is_deleted = 0
+              AND om.order_status IN ('PAID', 'PARTIAL_REFUNDED')
+        )
+    </select>
+
+    <update id="deleteFeedbackAttachmentsBySessionId">
+        UPDATE feedback_attachment fa
+            INNER JOIN feedback f ON fa.feedback_id = f.feedback_id
+            INNER JOIN training_course_application tca ON f.application_id = tca.application_id
+            SET fa.is_deleted = 1,
+                fa.deleted_at = NOW(),
+                fa.updated_by = #{deletedBy},
+                fa.updated_at = NOW()
+        WHERE tca.session_id = #{sessionId}
+          AND tca.is_deleted = 0
+          AND f.is_deleted = 0
+          AND fa.is_deleted = 0
+    </update>
+
+    <update id="deleteFeedbacksBySessionId">
+        UPDATE feedback
+        SET is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{deletedBy},
+            updated_at = NOW()
+        WHERE application_id IN (
+            SELECT application_id
+            FROM training_course_application
+            WHERE session_id = #{sessionId}
+              AND is_deleted = 0
+        )
+          AND is_deleted = 0
+    </update>
+
+    <update id="deleteAttendancesBySessionId">
+        UPDATE training_attendance
+        SET is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{deletedBy},
+            updated_at = NOW()
+        WHERE application_id IN (
+            SELECT application_id
+            FROM training_course_application
+            WHERE session_id = #{sessionId}
+              AND is_deleted = 0
+        )
+          AND is_deleted = 0
+    </update>
+
+    <update id="deleteWaitingBySessionId">
+        UPDATE waiting
+        SET is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{deletedBy},
+            updated_at = NOW()
+        WHERE application_id IN (
+            SELECT application_id
+            FROM training_course_application
+            WHERE session_id = #{sessionId}
+              AND is_deleted = 0
+        )
+          AND is_deleted = 0
+    </update>
+
+    <update id="deleteApplicationsBySessionId">
+        UPDATE training_course_application
+        SET is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{deletedBy},
+            updated_at = NOW()
+        WHERE session_id = #{sessionId}
+          AND is_deleted = 0
+    </update>
+
+    <update id="deleteNoticesBySessionId">
+        UPDATE training_course_notice
+        SET is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{deletedBy},
+            updated_at = NOW()
+        WHERE session_id = #{sessionId}
+          AND is_deleted = 0
+    </update>
+
+    <update id="deleteSessionChangesBySessionId">
+        UPDATE training_session_change
+        SET is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{deletedBy},
+            updated_at = NOW()
+        WHERE session_id = #{sessionId}
+          AND is_deleted = 0
+    </update>
+
+    <update id="deleteSessionById">
+        UPDATE training_session
+        SET is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by = #{deletedBy},
+            updated_at = NOW()
+        WHERE session_id = #{sessionId}
+          AND is_deleted = 0
+    </update>
+
+</mapper>

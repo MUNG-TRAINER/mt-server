@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mungtrainer.mtserver.dog.dao.DogDAO">
+
+    <!-- Result Map 정의 -->
+    <resultMap id="dogResultMap" type="com.mungtrainer.mtserver.dog.dto.response.DogResponse">
+        <id property="dogId" column="dog_id"/>
+        <result property="name" column="name"/>
+        <result property="breed" column="breed"/>
+        <result property="age" column="age"/>
+        <result property="gender" column="gender"/>
+        <result property="isNeutered" column="is_neutered"/>
+        <result property="weight" column="weight"/>
+        <result property="personality" column="personality"/>
+        <result property="habits" column="habits"/>
+        <result property="healthInfo" column="health_info"/>
+        <result property="humanSocialization" column="human_socialization"/>
+        <result property="animalSocialization" column="animal_socialization"/>
+        <result property="profileImage" column="profile_image"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- 반려견 생성 -->
+    <insert id="insertDog" parameterType="map">
+        INSERT INTO dog (
+            user_id,
+            name,
+            breed,
+            age,
+            gender,
+            is_neutered,
+            weight,
+            personality,
+            habits,
+            health_info,
+            human_socialization,
+            animal_socialization,
+            profile_image,
+            created_by,
+            created_at,
+            updated_by,
+            updated_at,
+            is_deleted
+        ) VALUES (
+            #{userId},
+            #{request.name},
+            #{request.breed},
+            #{request.age},
+            #{request.gender},
+            #{request.isNeutered},
+            #{request.weight},
+            #{request.personality},
+            #{request.habits},
+            #{request.healthInfo},
+            #{request.humanSocialization},
+            #{request.animalSocialization},
+            #{request.profileImageUrl},
+            #{createdBy},
+            NOW(),
+            #{updatedBy},
+            NOW(),
+            0
+        )
+        <selectKey keyProperty="dogId" resultType="long" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <!-- 반려견 단건 조회 -->
+    <select id="selectDogById" resultMap="dogResultMap">
+        SELECT
+            dog_id,
+            name,
+            breed,
+            age,
+            gender,
+            is_neutered,
+            weight,
+            personality,
+            habits,
+            health_info,
+            human_socialization,
+            animal_socialization,
+            profile_image,
+            created_at,
+            updated_at
+        FROM dog
+        WHERE dog_id = #{dogId}
+          AND is_deleted = 0
+    </select>
+
+    <!-- 반려견 조회 (소유자 확인) -->
+    <select id="selectDogByIdAndUserId" resultMap="dogResultMap">
+        SELECT
+            dog_id,
+            name,
+            breed,
+            age,
+            gender,
+            is_neutered,
+            weight,
+            personality,
+            habits,
+            health_info,
+            human_socialization,
+            animal_socialization,
+            profile_image,
+            created_at,
+            updated_at
+        FROM dog
+        WHERE dog_id = #{dogId}
+          AND user_id = #{userId}
+          AND is_deleted = 0
+    </select>
+
+    <!-- 반려견 리스트 조회 (본인) -->
+    <select id="selectDogsByUserId" resultMap="dogResultMap">
+        SELECT
+            dog_id,
+            name,
+            breed,
+            age,
+            gender,
+            is_neutered,
+            weight,
+            personality,
+            habits,
+            health_info,
+            human_socialization,
+            animal_socialization,
+            profile_image,
+            created_at,
+            updated_at
+        FROM dog
+        WHERE user_id = #{userId}
+          AND is_deleted = 0
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 반려견 리스트 조회 (타인) -->
+    <select id="selectDogsByUsername" resultMap="dogResultMap">
+        SELECT
+            d.dog_id,
+            d.name,
+            d.breed,
+            d.age,
+            d.gender,
+            d.is_neutered,
+            d.weight,
+            d.personality,
+            d.habits,
+            d.health_info,
+            d.human_socialization,
+            d.animal_socialization,
+            d.profile_image,
+            d.created_at,
+            d.updated_at
+        FROM dog d
+        INNER JOIN user u ON d.user_id = u.user_id
+        WHERE u.user_name = #{username}
+          AND d.is_deleted = 0
+          AND u.is_deleted = 0
+        ORDER BY d.created_at DESC
+    </select>
+
+    <!-- 반려견 정보 수정 -->
+    <update id="updateDog">
+        UPDATE dog
+        <set>
+            <!-- 필수값 (NOT NULL) - 빈 문자열 업데이트 방지 -->
+            <if test="request.name != null and request.name != ''">
+                name = #{request.name},
+            </if>
+            <if test="request.breed != null and request.breed != ''">
+                breed = #{request.breed},
+            </if>
+            <if test="request.age != null">
+                age = #{request.age},
+            </if>
+            <if test="request.gender != null and request.gender != ''">
+                gender = #{request.gender},
+            </if>
+            <if test="request.isNeutered != null">
+                is_neutered = #{request.isNeutered},
+            </if>
+            <!-- 선택값 (NULL 허용) - null 또는 빈 문자열을 NULL로 업데이트 -->
+            <!-- weight: clearWeight 플래그로 삭제 처리 -->
+            <choose>
+                <when test="request.clearWeight != null and request.clearWeight == true">
+                    weight = NULL,
+                </when>
+                <when test="request.weight != null">
+                    weight = #{request.weight},
+                </when>
+            </choose>
+            <choose>
+                <when test="request.personality != null and request.personality != ''">
+                    personality = #{request.personality},
+                </when>
+                <when test="request.personality != null and request.personality == ''">
+                    personality = NULL,
+                </when>
+            </choose>
+            <choose>
+                <when test="request.habits != null and request.habits != ''">
+                    habits = #{request.habits},
+                </when>
+                <when test="request.habits != null and request.habits == ''">
+                    habits = NULL,
+                </when>
+            </choose>
+            <choose>
+                <when test="request.healthInfo != null and request.healthInfo != ''">
+                    health_info = #{request.healthInfo},
+                </when>
+                <when test="request.healthInfo != null and request.healthInfo == ''">
+                    health_info = NULL,
+                </when>
+            </choose>
+            <!-- 사회화 정보 (NOT NULL) -->
+            <if test="request.humanSocialization != null">
+                human_socialization = #{request.humanSocialization},
+            </if>
+            <if test="request.animalSocialization != null">
+                animal_socialization = #{request.animalSocialization},
+            </if>
+            <!-- 프로필 이미지 (NULL 허용) -->
+            <choose>
+                <when test="request.profileImageUrl != null and request.profileImageUrl != ''">
+                    profile_image = #{request.profileImageUrl},
+                </when>
+                <when test="request.profileImageUrl != null and request.profileImageUrl == ''">
+                    profile_image = NULL,
+                </when>
+            </choose>
+            updated_by = #{updatedBy},
+            updated_at = NOW()
+        </set>
+        WHERE dog_id = #{dogId}
+        AND user_id = #{userId}
+        AND is_deleted = 0
+    </update>
+
+    <!-- 반려견 삭제 (소프트 삭제) -->
+    <update id="deleteDog">
+        UPDATE dog
+        SET is_deleted = 1,
+            name = CONCAT(name, '_deleted_', #{dogId}, '_', UNIX_TIMESTAMP(NOW(6))),
+            deleted_at = NOW(),
+            updated_by = #{deletedBy},
+            updated_at = NOW()
+        WHERE dog_id = #{dogId}
+          AND user_id = #{userId}
+          AND is_deleted = 0
+    </update>
+
+    <!-- 이름 중복 체크 -->
+    <select id="existsByUserIdAndName" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM dog
+            WHERE user_id = #{userId}
+              AND name = #{name}
+              AND is_deleted = 0
+        )
+    </select>
+
+</mapper>
