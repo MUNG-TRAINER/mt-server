@@ -41,11 +41,14 @@
     <select id="findDogsByCompleted" resultType="com.mungtrainer.mtserver.counseling.dto.response.CounselingDogResponse">
         SELECT
         c.counseling_id AS counselingId,
+        d.dog_id AS dogId,
         d.name AS dogName,
-        u.name AS ownerName
+        u.name AS ownerName,
+        d.profile_image AS dogImage,
+        c.content AS content
         FROM counseling c
-        JOIN dog d ON c.dog_id = d.dog_id
-        JOIN user u ON d.user_id = u.user_id
+        JOIN dog d ON c.dog_id = d.dog_id AND d.is_deleted = 0
+        JOIN user u ON d.user_id = u.user_id AND u.is_deleted = 0
         WHERE c.is_completed = CASE WHEN #{completed} = true THEN 1 ELSE 0 END
         AND c.is_deleted = 0
     </select>
