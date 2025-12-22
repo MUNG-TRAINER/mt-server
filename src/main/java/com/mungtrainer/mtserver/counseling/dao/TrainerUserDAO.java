@@ -62,4 +62,11 @@ public interface TrainerUserDAO {
                                  @Param("rejectReason") String rejectReason);
 
     List<MultiCourseGroupResponse> findMultiCourseDetail(Map<String, Long> params);
+
+    /**
+     * 코스와 반려견으로 신청 ID 목록 조회
+     * 일괄 승인 시 출석 정보 생성에 사용
+     */
+    List<Long> findApplicationIdsByCourseAndDog(@Param("courseId") Long courseId,
+                                                 @Param("dogId") Long dogId);
 }

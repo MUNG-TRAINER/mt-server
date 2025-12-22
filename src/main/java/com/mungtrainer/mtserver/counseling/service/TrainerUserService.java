@@ -11,13 +11,16 @@ import com.mungtrainer.mtserver.counseling.dto.request.BulkApplicationStatusRequ
 import com.mungtrainer.mtserver.counseling.dto.response.*;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
 import com.mungtrainer.mtserver.dog.dao.DogDAO;
+import com.mungtrainer.mtserver.training.dao.TrainingAttendanceDAO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TrainerUserService {
@@ -26,6 +29,7 @@ public class TrainerUserService {
     private final TrainerUserDAO trainerUserDao;
     private final S3Service s3Service;
     private final CounselingDAO counselingDao;
+    private final TrainingAttendanceDAO trainingAttendanceDao;
 
     public List<TrainerUserListResponse> getUsersByTrainer(Long trainerId) {
         return trainerUserDao.findUsersByTrainerId(trainerId);
@@ -234,6 +238,11 @@ public class TrainerUserService {
         if (updated == 0) {
             throw new CustomException(ErrorCode.APPLICATION_ALREADY_PROCESSED);
         }
+
+        // 승인 시 출석 정보 생성
+        if ("ACCEPT".equals(status)) {
+            createAttendanceRecord(applicationId, trainerId);
+        }
     }
 
     /**
@@ -259,6 +268,11 @@ public class TrainerUserService {
         // DB 반영 결과 검증
         if (updated == 0) {
             throw new CustomException(ErrorCode.APPLICATION_NO_MATCHING_RECORD);
+        }
+
+        // 승인 시 해당 코스의 모든 신청에 대해 출석 정보 일괄 생성
+        if ("ACCEPT".equals(status)) {
+            createBulkAttendanceRecords(courseId, dogId, trainerId);
         }
     }
 
@@ -332,6 +346,76 @@ public class TrainerUserService {
         }
 
         return updated;
+    }
+
+    /**
+     * 개별 신청에 대한 출석 정보 생성
+     * 신청이 승인되었을 때 호출됩니다.
+     * 출석 정보 생성 실패 시 트랜잭션을 롤백하여 데이터 일관성을 보장합니다.
+     *
+     * @param applicationId 승인된 신청 ID
+     * @param trainerId 승인한 훈련사 ID (감사 추적용)
+     * @throws CustomException 출석 정보 생성 실패 시
+     */
+    private void createAttendanceRecord(Long applicationId, Long trainerId) {
+        log.info("출석 정보 생성 시작 - 신청 ID: {}, 생성자: {}", applicationId, trainerId);
+
+        int inserted = trainingAttendanceDao.insertAttendanceByApplicationId(applicationId, trainerId);
+        validateAttendanceCreation(inserted, 1, "신청 ID: " + applicationId);
+
+        log.info("출석 정보 생성 완료 - 신청 ID: {}, 생성된 레코드 수: {}", applicationId, inserted);
+    }
+
+    /**
+     * 여러 신청에 대한 출석 정보 일괄 생성
+     * 다회차 코스 일괄 승인 시 호출됩니다.
+     * 출석 정보 생성 실패 시 트랜잭션을 롤백하여 데이터 일관성을 보장합니다.
+     *
+     * @param courseId 코스 ID
+     * @param dogId 반려견 ID
+     * @param trainerId 승인한 훈련사 ID (감사 추적용)
+     * @throws CustomException 출석 정보 생성 실패 시
+     */
+    private void createBulkAttendanceRecords(Long courseId, Long dogId, Long trainerId) {
+        log.info("일괄 출석 정보 생성 시작 - 코스 ID: {}, 반려견 ID: {}, 생성자: {}", courseId, dogId, trainerId);
+
+        // 해당 코스와 반려견의 모든 승인된 신청 ID 조회
+        List<Long> applicationIds = trainerUserDao.findApplicationIdsByCourseAndDog(courseId, dogId);
+
+        if (applicationIds == null || applicationIds.isEmpty()) {
+            log.error("출석 정보 생성 대상 없음 - 코스 ID: {}, 반려견 ID: {}", courseId, dogId);
+            throw new CustomException(ErrorCode.ATTENDANCE_CREATION_FAILED);
+        }
+
+        // 출석 정보 일괄 생성
+        int inserted = trainingAttendanceDao.insertAttendanceByApplicationIds(applicationIds, trainerId);
+        validateAttendanceCreation(inserted, applicationIds.size(),
+                String.format("코스 ID: %d, 반려견 ID: %d", courseId, dogId));
+
+        log.info("일괄 출석 정보 생성 완료 - 코스 ID: {}, 반려견 ID: {}, 생성된 레코드 수: {}",
+                courseId, dogId, inserted);
+    }
+
+    /**
+     * 출석 정보 생성 결과를 검증합니다.
+     * 생성된 레코드 수가 예상과 일치하지 않으면 예외를 발생시킵니다.
+     *
+     * @param actualCount 실제 생성된 레코드 수
+     * @param expectedCount 예상 생성 레코드 수
+     * @param context 에러 로그에 포함될 컨텍스트 정보
+     * @throws CustomException 검증 실패 시
+     */
+    private void validateAttendanceCreation(int actualCount, int expectedCount, String context) {
+        if (actualCount == 0) {
+            log.error("출석 정보 생성 실패 - {}, 삽입된 레코드 수: 0", context);
+            throw new CustomException(ErrorCode.ATTENDANCE_CREATION_FAILED);
+        }
+
+        if (actualCount != expectedCount) {
+            log.error("출석 정보 생성 불완전 - {}, 예상: {}, 실제: {}",
+                    context, expectedCount, actualCount);
+            throw new CustomException(ErrorCode.ATTENDANCE_CREATION_FAILED);
+        }
     }
 
 

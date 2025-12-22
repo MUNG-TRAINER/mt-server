@@ -50,6 +50,7 @@ public enum ErrorCode {
 
   // 출석 관련
   ATTENDANCE_UPDATE_FAILED(500,"출석 상태 변경에 실패했습니다"),
+  ATTENDANCE_CREATION_FAILED(500, "출석 정보 생성에 실패했습니다"),
 
   // 반려견 관련
 
