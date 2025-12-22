@@ -19,6 +19,10 @@ public class WishlistResponse {
     private Long dogId;
     private String dogName;
     private String title;
+    private String description;
+    private String tags;
+    private String lessonForm;
+    private String mainImage;
     private String type;
     private String schedule;
     private String location;

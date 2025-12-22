@@ -10,7 +10,6 @@ public class ApplicationListViewResponse {
 
     // 신청 식별
     private Long applicationId;
-    private Long sessionId;
     private Long dogId;
 
 
@@ -30,6 +29,7 @@ public class ApplicationListViewResponse {
 
     // 세션 // ex: "2025-12-20 10:00 ~ 12:00"
     private String sessionSchedule;
-    private String sessionNumber;
+    private Integer price;
+
     private String dogName;
 }

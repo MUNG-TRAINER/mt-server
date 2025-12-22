@@ -9,13 +9,16 @@ import com.mungtrainer.mtserver.training.dto.response.ApplicationListViewRespons
 import com.mungtrainer.mtserver.training.dto.response.ApplicationResponse;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationStatusResponse;
 import com.mungtrainer.mtserver.training.service.TrainingCourseApplicationService;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.sql.DataSource;
 import java.util.List;
 
 @Validated
@@ -33,7 +36,6 @@ public class TrainingCourseApplicationController {
         List<ApplicationResponse> applicationList = applicationService.getApplicationsByUserId(userId);
         return ResponseEntity.ok(applicationList);
     }
-
     // 훈련과정 신청 상세페이지
     @GetMapping("/{applicationId}")
     public ResponseEntity<ApplicationResponse> getApplication(@AuthenticationPrincipal CustomUserDetails principal, @PathVariable Long applicationId){
@@ -41,15 +43,6 @@ public class TrainingCourseApplicationController {
         ApplicationResponse application = applicationService.getApplicationById( userId,applicationId);
         return ResponseEntity.ok(application);
     }
-
-    // 훈련과정 신청 생성
-    @PostMapping
-    public ResponseEntity<ApplicationResponse> createApplication(@AuthenticationPrincipal CustomUserDetails principal, @RequestBody ApplicationRequest request ){
-        Long userId = principal.getUserId();
-        ApplicationResponse created = applicationService.createApplication(userId,request,  request.getWishlistItemId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
-    }
-
 
     // 훈련과정 신청 취소
     @DeleteMapping("/{applicationId}")
@@ -63,7 +56,7 @@ public class TrainingCourseApplicationController {
     @DeleteMapping
     public ResponseEntity<Void> deleteApplicationList( @AuthenticationPrincipal CustomUserDetails principal,@RequestBody ApplicationCancelRequest request) {
         Long userId = principal.getUserId();
-        applicationService.deleteApplicationList(userId, request);
+        applicationService.cancelApplicationsByCourses(userId, request);
         return ResponseEntity.ok().build();
     }
 
@@ -75,7 +68,7 @@ public class TrainingCourseApplicationController {
                 applicationService.getApplicationListView(userId)
         );
     }
-
+    // 신청 상세 status 가져오기
     @GetMapping("/{applicationId}/status")
     public ResponseEntity<ApplicationStatusResponse> getApplicationStatus(
             @PathVariable Long applicationId,
@@ -88,11 +81,4 @@ public class TrainingCourseApplicationController {
         );
     }
 
-    // 신청 강아지 수정
-    @PatchMapping("/{applicationId}")
-    public ResponseEntity<Void> updateApplicationDog(@PathVariable Long applicationId, @RequestBody WishlistUpdateRequest request, @AuthenticationPrincipal CustomUserDetails principal) {
-        Long userId = principal.getUserId();
-        applicationService.updateApplicationDog(userId, applicationId, request.getDogId());
-        return ResponseEntity.ok().build();
-    }
 }
