@@ -9,7 +9,7 @@ public class CookieUtil {
     Cookie cookie = new Cookie(name, value);
     cookie.setHttpOnly(true);     // JS 접근 불가 → XSS 방어
     cookie.setSecure(false);       // true -> HTTPS에서만 전송
-    cookie.setPath("/");          // 모든 경로에서 유효
+    cookie.setPath("/");          // 모든 경로에서 유효 우효
     cookie.setMaxAge((int) maxAgeSeconds);
     cookie.setAttribute("SameSite", "Lax"); // 또는 Lax (cross-site 여부에 따라 선택)
 
