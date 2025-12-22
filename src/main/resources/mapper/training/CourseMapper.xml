@@ -4,19 +4,29 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.mungtrainer.mtserver.training.dao.CourseDAO">
-    <select id="findCourses" resultType="com.mungtrainer.mtserver.training.dto.response.CourseListResponse">
+    <select id="findCourses"
+            resultType="com.mungtrainer.mtserver.training.dto.response.CourseListResponse">
         SELECT
-        c.course_id,
-        c.trainer_id,
-        c.title,
-        c.type,
-        c.status,
-        c.lesson_form,
-        c.is_free,
-        c.difficulty,
-        c.schedule,
-        c.main_image
+        c.course_id            AS courseId,
+        c.trainer_id           AS trainerId,
+        c.title                AS title,
+        c.type                 AS type,
+        c.lesson_form          AS lessonForm,
+        c.main_image           AS mainImage,
+        c.location             AS location,
+        c.tags                 AS tags,
+        c.description          AS description,
+
+        s.session_id           AS sessionId,
+        s.session_no           AS sessionNo,
+        s.session_date         AS sessionDate,
+        s.start_time           AS startTime,
+        s.end_time             AS endTime,
+        s.status               AS sessionStatus
         FROM training_course c
+        LEFT JOIN training_session s
+        ON s.course_id = c.course_id
+        AND s.is_deleted = 0
         WHERE c.trainer_id = #{userId}
         AND c.is_deleted = 0
 
@@ -29,8 +39,8 @@
                      close=")">
                 #{status}
             </foreach>
-
         </if>
+
         <if test="types != null and types.size() > 0">
             AND c.type IN
             <foreach collection="types"
@@ -40,8 +50,8 @@
                      close=")">
                 #{type}
             </foreach>
-
         </if>
+
         <if test="lessonForms != null and lessonForms.size() > 0">
             AND c.lesson_form IN
             <foreach collection="lessonForms"
@@ -51,11 +61,11 @@
                      close=")">
                 #{lessonForm}
             </foreach>
-
         </if>
 
-        ORDER BY c.created_at DESC
+        ORDER BY c.created_at DESC, s.session_no ASC
     </select>
+
     <select id="hasPaidApplications" resultType="boolean">
         SELECT COUNT(*) > 0
         FROM training_course_application a
@@ -74,7 +84,7 @@
         from training_course
         where tags = #{tags}
     </select>
-    <select id="getCourseById">
+    <select id="getCourseById" resultType="com.mungtrainer.mtserver.training.entity.TrainingCourse">
         select *
         from training_course
         where course_id = #{courseId}

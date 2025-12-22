@@ -236,9 +236,10 @@
     </select>
 
 
-<!--    승인 대기 목록-->
+<!--    승인 대기 목록 (특정 훈련사의 과정만 조회)-->
     <select id="selectWaitingApplications" resultType="com.mungtrainer.mtserver.counseling.dto.response.AppliedWaitingResponse">
         SELECT
+        tca.application_id AS applicationId,
         d.name AS dogName,
         u.name AS ownerName,
         tc.title AS courseTitle,
@@ -251,12 +252,89 @@
         JOIN training_session ts ON tca.session_id = ts.session_id
         JOIN training_course tc ON ts.course_id = tc.course_id
         WHERE tca.status = 'APPLIED'
+        AND tc.trainer_id = #{trainerId}
         AND tca.is_deleted = 0
         AND d.is_deleted = 0
         AND u.is_deleted = 0
         AND ts.is_deleted = 0
         AND tc.is_deleted = 0
         ORDER BY ts.session_date, ts.start_time;
+    </select>
+
+<!--    코스별로 그룹핑된 승인 대기 목록 조회 (다회차 일괄 승인용)-->
+    <resultMap id="GroupedApplicationMap" type="com.mungtrainer.mtserver.counseling.dto.response.GroupedApplicationResponse">
+        <result property="courseId" column="courseId"/>
+        <result property="courseTitle" column="courseTitle"/>
+        <result property="courseType" column="courseType"/>
+        <result property="dogId" column="dogId"/>
+        <result property="dogName" column="dogName"/>
+        <result property="ownerName" column="ownerName"/>
+        <result property="totalSessions" column="totalSessions"/>
+        <collection property="sessions" ofType="com.mungtrainer.mtserver.counseling.dto.response.GroupedApplicationResponse$SessionInfo">
+            <result property="applicationId" column="applicationId"/>
+            <result property="sessionId" column="sessionId"/>
+            <result property="sessionNo" column="sessionNo"/>
+            <result property="sessionDate" column="sessionDate"/>
+            <result property="startTime" column="startTime"/>
+            <result property="endTime" column="endTime"/>
+        </collection>
+    </resultMap>
+
+    <select id="selectGroupedWaitingApplications" resultMap="GroupedApplicationMap">
+        SELECT
+            tc.course_id AS courseId,
+            tc.title AS courseTitle,
+            tc.type AS courseType,
+            d.dog_id AS dogId,
+            d.name AS dogName,
+            u.name AS ownerName,
+            (SELECT COUNT(DISTINCT ts2.session_id)
+             FROM training_session ts2
+             WHERE ts2.course_id = tc.course_id
+             AND ts2.is_deleted = 0) AS totalSessions,
+            tca.application_id AS applicationId,
+            ts.session_id AS sessionId,
+            ts.session_no AS sessionNo,
+            ts.session_date AS sessionDate,
+            ts.start_time AS startTime,
+            ts.end_time AS endTime
+        FROM training_course_application tca
+        JOIN dog d ON tca.dog_id = d.dog_id
+        JOIN user u ON d.user_id = u.user_id
+        JOIN training_session ts ON tca.session_id = ts.session_id
+        JOIN training_course tc ON ts.course_id = tc.course_id
+        WHERE tca.status = 'APPLIED'
+        AND tc.trainer_id = #{trainerId}
+        AND tca.is_deleted = 0
+        AND d.is_deleted = 0
+        AND u.is_deleted = 0
+        AND ts.is_deleted = 0
+        AND tc.is_deleted = 0
+        ORDER BY tc.course_id, d.dog_id, ts.session_date, ts.start_time;
+    </select>
+
+<!--    신청 반려견 상세 정보 조회 (훈련사용 - 승인 대기 모달)-->
+    <select id="selectApplicationDogDetail" resultType="com.mungtrainer.mtserver.counseling.dto.response.ApplicationDogDetailResponse">
+        SELECT
+            d.dog_id AS dogId,
+            d.name AS name,
+            d.profile_image AS profileImageUrl,
+            d.age AS age,
+            d.gender AS gender,
+            d.breed AS breed,
+            u.name AS ownerName,
+            u.phone AS ownerPhone
+        FROM training_course_application tca
+        JOIN dog d ON tca.dog_id = d.dog_id
+        JOIN user u ON d.user_id = u.user_id
+        JOIN training_session ts ON tca.session_id = ts.session_id
+        JOIN training_course tc ON ts.course_id = tc.course_id
+        WHERE tca.application_id = #{applicationId}
+        AND tc.trainer_id = #{trainerId}
+        AND tca.is_deleted = 0
+        AND d.is_deleted = 0
+        AND u.is_deleted = 0
+        LIMIT 1;
     </select>
 
 <!--    승인, 거절(거절사유)-->
@@ -285,6 +363,52 @@
         AND is_deleted = 0
         AND status = 'APPLIED';
     </update>
+
+<!--    일괄 승인 (코스의 모든 회차)-->
+    <update id="updateBulkStatusApproved">
+        UPDATE training_course_application tca
+        JOIN training_session ts ON tca.session_id = ts.session_id
+        JOIN training_course tc ON ts.course_id = tc.course_id
+        SET
+            tca.status = 'ACCEPT',
+            tca.updated_by = #{trainerId},
+            tca.updated_at = NOW()
+        WHERE tc.course_id = #{courseId}
+        AND tca.dog_id = #{dogId}
+        AND tc.trainer_id = #{trainerId}
+        AND tca.status = 'APPLIED'
+        AND tca.is_deleted = 0;
+    </update>
+
+<!--    일괄 거절 (코스의 모든 회차)-->
+    <update id="updateBulkStatusRejected">
+        UPDATE training_course_application tca
+        JOIN training_session ts ON tca.session_id = ts.session_id
+        JOIN training_course tc ON ts.course_id = tc.course_id
+        SET
+            tca.status = 'REJECTED',
+            tca.reject_reason = #{rejectReason},
+            tca.updated_by = #{trainerId},
+            tca.updated_at = NOW()
+        WHERE tc.course_id = #{courseId}
+        AND tca.dog_id = #{dogId}
+        AND tc.trainer_id = #{trainerId}
+        AND tca.status = 'APPLIED'
+        AND tca.is_deleted = 0;
+    </update>
+
+    <!-- 코스와 반려견으로 신청 ID 목록 조회 -->
+    <select id="findApplicationIdsByCourseAndDog" resultType="java.lang.Long">
+        SELECT tca.application_id
+        FROM training_course_application tca
+        JOIN training_session ts ON tca.session_id = ts.session_id
+        JOIN training_course tc ON ts.course_id = tc.course_id
+        WHERE tc.course_id = #{courseId}
+        AND tca.dog_id = #{dogId}
+        AND tca.status = 'ACCEPT'
+        AND tca.is_deleted = 0
+        ORDER BY ts.session_date, ts.start_time
+    </select>
 
 
 </mapper>

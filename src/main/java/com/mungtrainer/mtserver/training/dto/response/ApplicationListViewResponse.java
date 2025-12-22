@@ -13,11 +13,13 @@ public class ApplicationListViewResponse {
     private Long sessionId;
     private Long dogId;
 
+
     // 신청 상태
     private String applicationStatus;
     private String rejectReason;
 
     // 코스 정보 (리스트 UI)
+    private Long courseId;
     private String tags;
     private String title;
     private String description;
@@ -28,5 +30,6 @@ public class ApplicationListViewResponse {
 
     // 세션 // ex: "2025-12-20 10:00 ~ 12:00"
     private String sessionSchedule;
+    private String sessionNumber;
     private String dogName;
 }

@@ -33,7 +33,15 @@ public interface TrainerUserDAO {
             @Param("courseId") Long courseId
     );
 
-    List<AppliedWaitingResponse> selectWaitingApplications();
+    List<AppliedWaitingResponse> selectWaitingApplications(@Param("trainerId") Long trainerId);
+
+    // 코스별로 그룹핑된 승인 대기 목록 조회
+    List<GroupedApplicationResponse> selectGroupedWaitingApplications(@Param("trainerId") Long trainerId);
+
+    ApplicationDogDetailResponse selectApplicationDogDetail(
+            @Param("applicationId") Long applicationId,
+            @Param("trainerId") Long trainerId
+    );
 
     int updateStatusApproved(@Param("applicationId") Long applicationId,
                              @Param("trainerId") Long trainerId);
@@ -42,5 +50,23 @@ public interface TrainerUserDAO {
                              @Param("trainerId") Long trainerId,
                              @Param("rejectReason") String rejectReason);
 
+    // 일괄 승인 (코스의 모든 회차)
+    int updateBulkStatusApproved(@Param("courseId") Long courseId,
+                                 @Param("dogId") Long dogId,
+                                 @Param("trainerId") Long trainerId);
+
+    // 일괄 거절 (코스의 모든 회차)
+    int updateBulkStatusRejected(@Param("courseId") Long courseId,
+                                 @Param("dogId") Long dogId,
+                                 @Param("trainerId") Long trainerId,
+                                 @Param("rejectReason") String rejectReason);
+
     List<MultiCourseGroupResponse> findMultiCourseDetail(Map<String, Long> params);
+
+    /**
+     * 코스와 반려견으로 신청 ID 목록 조회
+     * 일괄 승인 시 출석 정보 생성에 사용
+     */
+    List<Long> findApplicationIdsByCourseAndDog(@Param("courseId") Long courseId,
+                                                 @Param("dogId") Long dogId);
 }
