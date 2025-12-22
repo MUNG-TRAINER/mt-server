@@ -53,6 +53,8 @@ dependencies {
 
     // .env파일 로드
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+    // 애플리케이션의 상태를 실시간으로 확인하고 관리하는 여러 엔드포인트를 제공
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 }
 
 tasks.named('test') {
