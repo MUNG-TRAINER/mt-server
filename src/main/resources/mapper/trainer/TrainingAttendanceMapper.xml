@@ -81,4 +81,64 @@
                 AND ta.deleted_at IS NULL
             </update>
 
+            <!-- 출석 정보 단일 생성 -->
+            <insert id="insertAttendance" parameterType="com.mungtrainer.mtserver.training.entity.TrainingAttendance"
+                    useGeneratedKeys="true" keyProperty="attendance.attendanceId">
+                INSERT INTO training_attendance (
+                    application_id,
+                    status,
+                    checkin_time,
+                    checkout_time,
+                    memo,
+                    created_at,
+                    updated_at,
+                    created_by,
+                    updated_by
+                ) VALUES (
+                    #{attendance.applicationId},
+                    COALESCE(#{attendance.status}, 'PENDING'),
+                    #{attendance.checkinTime},
+                    #{attendance.checkoutTime},
+                    #{attendance.memo},
+                    NOW(),
+                    NOW(),
+                    #{attendance.createdBy},
+                    #{attendance.updatedBy}
+                )
+            </insert>
+
+            <!-- 신청 ID로 출석 정보 생성 -->
+            <insert id="insertAttendanceByApplicationId">
+                INSERT INTO training_attendance (
+                    application_id,
+                    status,
+                    created_at,
+                    updated_at
+                ) VALUES (
+                    #{applicationId},
+                    'PENDING',
+                    NOW(),
+                    NOW()
+                )
+            </insert>
+
+            <!-- 여러 신청 ID로 출석 정보 일괄 생성 -->
+            <insert id="insertAttendanceByApplicationIds">
+                INSERT INTO training_attendance (
+                    application_id,
+                    status,
+                    created_at,
+                    updated_at
+                )
+                VALUES
+                <foreach collection="applicationIds" item="appId" separator=",">
+                    (
+                        #{appId},
+                        'PENDING',
+                        NOW(),
+                        NOW()
+                    )
+                </foreach>
+            </insert>
+
         </mapper>

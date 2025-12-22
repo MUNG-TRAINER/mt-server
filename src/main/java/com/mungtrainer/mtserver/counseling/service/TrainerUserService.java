@@ -11,13 +11,16 @@ import com.mungtrainer.mtserver.counseling.dto.request.BulkApplicationStatusRequ
 import com.mungtrainer.mtserver.counseling.dto.response.*;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
 import com.mungtrainer.mtserver.dog.dao.DogDAO;
+import com.mungtrainer.mtserver.training.dao.TrainingAttendanceDAO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TrainerUserService {
@@ -26,6 +29,7 @@ public class TrainerUserService {
     private final TrainerUserDAO trainerUserDao;
     private final S3Service s3Service;
     private final CounselingDAO counselingDao;
+    private final TrainingAttendanceDAO trainingAttendanceDao;
 
     public List<TrainerUserListResponse> getUsersByTrainer(Long trainerId) {
         return trainerUserDao.findUsersByTrainerId(trainerId);
@@ -234,6 +238,11 @@ public class TrainerUserService {
         if (updated == 0) {
             throw new CustomException(ErrorCode.APPLICATION_ALREADY_PROCESSED);
         }
+
+        // 승인 시 출석 정보 생성
+        if ("ACCEPT".equals(status)) {
+            createAttendanceRecord(applicationId);
+        }
     }
 
     /**
@@ -259,6 +268,11 @@ public class TrainerUserService {
         // DB 반영 결과 검증
         if (updated == 0) {
             throw new CustomException(ErrorCode.APPLICATION_NO_MATCHING_RECORD);
+        }
+
+        // 승인 시 해당 코스의 모든 신청에 대해 출석 정보 일괄 생성
+        if ("ACCEPT".equals(status)) {
+            createBulkAttendanceRecords(courseId, dogId);
         }
     }
 
@@ -332,6 +346,64 @@ public class TrainerUserService {
         }
 
         return updated;
+    }
+
+    /**
+     * 개별 신청에 대한 출석 정보 생성
+     * 신청이 승인되었을 때 호출됩니다.
+     *
+     * @param applicationId 승인된 신청 ID
+     */
+    private void createAttendanceRecord(Long applicationId) {
+        try {
+            log.info("출석 정보 생성 시작 - 신청 ID: {}", applicationId);
+            int inserted = trainingAttendanceDao.insertAttendanceByApplicationId(applicationId);
+
+            if (inserted > 0) {
+                log.info("출석 정보 생성 완료 - 신청 ID: {}, 생성된 레코드 수: {}", applicationId, inserted);
+            } else {
+                log.warn("출석 정보 생성 실패 - 신청 ID: {}", applicationId);
+            }
+        } catch (Exception e) {
+            log.error("출석 정보 생성 중 오류 발생 - 신청 ID: {}, 오류: {}", applicationId, e.getMessage(), e);
+            // 출석 정보 생성 실패 시에도 승인 자체는 완료되어야 하므로 예외를 던지지 않음
+            // 단, 로그에 명확히 기록하여 추후 수동 처리 가능하도록 함
+        }
+    }
+
+    /**
+     * 여러 신청에 대한 출석 정보 일괄 생성
+     * 다회차 코스 일괄 승인 시 호출됩니다.
+     *
+     * @param courseId 코스 ID
+     * @param dogId 반려견 ID
+     */
+    private void createBulkAttendanceRecords(Long courseId, Long dogId) {
+        try {
+            log.info("일괄 출석 정보 생성 시작 - 코스 ID: {}, 반려견 ID: {}", courseId, dogId);
+
+            // 해당 코스와 반려견의 모든 승인된 신청 ID 조회
+            List<Long> applicationIds = trainerUserDao.findApplicationIdsByCourseAndDog(courseId, dogId);
+
+            if (applicationIds == null || applicationIds.isEmpty()) {
+                log.warn("출석 정보 생성 대상 없음 - 코스 ID: {}, 반려견 ID: {}", courseId, dogId);
+                return;
+            }
+
+            // 출석 정보 일괄 생성
+            int inserted = trainingAttendanceDao.insertAttendanceByApplicationIds(applicationIds);
+
+            if (inserted > 0) {
+                log.info("일괄 출석 정보 생성 완료 - 코스 ID: {}, 반려견 ID: {}, 생성된 레코드 수: {}",
+                        courseId, dogId, inserted);
+            } else {
+                log.warn("일괄 출석 정보 생성 실패 - 코스 ID: {}, 반려견 ID: {}", courseId, dogId);
+            }
+        } catch (Exception e) {
+            log.error("일괄 출석 정보 생성 중 오류 발생 - 코스 ID: {}, 반려견 ID: {}, 오류: {}",
+                    courseId, dogId, e.getMessage(), e);
+            // 출석 정보 생성 실패 시에도 승인 자체는 완료되어야 하므로 예외를 던지지 않음
+        }
     }
 
 

@@ -397,5 +397,18 @@
         AND tca.is_deleted = 0;
     </update>
 
+    <!-- 코스와 반려견으로 신청 ID 목록 조회 -->
+    <select id="findApplicationIdsByCourseAndDog" resultType="java.lang.Long">
+        SELECT tca.application_id
+        FROM training_course_application tca
+        JOIN training_session ts ON tca.session_id = ts.session_id
+        JOIN training_course tc ON ts.course_id = tc.course_id
+        WHERE tc.course_id = #{courseId}
+        AND tca.dog_id = #{dogId}
+        AND tca.status = 'ACCEPT'
+        AND tca.is_deleted = 0
+        ORDER BY ts.session_date, ts.start_time
+    </select>
+
 
 </mapper>

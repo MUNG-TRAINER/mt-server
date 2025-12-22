@@ -32,4 +32,19 @@ public interface TrainingAttendanceDAO {
       @Param("status") String status,
       @Param("memo") String memo
   );
+
+  /**
+   * 출석 정보 생성 (단일)
+   */
+  int insertAttendance(@Param("attendance") TrainingAttendance attendance);
+
+  /**
+   * 신청 ID로 출석 정보 생성
+   */
+  int insertAttendanceByApplicationId(@Param("applicationId") Long applicationId);
+
+  /**
+   * 여러 신청 ID로 출석 정보 일괄 생성
+   */
+  int insertAttendanceByApplicationIds(@Param("applicationIds") List<Long> applicationIds);
 }
