@@ -20,6 +20,7 @@
                 <result property="attendanceId" column="attendance_id"/>
                 <result property="userName" column="user_name"/>
                 <result property="dogName" column="dog_name"/>
+                <result property="dogProfileImage" column="dog_profile_image"/>
                 <result property="status" column="status"/>
                 <result property="checkinTime" column="checkin_time"/>
                 <result property="checkoutTime" column="checkout_time"/>
@@ -33,6 +34,7 @@
                     ta.attendance_id,
                     u.name AS user_name,
                     d.name AS dog_name,
+                    d.profile_image AS dog_profile_image,
                     ta.status,
                     ta.checkin_time,
                     ta.checkout_time,
