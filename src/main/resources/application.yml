@@ -29,8 +29,10 @@ mybatis:
 
 aws:
   s3:
-    bucket: ${AWS_BUCKET_NAME}# 환경변수 사용
-    region: ${AWS_DEFAULT_REGION}
+    bucket: ${AWS_BUCKET_NAME} # 환경변수 사용
+    region: ${AWS_DEFAULT_REGION} # 환경변수 사용
+    accessKeyId: ${AWS_ACCESS_KEY_ID}   # 환경변수 사용
+    secretAccessKey: ${AWS_SECRET_ACCESS_KEY} # 환경변수 사용
     presigned-url:
       expiration-minutes: 10
 # ===== Actuator 설정 추가 =====
