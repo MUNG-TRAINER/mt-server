@@ -41,10 +41,16 @@ public interface TrainingAttendanceDAO {
   /**
    * 신청 ID로 출석 정보 생성
    */
-  int insertAttendanceByApplicationId(@Param("applicationId") Long applicationId);
+  int insertAttendanceByApplicationId(
+      @Param("applicationId") Long applicationId,
+      @Param("createdBy") Long createdBy
+  );
 
   /**
    * 여러 신청 ID로 출석 정보 일괄 생성
    */
-  int insertAttendanceByApplicationIds(@Param("applicationIds") List<Long> applicationIds);
+  int insertAttendanceByApplicationIds(
+      @Param("applicationIds") List<Long> applicationIds,
+      @Param("createdBy") Long createdBy
+  );
 }
