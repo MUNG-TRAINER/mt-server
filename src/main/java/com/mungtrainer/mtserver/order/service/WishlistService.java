@@ -7,6 +7,7 @@ import com.mungtrainer.mtserver.order.dao.WishlistDAO;
 import com.mungtrainer.mtserver.order.dto.request.WishlistCreateRequest;
 import com.mungtrainer.mtserver.order.dto.request.WishlistDeleteRequest;
 import com.mungtrainer.mtserver.order.dto.request.WishlistUpdateRequest;
+import com.mungtrainer.mtserver.order.dto.response.WishlistDogListResponse;
 import com.mungtrainer.mtserver.order.dto.response.WishlistResponse;
 import com.mungtrainer.mtserver.order.entity.Wishlist;
 import com.mungtrainer.mtserver.order.entity.WishlistDetail;
@@ -186,5 +187,10 @@ public class WishlistService {
         // detailDog -> detail 순으로 지우기
         wishlistDao.deleteWishlistItemDog(requestIds);
         wishlistDao.deleteWishlistItem(requestIds);
+    }
+
+    // 위시리스트용 dogList 조회
+    public List<WishlistDogListResponse> getDogsWithCounseling(Long userId) {
+        return wishlistDao.findDogsWithCounselingByUserId(userId);
     }
 }

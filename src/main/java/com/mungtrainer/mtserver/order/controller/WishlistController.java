@@ -5,6 +5,7 @@ import com.mungtrainer.mtserver.order.dto.request.WishlistApplyRequest;
 import com.mungtrainer.mtserver.order.dto.request.WishlistCreateRequest;
 import com.mungtrainer.mtserver.order.dto.request.WishlistDeleteRequest;
 import com.mungtrainer.mtserver.order.dto.request.WishlistUpdateRequest;
+import com.mungtrainer.mtserver.order.dto.response.WishlistDogListResponse;
 import com.mungtrainer.mtserver.order.dto.response.WishlistResponse;
 import com.mungtrainer.mtserver.order.service.WishlistService;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationResponse;
@@ -62,17 +63,23 @@ public class WishlistController {
         wishlistService.updateWishlist(userId, wishlistItemId, request);
         return ResponseEntity.ok().build();
     }
-
+    // 위시리스트 -> 신청으로 넘어가는 로직
     @PostMapping("/apply")
     public ResponseEntity<List<ApplicationResponse>> applyWishlistCourses(
-            @AuthenticationPrincipal CustomUserDetails principal,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid List<WishlistApplyRequest> requests
     ) {
         List<ApplicationResponse> created = trainingCourseApplicationService.applyWishlistCourses(
-                principal.getUserId(), requests
+                userDetails.getUserId(), requests
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
-
-
+    // 위시리스트용 반려견 리스트 조회
+    @GetMapping("/dogs")
+    public ResponseEntity<List<WishlistDogListResponse>> getDogsWithCounseling(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUserId();
+        List<WishlistDogListResponse> dogList = wishlistService.getDogsWithCounseling(userId);
+        return ResponseEntity.ok(dogList);
+    }
 }

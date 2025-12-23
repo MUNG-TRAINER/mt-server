@@ -173,6 +173,18 @@
         WHERE wdd.dog_id = #{dogId}
     </delete>
 
-
+    <select id="findDogsWithCounselingByUserId" resultType="com.mungtrainer.mtserver.order.dto.response.WishlistDogListResponse">
+        SELECT
+        d.dog_id AS dogId,
+        d.name AS name,
+        d.breed AS breed,
+        CASE WHEN c.counseling_id IS NULL THEN FALSE ELSE TRUE END AS hasCounseling
+        FROM dog d
+        LEFT JOIN counseling c
+        ON d.dog_id = c.dog_id
+        AND c.is_deleted = 0
+        WHERE d.user_id = #{userId}
+        AND d.is_deleted = 0
+    </select>
 
 </mapper>

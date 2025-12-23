@@ -1,4 +1,4 @@
-package com.mungtrainer.mtserver.dog.dto.response;
+package com.mungtrainer.mtserver.order.dto.response;
 
 import lombok.*;
 
@@ -6,7 +6,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DogsCounselingResponse {
+public class WishlistDogListResponse {
     private Long dogId;
     private String name;
     private String breed;

@@ -6,12 +6,11 @@ package com.mungtrainer.mtserver.dog.controller;
     import com.mungtrainer.mtserver.dog.dto.request.DogUpdateRequest;
     import com.mungtrainer.mtserver.dog.dto.response.DogImageUploadResponse;
     import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
-    import com.mungtrainer.mtserver.dog.dto.response.DogsCounselingResponse;
+    import com.mungtrainer.mtserver.order.dto.response.WishlistDogListResponse;
     import com.mungtrainer.mtserver.dog.service.DogService;
-    import com.mungtrainer.mtserver.order.dto.response.WishlistResponse;
+    import com.mungtrainer.mtserver.order.service.WishlistService;
     import jakarta.validation.Valid;
     import lombok.RequiredArgsConstructor;
-    import lombok.extern.slf4j.Slf4j;
     import org.springframework.http.HttpStatus;
     import org.springframework.http.ResponseEntity;
     import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -128,11 +127,4 @@ package com.mungtrainer.mtserver.dog.controller;
             return ResponseEntity.ok(response);
         }
 
-//        @GetMapping("/dogs/counseling")
-//        public ResponseEntity<List<DogsCounselingResponse>> getDogsWithCounseling(
-//                @AuthenticationPrincipal CustomUserDetails customUserDetails) {
-//            Long userId = customUserDetails.getUserId();
-//            List<DogsCounselingResponse> dogList = wishlistService.getDogsWithCounseling(userId);
-//            return ResponseEntity.ok(dogList);
-//        }
     }
