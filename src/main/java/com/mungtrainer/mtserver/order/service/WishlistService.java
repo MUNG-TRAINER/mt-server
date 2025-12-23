@@ -2,6 +2,7 @@ package com.mungtrainer.mtserver.order.service;
 
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
+import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.order.dao.WishlistDAO;
 import com.mungtrainer.mtserver.order.dto.request.WishlistCreateRequest;
 import com.mungtrainer.mtserver.order.dto.request.WishlistDeleteRequest;
@@ -15,19 +16,53 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class WishlistService {
     private final WishlistDAO wishlistDao;
+    private final S3Service s3Service;
 
     // 장바구니 리스트 목록 조회
     @Transactional(readOnly = true)
     public List<WishlistResponse> getWishLists(Long userId) {
-        return wishlistDao.findWishlistResponsesByUserId(userId);
+        List<WishlistResponse> list = wishlistDao.findWishlistResponsesByUserId(userId);
+
+        if (list == null || list.isEmpty()) return Collections.emptyList();
+
+        // 1. S3 key 수집
+        List<String> imageKeys = list.stream()
+                .map(WishlistResponse::getMainImage)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 2. Presigned URL 발급 + key → URL 매핑
+        Map<String, String> imageUrlMap = new HashMap<>();
+        if (!imageKeys.isEmpty()) {
+            for (String key : imageKeys) {
+                List<String> urls = s3Service.generateDownloadPresignedUrls(Collections.singletonList(key));
+                if (urls != null && !urls.isEmpty() && urls.get(0) != null && !urls.get(0).isEmpty()) {
+                    imageUrlMap.put(key, urls.get(0));
+                }
+            }
+        }
+
+        // 3. URL 매핑 후 반환
+        return list.stream()
+                .map(dto -> {
+                    if (dto.getMainImage() != null) {
+                        return dto
+                                .toBuilder()
+                                .mainImage(imageUrlMap.get(dto.getMainImage()))
+                                .build();
+                    }
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
     // 장바구니 생성

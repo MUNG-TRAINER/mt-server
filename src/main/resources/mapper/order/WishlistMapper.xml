@@ -36,6 +36,7 @@
         WHERE w.user_id = #{userId}
         AND w.is_deleted = 0
         AND wd.is_deleted = 0
+        AND wd.status = 'ACTIVE'
         AND (wdd.is_deleted = 0 OR wdd.is_deleted IS NULL)
         GROUP BY
         w.user_id, wd.wishlist_item_id, wd.wishlist_id, wd.course_id, wd.price, wd.status,

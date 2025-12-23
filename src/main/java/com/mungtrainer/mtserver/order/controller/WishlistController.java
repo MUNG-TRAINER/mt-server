@@ -1,11 +1,15 @@
 package com.mungtrainer.mtserver.order.controller;
 
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
+import com.mungtrainer.mtserver.order.dto.request.WishlistApplyRequest;
 import com.mungtrainer.mtserver.order.dto.request.WishlistCreateRequest;
 import com.mungtrainer.mtserver.order.dto.request.WishlistDeleteRequest;
 import com.mungtrainer.mtserver.order.dto.request.WishlistUpdateRequest;
 import com.mungtrainer.mtserver.order.dto.response.WishlistResponse;
 import com.mungtrainer.mtserver.order.service.WishlistService;
+import com.mungtrainer.mtserver.training.dto.response.ApplicationResponse;
+import com.mungtrainer.mtserver.training.service.TrainingCourseApplicationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +25,7 @@ import java.util.List;
 public class WishlistController {
 
     private final WishlistService wishlistService;
+    private final TrainingCourseApplicationService trainingCourseApplicationService;
 
     // 전체 위시리스트 조회
     @GetMapping
@@ -57,4 +62,17 @@ public class WishlistController {
         wishlistService.updateWishlist(userId, wishlistItemId, request);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/apply")
+    public ResponseEntity<List<ApplicationResponse>> applyWishlistCourses(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @RequestBody @Valid List<WishlistApplyRequest> requests
+    ) {
+        List<ApplicationResponse> created = trainingCourseApplicationService.applyWishlistCourses(
+                principal.getUserId(), requests
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+
 }

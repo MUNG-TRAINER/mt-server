@@ -80,26 +80,14 @@ public class TrainingCourseController {
         return ResponseEntity.ok(courseResponse);
     }
 
-//    @PostMapping("/{courseId}/apply")
-//    public ResponseEntity<List<ApplicationResponse>> applyCourse(
-//            @PathVariable Long courseId,
-//            @AuthenticationPrincipal CustomUserDetails principal,
-//            @RequestBody @Valid ApplicationRequest request
-//    ) {
-//        List<ApplicationResponse> created = applicationService.applyCourse(
-//                principal.getUserId(), courseId, request
-//        );
-//        return ResponseEntity.status(HttpStatus.CREATED).body(created);
-//    }
-
     @PostMapping("/{courseId}/apply")
     public ResponseEntity<List<ApplicationResponse>> applyCourse(
             @PathVariable Long courseId,
+            @AuthenticationPrincipal CustomUserDetails principal,
             @RequestBody @Valid ApplicationRequest request
     ) {
-        Long userId = 5L;
         List<ApplicationResponse> created = applicationService.applyCourse(
-                userId, courseId, request
+                principal.getUserId(), courseId, request
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }

@@ -6,6 +6,7 @@ import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.training.dao.ApplicationDAO;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationCancelRequest;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationRequest;
+import com.mungtrainer.mtserver.order.dto.request.WishlistApplyRequest;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationListViewResponse;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationResponse;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationStatusResponse;
@@ -206,15 +207,8 @@ public class TrainingCourseApplicationService {
             createdApplications.add(toResponse(created)); // 기존에 쓰던 변환 메서드
         }
 
-        // 4. 장바구니 상태 업데이트 (선택적)
-        if (request.getWishlistItemId() != null) {
-            applicationDao.updateWishlistDetailStatus(request.getWishlistItemId(), "ORDERED");
-        }
-
         return createdApplications;
     }
-
-
 
     // 신청 취소
     public void cancelApplication(Long userId, Long applicationId) {
@@ -304,5 +298,72 @@ public class TrainingCourseApplicationService {
             }
         }
     }
+    // wishlist에서 신청으로 가는 로직
+    @Transactional
+    public List<ApplicationResponse> applyWishlistCourses(Long userId, List<WishlistApplyRequest> requests) {
+        List<ApplicationResponse> createdApplications = new ArrayList<>();
+
+        for (WishlistApplyRequest req : requests) {
+            Long wishlistItemId = req.getWishlistItemId();
+            Long dogId = req.getDogId();
+            Long courseId = req.getCourseId();
+
+            // 1. 소유 확인
+            Long ownerId = applicationDao.findOwnerByDogId(dogId);
+            if (!userId.equals(ownerId)) {
+                throw new CustomException(ErrorCode.UNAUTHORIZED_APPLICATION);
+            }
+
+            // 2. 세션 조회
+            List<TrainingSession> sessions = applicationDao.findSessionsByCourseId(courseId);
+            if (sessions.isEmpty()) {
+                throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
+            }
+
+            // 3. 각 세션별 신청 처리
+            for (TrainingSession session : sessions) {
+                Long sessionId = session.getSessionId();
+                boolean exists = applicationDao.existsByDogAndSession(dogId, sessionId);
+                if (exists) {
+                    throw new CustomException(ErrorCode.DUPLICATE_APPLICATION);
+                }
+
+                int maxStudent = applicationDao.getMaxStudentsBySessionId(sessionId);
+                int currentCount = applicationDao.countApplicationBySessionId(sessionId);
+                boolean hasCounselingCompleted = applicationDao.findCounselingByDogID(dogId);
+
+                String status;
+                if (currentCount >= maxStudent) status = "WAITING";
+                else if (!hasCounselingCompleted) status = "COUNSELING_REQUIRED";
+                else status = "APPLIED";
+
+                TrainingCourseApplication created = TrainingCourseApplication.builder()
+                        .sessionId(sessionId)
+                        .dogId(dogId)
+                        .appliedAt(LocalDateTime.now())
+                        .status(status)
+                        .createdBy(userId)
+                        .updatedBy(userId)
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build();
+
+                int rows = applicationDao.insertApplication(created);
+                if (rows != 1) throw new CustomException(ErrorCode.APPLICATION_CREATION_FAILED);
+
+                if ("WAITING".equals(status)) {
+                    applicationDao.insertWaiting(created.getApplicationId(), userId);
+                }
+
+                createdApplications.add(toResponse(created));
+            }
+
+            // 4. 장바구니 상태 업데이트
+            applicationDao.updateWishlistDetailStatus(wishlistItemId, "ORDERED");
+        }
+
+        return createdApplications;
     }
+}
+
 

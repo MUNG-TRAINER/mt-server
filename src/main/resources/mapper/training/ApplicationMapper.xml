@@ -293,4 +293,19 @@
         AND tca.status NOT IN ('CANCELLED','EXPIRED','REFUNDED')
 
     </select>
+
+    <!-- wishlist_item_id로 courseId 조회 -->
+    <select id="findCourseIdByWishlistItemId" resultType="long" parameterType="long">
+        SELECT course_id
+        FROM wishlist_detail
+        WHERE wishlist_item_id = #{wishlistItemId}
+    </select>
+
+    <!-- wishlist_item_id로 dogId 조회 (wishlist_detail_dog 활용) -->
+    <select id="findDogIdsByWishlistItemId" resultType="long" parameterType="long">
+        SELECT dog_id
+        FROM wishlist_detail_dog
+        WHERE wishlist_item_id = #{wishlistItemId}
+        AND is_deleted = 0
+    </select>
 </mapper>
