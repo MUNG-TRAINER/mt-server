@@ -177,6 +177,7 @@ public class AuthController {
   public ResponseEntity<CheckResponse> checkAuthentication(
       @AuthenticationPrincipal CustomUserDetails principal) {
     log.info("checkAuthentication called");
+    log.info("principal: {},{},{}", principal, principal.getUserId(), principal.getUsername());
     return ResponseEntity.ok(CheckResponse.builder()
                                           .userId(principal.getUserId())
                                           .role(principal.getRole())
