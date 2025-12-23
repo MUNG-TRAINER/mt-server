@@ -16,6 +16,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,6 +24,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -174,6 +176,7 @@ public class AuthController {
   @GetMapping("/check")
   public ResponseEntity<CheckResponse> checkAuthentication(
       @AuthenticationPrincipal CustomUserDetails principal) {
+    log.info("checkAuthentication called");
     return ResponseEntity.ok(CheckResponse.builder()
                                           .userId(principal.getUserId())
                                           .role(principal.getRole())
