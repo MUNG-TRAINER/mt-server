@@ -211,11 +211,10 @@ public class TrainingCourseService {
 
         // S3 Presigned URL 생성
         for (CourseSearchItemDto course : courses) {
-            String presignedUrl = course.getMainImage();
-            if (course.getMainImage() != null && !course.getMainImage().isBlank()) {
-                presignedUrl = s3Service.generateDownloadPresignedUrl(course.getMainImage());
-            }
-            course.setMainImage(presignedUrl);
+          String mainImage = course.getMainImage();
+          if (mainImage != null && !mainImage.isBlank()) {
+            course.setMainImage(s3Service.generateDownloadPresignedUrl(mainImage));
+          }
         }
 
         return CourseSearchResponse.builder()
