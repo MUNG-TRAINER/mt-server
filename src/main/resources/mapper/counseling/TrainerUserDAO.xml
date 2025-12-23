@@ -64,30 +64,30 @@
     <select id="findTrainingApplicationsByDogId"
             resultType="com.mungtrainer.mtserver.counseling.dto.response.TrainingApplicationResponse">
         SELECT
-        c.course_id,
-        c.title AS course_title,
-        c.description AS course_description,
-        c.tags,
-        c.type,
+            c.course_id,
+            c.title AS course_title,
+            c.description AS course_description,
+            c.tags,
+            c.type,
+            c.difficulty,
 
-        s.session_id,
-        s.session_date,
-        s.start_time AS session_start_time,
-        s.end_time AS session_end_time,
+            s.session_id,
+            s.session_date,
+            s.start_time AS session_start_time,
+            s.end_time AS session_end_time,
 
-        COUNT(a.application_id) OVER (PARTITION BY c.tags) AS times_applied,
+            COUNT(a.application_id) OVER (PARTITION BY c.tags) AS times_applied,
 
+            attended.attended_count,
 
-        attended.attended_count,
-
-        ta.`status` AS attendance_status
+            ta.`status` AS attendance_status
 
         FROM training_course c
         JOIN training_session s ON s.course_id = c.course_id
         JOIN training_course_application a ON a.session_id = s.session_id
         LEFT JOIN training_attendance ta
-        ON ta.application_id = a.application_id
-        AND ta.is_deleted = 0
+            ON ta.application_id = a.application_id
+            AND ta.is_deleted = 0
 
 <!--    ATTENDED 개수를 course.tags 기준으로 미리 group by 해서 가져오기 (dogId 조건 추가) -->
         LEFT JOIN (

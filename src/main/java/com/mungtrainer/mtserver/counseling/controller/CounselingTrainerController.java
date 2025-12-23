@@ -9,12 +9,14 @@ import com.mungtrainer.mtserver.counseling.service.CounselingService;
 import com.mungtrainer.mtserver.counseling.service.TrainerUserService;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/trainer")
 @RequiredArgsConstructor
@@ -72,8 +74,14 @@ public class CounselingTrainerController {
             @PathVariable("dogId") Long dogId
     ) {
         Long trainerId = userDetails.getUserId();
+        log.info("🐕 [API] 반려견 통계 조회 - trainerId={}, dogId={}", trainerId, dogId);
+
         DogStatsResponse dogStats = trainerService.getDogStats(dogId, trainerId);
-      System.out.println(dogStats.toString());
+
+        log.info("📊 [Response] stats.timesApplied={}, stats.attendedCount={}",
+                dogStats.getStats().getTimesApplied(),
+                dogStats.getStats().getAttendedCount());
+
         return ResponseEntity.ok(dogStats);
     }
 

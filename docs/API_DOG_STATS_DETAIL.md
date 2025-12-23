@@ -80,33 +80,51 @@ const getDogStats = async (dogId: number) => {
 
 ---
 
-### 1️⃣ **dog** - 반려견 기본 정보
+### 1️⃣ **dog** - 반려견 전체 정보
 
 ```typescript
 {
-  "dogId": 1,
-  "dogName": "멍멍이",
-  "breed": "골든 리트리버",
-  "age": 3,
-  "gender": "MALE",
-  "weight": 28.5,
-  "profileImage": "https://mungtrainer-s3.s3.ap-northeast-2.amazonaws.com/...",
-  "neutered": true,
-  "registeredDate": "2024-01-10T09:00:00"
+  "dogId": 6,
+  "name": "뿌뿌",
+  "breed": "포메",
+  "age": 0,
+  "gender": "M",
+  "isNeutered": true,
+  "weight": null,
+  "personality": null,
+  "habits": null,
+  "healthInfo": null,
+  "humanSocialization": "MEDIUM",
+  "animalSocialization": "MEDIUM",
+  "profileImage": "https://mungschool.s3.ap-northeast-2.amazonaws.com/dog-profile/2/dog2-1766297465500.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&...",
+  "createdAt": "2025-12-21T15:11:05",
+  "updatedAt": "2025-12-21T15:11:05"
 }
 ```
 
-| 필드 | 타입 | 설명 |
-|-----|------|------|
-| dogId | number | 반려견 고유 ID |
-| dogName | string | 반려견 이름 |
-| breed | string | 견종 |
-| age | number | 나이 (년) |
-| gender | string | 성별 (`MALE` / `FEMALE`) |
-| weight | number | 체중 (kg) |
-| profileImage | string \| null | 프로필 이미지 S3 Presigned URL (유효기간 15분) |
-| neutered | boolean | 중성화 여부 |
-| registeredDate | string | 등록일시 (ISO 8601) |
+| 필드 | 타입 | 설명 | 예시 |
+|-----|------|------|-----|
+| dogId | number | 반려견 고유 ID | 6 |
+| name | string | 반려견 이름 | "뿌뿌" |
+| breed | string | 견종 | "포메" |
+| age | number | 나이 (년) | 0 |
+| gender | string | 성별 (`M` / `F`) | "M" |
+| isNeutered | boolean | 중성화 여부 | true |
+| weight | number \| null | 체중 (kg) | null |
+| personality | string \| null | 성격 설명 | null |
+| habits | string \| null | 습관 정보 | null |
+| healthInfo | string \| null | 건강 정보 | null |
+| humanSocialization | string | 사람 사회화 수준 (`LOW`/`MEDIUM`/`HIGH`) | "MEDIUM" |
+| animalSocialization | string | 동물 사회화 수준 (`LOW`/`MEDIUM`/`HIGH`) | "MEDIUM" |
+| profileImage | string \| null | S3 Presigned URL (15분 유효) | "https://..." |
+| createdAt | string | 등록일시 (ISO 8601) | "2025-12-21T15:11:05" |
+| updatedAt | string | 수정일시 (ISO 8601) | "2025-12-21T15:11:05" |
+
+> 📝 **참고**:
+> - `gender`: `"M"` (수컷) 또는 `"F"` (암컷)
+> - `humanSocialization`, `animalSocialization`: `"LOW"`, `"MEDIUM"`, `"HIGH"` 중 하나
+> - `weight`, `personality`, `habits`, `healthInfo`: null 가능 (선택 입력 필드)
+> - `profileImage`: S3 Presigned URL로 15분간 유효
 
 ---
 
