@@ -6,7 +6,9 @@ package com.mungtrainer.mtserver.dog.controller;
     import com.mungtrainer.mtserver.dog.dto.request.DogUpdateRequest;
     import com.mungtrainer.mtserver.dog.dto.response.DogImageUploadResponse;
     import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
+    import com.mungtrainer.mtserver.dog.dto.response.DogsCounselingResponse;
     import com.mungtrainer.mtserver.dog.service.DogService;
+    import com.mungtrainer.mtserver.order.dto.response.WishlistResponse;
     import jakarta.validation.Valid;
     import lombok.RequiredArgsConstructor;
     import lombok.extern.slf4j.Slf4j;
@@ -125,4 +127,12 @@ package com.mungtrainer.mtserver.dog.controller;
             DogImageUploadResponse response = dogService.generateUploadUrl(customUserDetails.getUserId(), dogId, request);
             return ResponseEntity.ok(response);
         }
+
+//        @GetMapping("/dogs/counseling")
+//        public ResponseEntity<List<DogsCounselingResponse>> getDogsWithCounseling(
+//                @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+//            Long userId = customUserDetails.getUserId();
+//            List<DogsCounselingResponse> dogList = wishlistService.getDogsWithCounseling(userId);
+//            return ResponseEntity.ok(dogList);
+//        }
     }
