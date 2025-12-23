@@ -6,6 +6,8 @@
   - ✅ 사용자 프로필 이미지 필드 추가 및 S3 Presigned URL 자동 변환 적용
   - ✅ 반려견 프로필 이미지 S3 Presigned URL 처리 확인
   - ✅ 프론트엔드 이미지 출력 가이드 추가
+  - ✅ 반려견 통계 API 상세 문서 작성 ([API_DOG_STATS_DETAIL.md](./API_DOG_STATS_DETAIL.md))
+  - ✅ 실제 백엔드 응답 구조에 맞게 문서 전면 수정
 
 ## 📋 목차
 1. [훈련사가 관리하는 회원 목록 조회](#1-훈련사가-관리하는-회원-목록-조회)
@@ -513,11 +515,15 @@ export default async function UserDogsPage({
 
 ## 3. 반려견 통계 정보 조회
 
+> 🚨 **중요**: 이 API는 복잡한 중첩 구조를 가지고 있습니다.  
+> 📖 **상세 가이드**: [반려견 통계 페이지 API 상세 문서](./API_DOG_STATS_DETAIL.md)를 참고하세요.
+
 ### 📌 기본 정보
 - **Endpoint**: `GET /api/trainer/user/dogs/{dogId}`
-- **설명**: 특정 반려견이 신청했던 모든 훈련 정보를 요약하여 통계를 제공합니다.
+- **설명**: 특정 반려견의 **전체 훈련 이력, 상담 기록, 통계 정보**를 한 번에 조회합니다.
 - **인증**: 필수 (JWT Token)
-- **용도**: 반려견 상세 페이지, 통계 대시보드
+- **용도**: 반려견 상세 페이지, 훈련 이력 대시보드
+- **복잡도**: ⭐⭐⭐⭐⭐ (가장 복잡한 API)
 
 ### 📝 Request
 
@@ -558,77 +564,147 @@ const getDogStats = async (dogId: number) => {
 
 ### 📤 Response
 
-#### Success Response (200 OK)
-```json
+#### 📊 응답 구조 개요
+
+이 API는 **5개의 주요 섹션**으로 구성된 복잡한 응답을 반환합니다:
+
+```typescript
 {
-  "dogId": 1,
-  "dogName": "멍멍이",
-  "breed": "골든 리트리버",
-  "age": 3,
-  "imageUrl": "https://s3.amazonaws.com/dogs/dog1.jpg",
-  "ownerName": "김철수",
-  "ownerPhone": "010-1234-5678",
-  "totalTrainingCount": 5,
-  "completedTrainingCount": 3,
-  "ongoingTrainingCount": 2,
-  "totalAttendanceCount": 15,
-  "attendanceRate": 93.75,
-  "recentTrainings": [
-    {
-      "trainingId": 101,
-      "courseName": "기본 복종 훈련",
-      "startDate": "2024-11-01",
-      "endDate": "2024-11-30",
-      "status": "COMPLETED",
-      "attendanceRate": 100.0
-    },
-    {
-      "trainingId": 102,
-      "courseName": "산책 훈련",
-      "startDate": "2024-12-01",
-      "endDate": "2024-12-31",
-      "status": "ONGOING",
-      "attendanceRate": 87.5
-    }
-  ],
-  "behaviorIssues": [
-    "짖음",
-    "분리불안"
-  ],
-  "specialNotes": "사람을 좋아하나 다른 개들과는 조심스러움"
+  dog: DogResponse,                     // 1️⃣ 반려견 기본 정보
+  counselings: CounselingResponse[],    // 2️⃣ 상담 기록
+  stats: Stats,                         // 3️⃣ 통계 요약
+  trainingApplications: TrainingSessionDto[],  // 4️⃣ 단회차 훈련
+  multiCourses: MultiCourseCategoryResponse[]  // 5️⃣ 다회차 훈련 (3단계 중첩!)
 }
 ```
 
-#### Response Fields
+#### Success Response (200 OK)
+
+```json
+{
+  "dog": {
+    "dogId": 1,
+    "dogName": "멍멍이",
+    "breed": "골든 리트리버",
+    "age": 3,
+    "gender": "MALE",
+    "weight": 28.5,
+    "profileImage": "https://mungtrainer-s3.s3.ap-northeast-2.amazonaws.com/...",
+    "neutered": true,
+    "registeredDate": "2024-01-10T09:00:00"
+  },
+  "counselings": [
+    {
+      "counselingId": 101,
+      "dogId": 1,
+      "content": "산책 시 다른 개를 보면 짖는 문제가 있어 집중 훈련 필요",
+      "trainerId": 5,
+      "isCompleted": true,
+      "createdAt": "2024-11-01T10:30:00",
+      "updatedAt": "2024-11-05T14:20:00"
+    }
+  ],
+  "stats": {
+    "timesApplied": 5,
+    "attendedCount": 12
+  },
+  "trainingApplications": [
+    {
+      "courseId": 201,
+      "courseTitle": "기본 복종 훈련",
+      "courseDescription": "앉아, 엎드려, 기다려",
+      "tags": "기본훈련",
+      "type": "SINGLE",
+      "sessionId": 301,
+      "sessionDate": "2024-11-15",
+      "sessionStartTime": "10:00:00",
+      "sessionEndTime": "11:00:00"
+    }
+  ],
+  "multiCourses": [
+    {
+      "tags": "기본훈련",
+      "courses": [
+        {
+          "courseId": 101,
+          "title": "퍼피 기초 훈련 과정",
+          "tags": "기본훈련",
+          "description": "강아지 시기에 배워야 할 기본 훈련",
+          "location": "강남센터",
+          "type": "MULTI",
+          "difficulty": "BEGINNER",
+          "mainImage": "https://s3.../course-101.jpg",
+          "totalSessions": 10,
+          "attendedSessions": 8,
+          "attendanceRate": 80.0,
+          "sessions": [
+            {
+              "sessionId": 1001,
+              "sessionNo": 1,
+              "sessionDate": "2024-11-01",
+              "startTime": "10:00:00",
+              "endTime": "11:00:00",
+              "locationDetail": "강남센터 1층 훈련장",
+              "attendanceStatus": "ATTENDED"
+            },
+            {
+              "sessionId": 1002,
+              "sessionNo": 2,
+              "sessionDate": "2024-11-08",
+              "startTime": "10:00:00",
+              "endTime": "11:00:00",
+              "locationDetail": "강남센터 1층 훈련장",
+              "attendanceStatus": "ABSENT"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### Response Fields 요약
+
+**1️⃣ dog** (DogResponse)
 | 필드 | 타입 | 설명 |
 |-----|------|------|
 | dogId | number | 반려견 고유 ID |
 | dogName | string | 반려견 이름 |
 | breed | string | 견종 |
-| age | number | 나이 |
-| imageUrl | string | 프로필 이미지 URL |
-| ownerName | string | 보호자 이름 |
-| ownerPhone | string | 보호자 연락처 |
-| totalTrainingCount | number | 총 신청한 훈련 수 |
-| completedTrainingCount | number | 완료된 훈련 수 |
-| ongoingTrainingCount | number | 진행 중인 훈련 수 |
-| totalAttendanceCount | number | 총 출석 횟수 |
-| attendanceRate | number | 전체 출석률 (%) |
-| recentTrainings | TrainingSummary[] | 최근 훈련 목록 |
-| behaviorIssues | string[] | 행동 문제 목록 |
-| specialNotes | string | 특이사항 |
+| profileImage | string \| null | S3 Presigned URL (15분 유효) |
 
-#### TrainingSummary Object
+**2️⃣ counselings** (CounselingResponse[])
 | 필드 | 타입 | 설명 |
 |-----|------|------|
-| trainingId | number | 훈련 ID |
-| courseName | string | 코스명 |
-| startDate | string (YYYY-MM-DD) | 시작일 |
-| endDate | string (YYYY-MM-DD) | 종료일 |
-| status | string | 상태 (COMPLETED/ONGOING/CANCELLED) |
-| attendanceRate | number | 해당 훈련 출석률 (%) |
+| counselingId | number | 상담 ID |
+| content | string | 상담 내용 |
+| isCompleted | boolean | 완료 여부 |
+| createdAt | string | 생성일시 |
 
-> 📝 **참고**: 실제 Response 타입은 `DogStatsResponse`를 확인하세요.
+**3️⃣ stats** (Stats)
+| 필드 | 타입 | 설명 |
+|-----|------|------|
+| timesApplied | number | 총 신청 횟수 |
+| attendedCount | number | 총 출석 횟수 |
+
+**4️⃣ trainingApplications** (TrainingSessionDto[])
+| 필드 | 타입 | 설명 |
+|-----|------|------|
+| courseId | number | 코스 ID |
+| courseTitle | string | 코스 제목 |
+| tags | string | 태그 |
+| sessionDate | string | 세션 날짜 (YYYY-MM-DD) |
+
+**5️⃣ multiCourses** (MultiCourseCategoryResponse[]) ⭐ **복잡!**
+```
+배열 구조:
+└─ { tags, courses[] }
+    └─ { courseId, title, totalSessions, sessions[] }
+        └─ { sessionId, sessionNo, attendanceStatus }
+```
+
+> 📘 **상세 필드 설명 및 TypeScript 인터페이스**는 [상세 문서](./API_DOG_STATS_DETAIL.md)를 참고하세요.
 
 #### Error Response (403 Forbidden)
 ```json
@@ -648,224 +724,64 @@ const getDogStats = async (dogId: number) => {
 
 ### 🎨 Next.js 사용 예시
 
-#### TypeScript Interface
-```typescript
-// types/stats.ts
-export type TrainingStatus = 'COMPLETED' | 'ONGOING' | 'CANCELLED';
+#### TypeScript Interface (간략 버전)
 
-export interface TrainingSummary {
-  trainingId: number;
-  courseName: string;
-  startDate: string;
-  endDate: string;
-  status: TrainingStatus;
-  attendanceRate: number;
-}
+> 📘 **완전한 타입 정의**는 [상세 문서](./API_DOG_STATS_DETAIL.md#typescript-인터페이스)를 참고하세요.
+
+```typescript
+// types/dog-stats.ts (핵심 타입만 발췌)
 
 export interface DogStatsResponse {
-  dogId: number;
-  dogName: string;
-  breed: string;
-  age: number;
-  imageUrl: string;
-  ownerName: string;
-  ownerPhone: string;
-  totalTrainingCount: number;
-  completedTrainingCount: number;
-  ongoingTrainingCount: number;
-  totalAttendanceCount: number;
-  attendanceRate: number;
-  recentTrainings: TrainingSummary[];
-  behaviorIssues: string[];
-  specialNotes: string;
-}
-```
-
-#### React Component (Statistics Dashboard)
-```typescript
-// app/trainer/dogs/[dogId]/stats/page.tsx
-'use client';
-
-import { useEffect, useState } from 'react';
-import { DogStatsResponse } from '@/types/stats';
-import { useParams } from 'next/navigation';
-
-export default function DogStatsPage() {
-  const params = useParams();
-  const dogId = params.dogId as string;
-  
-  const [stats, setStats] = useState<DogStatsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/trainer/user/dogs/${dogId}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-          },
-        });
-
-        if (!response.ok) throw new Error('Failed to fetch dog stats');
-
-        const data: DogStatsResponse = await response.json();
-        setStats(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '알 수 없는 오류');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, [dogId]);
-
-  if (loading) return <div>로딩 중...</div>;
-  if (error) return <div>오류: {error}</div>;
-  if (!stats) return <div>데이터가 없습니다.</div>;
-
-  return (
-    <div className="container mx-auto p-6">
-      {/* 반려견 기본 정보 */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <div className="flex items-center gap-4">
-          <img
-            src={stats.imageUrl}
-            alt={stats.dogName}
-            className="w-24 h-24 rounded-full object-cover"
-          />
-          <div>
-            <h1 className="text-2xl font-bold">{stats.dogName}</h1>
-            <p className="text-gray-600">{stats.breed} · {stats.age}세</p>
-            <p className="text-gray-600">
-              보호자: {stats.ownerName} ({stats.ownerPhone})
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* 통계 카드 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <StatCard
-          title="총 훈련 수"
-          value={stats.totalTrainingCount}
-          icon="📚"
-        />
-        <StatCard
-          title="완료된 훈련"
-          value={stats.completedTrainingCount}
-          icon="✅"
-        />
-        <StatCard
-          title="진행 중인 훈련"
-          value={stats.ongoingTrainingCount}
-          icon="🔄"
-        />
-        <StatCard
-          title="출석률"
-          value={`${stats.attendanceRate.toFixed(1)}%`}
-          icon="📊"
-        />
-      </div>
-
-      {/* 최근 훈련 목록 */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 className="text-xl font-bold mb-4">최근 훈련 내역</h2>
-        <div className="space-y-4">
-          {stats.recentTrainings.map((training) => (
-            <div
-              key={training.trainingId}
-              className="border-l-4 border-blue-500 pl-4 py-2"
-            >
-              <h3 className="font-semibold">{training.courseName}</h3>
-              <p className="text-sm text-gray-600">
-                {training.startDate} ~ {training.endDate}
-              </p>
-              <div className="flex items-center gap-2 mt-1">
-                <StatusBadge status={training.status} />
-                <span className="text-sm">
-                  출석률: {training.attendanceRate.toFixed(1)}%
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 행동 문제 및 특이사항 */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold mb-4">행동 문제 및 특이사항</h2>
-        
-        <div className="mb-4">
-          <h3 className="font-semibold mb-2">행동 문제</h3>
-          <div className="flex flex-wrap gap-2">
-            {stats.behaviorIssues.map((issue, index) => (
-              <span
-                key={index}
-                className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm"
-              >
-                {issue}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <h3 className="font-semibold mb-2">특이사항</h3>
-          <p className="text-gray-700">{stats.specialNotes}</p>
-        </div>
-      </div>
-    </div>
-  );
+  dog: DogResponse;
+  counselings: CounselingResponse[];
+  stats: Stats;
+  trainingApplications: TrainingSessionDto[];
+  multiCourses: MultiCourseCategoryResponse[];  // ⚠️ 복잡한 중첩 구조!
 }
 
-// 통계 카드 컴포넌트
-function StatCard({
-  title,
-  value,
-  icon,
-}: {
+export interface Stats {
+  timesApplied: number;
+  attendedCount: number;
+}
+
+export interface TrainingSessionDto {
+  courseId: number;
+  courseTitle: string;
+  tags: string;
+  sessionDate: string;  // YYYY-MM-DD
+  sessionStartTime: string;  // HH:mm:ss
+  sessionEndTime: string;
+}
+
+// ⭐ 다회차 훈련 - 3단계 중첩 구조
+export interface MultiCourseCategoryResponse {
+  tags: string;  // 1단계: 태그별 그룹
+  courses: MultiCourseGroupResponse[];  // 2단계: 코스 배열
+}
+
+export interface MultiCourseGroupResponse {
+  courseId: number;
   title: string;
-  value: string | number;
-  icon: string;
-}) {
-  return (
-    <div className="bg-white rounded-lg shadow p-4">
-      <div className="text-2xl mb-2">{icon}</div>
-      <div className="text-2xl font-bold">{value}</div>
-      <div className="text-sm text-gray-600">{title}</div>
-    </div>
-  );
+  totalSessions: number;
+  attendedSessions: number;
+  attendanceRate: number;
+  sessions: MultiSessionResponse[];  // 3단계: 세션 배열
 }
 
-// 상태 뱃지 컴포넌트
-function StatusBadge({ status }: { status: string }) {
-  const statusConfig = {
-    COMPLETED: { label: '완료', color: 'bg-green-100 text-green-800' },
-    ONGOING: { label: '진행중', color: 'bg-blue-100 text-blue-800' },
-    CANCELLED: { label: '취소', color: 'bg-gray-100 text-gray-800' },
-  };
-
-  const config = statusConfig[status as keyof typeof statusConfig] || {
-    label: status,
-    color: 'bg-gray-100 text-gray-800',
-  };
-
-  return (
-    <span className={`px-2 py-1 rounded text-xs font-semibold ${config.color}`}>
-      {config.label}
-    </span>
-  );
+export interface MultiSessionResponse {
+  sessionId: number;
+  sessionNo: number;
+  sessionDate: string;
+  attendanceStatus: 'ATTENDED' | 'ABSENT' | null;
 }
 ```
 
 #### React Query Hook
+
 ```typescript
 // hooks/useDogStats.ts
 import { useQuery } from '@tanstack/react-query';
-import { DogStatsResponse } from '@/types/stats';
+import { DogStatsResponse } from '@/types/dog-stats';
 
 export const useDogStats = (dogId: number) => {
   return useQuery<DogStatsResponse>({
@@ -877,20 +793,172 @@ export const useDogStats = (dogId: number) => {
         },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch dog stats');
-      }
-
+      if (!response.ok) throw new Error('Failed to fetch dog stats');
       return response.json();
     },
-    enabled: !!dogId, // dogId가 있을 때만 실행
-    staleTime: 5 * 60 * 1000, // 5분간 캐시 유지
+    enabled: !!dogId,
+    staleTime: 5 * 60 * 1000,
   });
 };
-
-// 사용 예시
-const { data: stats, isLoading, error, refetch } = useDogStats(dogId);
 ```
+
+#### React Component (Statistics Dashboard)
+
+> 📘 **완전한 컴포넌트 예시**는 [상세 문서](./API_DOG_STATS_DETAIL.md#ui-컴포넌트-설계)를 참고하세요.
+
+```typescript
+// app/trainer/dogs/[dogId]/stats/page.tsx
+'use client';
+
+import { useDogStats } from '@/hooks/useDogStats';
+import { useParams } from 'next/navigation';
+
+export default function DogStatsPage() {
+  const params = useParams();
+  const dogId = Number(params.dogId);
+  const { data, isLoading, error } = useDogStats(dogId);
+
+  if (isLoading) return <div>로딩 중...</div>;
+  if (error) return <div>오류: {error.message}</div>;
+  if (!data) return <div>데이터가 없습니다.</div>;
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      {/* 1. 반려견 프로필 */}
+      <DogProfileCard dog={data.dog} />
+
+      {/* 2. 통계 요약 */}
+      <div className="grid grid-cols-3 gap-4">
+        <StatCard
+          title="총 신청 횟수"
+          value={data.stats.timesApplied}
+          icon="📚"
+        />
+        <StatCard
+          title="총 출석 횟수"
+          value={data.stats.attendedCount}
+          icon="✅"
+        />
+        <StatCard
+          title="출석률"
+          value={`${((data.stats.attendedCount / data.stats.timesApplied) * 100).toFixed(1)}%`}
+          icon="📊"
+        />
+      </div>
+
+      {/* 3. 상담 기록 */}
+      <CounselingHistory counselings={data.counselings} />
+
+      {/* 4. 단회차 훈련 목록 */}
+      <SingleTrainingList trainings={data.trainingApplications} />
+
+      {/* 5. 다회차 훈련 (태그별) ⭐ 복잡! */}
+      <MultiCourseCategories categories={data.multiCourses} />
+    </div>
+  );
+}
+
+// 통계 카드 컴포넌트
+function StatCard({ title, value, icon }: { title: string; value: string | number; icon: string }) {
+  return (
+    <div className="bg-white rounded-lg shadow p-4">
+      <div className="text-2xl mb-2">{icon}</div>
+      <div className="text-2xl font-bold">{value}</div>
+      <div className="text-sm text-gray-600">{title}</div>
+    </div>
+  );
+}
+
+// 다회차 훈련 카테고리 (중첩 구조 처리)
+function MultiCourseCategories({ categories }: { categories: MultiCourseCategoryResponse[] }) {
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">📚 다회차 훈련 이력</h2>
+      
+      {categories.map((category) => (
+        <div key={category.tags} className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-xl font-bold mb-4">{category.tags}</h3>
+          
+          {/* 코스 목록 */}
+          {category.courses.map((course) => (
+            <div key={course.courseId} className="border-l-4 border-blue-500 pl-4 mb-4">
+              <h4 className="font-semibold">{course.title}</h4>
+              <p className="text-sm text-gray-600">
+                출석: {course.attendedSessions}/{course.totalSessions} ({course.attendanceRate.toFixed(1)}%)
+              </p>
+              
+              {/* 세션 목록 */}
+              <div className="mt-2 space-y-1">
+                {course.sessions.map((session) => (
+                  <div key={session.sessionId} className="text-sm flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${
+                      session.attendanceStatus === 'ATTENDED' ? 'bg-green-500' :
+                      session.attendanceStatus === 'ABSENT' ? 'bg-red-500' : 'bg-gray-300'
+                    }`} />
+                    <span>{session.sessionNo}회차 - {session.sessionDate}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+### ⚠️ 핵심 주의사항
+
+#### 1️⃣ **multiCourses 데이터 구조 이해**
+
+```typescript
+// ❌ 잘못된 접근
+data.multiCourses.map(course => ...)  // 틀림!
+
+// ✅ 올바른 접근 (3단계 중첩)
+data.multiCourses.map(category =>           // 1단계: 태그별 그룹
+  category.courses.map(course =>             // 2단계: 코스
+    course.sessions.map(session => ...)      // 3단계: 세션
+  )
+)
+```
+
+#### 2️⃣ **attendanceStatus null 처리**
+
+```typescript
+// 예정된 세션은 attendanceStatus가 null
+session.attendanceStatus === 'ATTENDED'  // ✅ 출석
+session.attendanceStatus === 'ABSENT'    // ✅ 결석
+session.attendanceStatus === null        // ✅ 예정
+```
+
+#### 3️⃣ **출석률 계산**
+
+```typescript
+// stats에는 통계만, 출석률은 직접 계산
+const attendanceRate = data.stats.timesApplied > 0
+  ? (data.stats.attendedCount / data.stats.timesApplied) * 100
+  : 0;
+```
+
+#### 4️⃣ **빈 배열 체크**
+
+```typescript
+// 모든 배열은 비어있을 수 있음
+if (data.counselings.length === 0) {
+  return <EmptyState message="상담 기록이 없습니다" />;
+}
+```
+
+### 📚 추가 리소스
+
+- **📖 상세 문서**: [API_DOG_STATS_DETAIL.md](./API_DOG_STATS_DETAIL.md)
+  - 완전한 TypeScript 인터페이스
+  - 실제 응답 예시 (전체)
+  - 5가지 UI 컴포넌트 전체 코드
+  - 트러블슈팅 가이드
+  - 데이터 시각화 예시
 
 ---
 

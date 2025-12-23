@@ -96,8 +96,36 @@ public class TrainerUserService {
         List<TrainingApplicationResponse> singleApps =
                 trainerUserDao.findTrainingApplicationsByDogId(dogId);
 
-        Integer timesApplied = singleApps.isEmpty() ? 0 : singleApps.get(0).getTimesApplied();
-        Integer attendedCount = singleApps.isEmpty() ? 0 : singleApps.get(0).getAttendedCount();
+        // 디버깅: 조회된 데이터 확인
+        log.info("🔍 [DogStats] dogId={}, 단회차 신청 건수={}", dogId, singleApps.size());
+
+        // 통계 계산 - 태그별로 다른 값이 나올 수 있으므로 중복 제거 후 합산
+        int timesApplied = 0;
+        int attendedCount = 0;
+
+        if (!singleApps.isEmpty()) {
+            // 태그별로 그룹화하여 중복 제거
+            Map<String, TrainingApplicationResponse> tagStats = singleApps.stream()
+                    .collect(Collectors.toMap(
+                            TrainingApplicationResponse::getTags,
+                            app -> app,
+                            (existing, replacement) -> existing  // 중복 시 첫 번째 값 유지
+                    ));
+
+            // 모든 태그의 통계 합산
+            for (TrainingApplicationResponse app : tagStats.values()) {
+                Integer applied = app.getTimesApplied();
+                Integer attended = app.getAttendedCount();
+
+                timesApplied += (applied != null ? applied : 0);
+                attendedCount += (attended != null ? attended : 0);
+            }
+
+            log.info("📊 [DogStats] 전체 통계 - timesApplied={}, attendedCount={}, 태그 수={}",
+                    timesApplied, attendedCount, tagStats.size());
+        } else {
+            log.info("ℹ️ [DogStats] 단회차 신청 내역이 없습니다.");
+        }
 
         List<DogStatsResponse.TrainingSessionDto> simplified =
                 singleApps.stream()
@@ -175,6 +203,15 @@ public class TrainerUserService {
                 groupedByTag.entrySet().stream()
                         .map(e -> new MultiCourseCategoryResponse(e.getKey(), e.getValue()))
                         .toList();
+
+        // 6. 다회차 통계를 전체 통계에 합산
+        for (MultiCourseGroupResponse course : multiCourses) {
+            timesApplied += (course.getTotalSessions() != null ? course.getTotalSessions() : 0);
+            attendedCount += course.getAttendedSessions();
+        }
+
+        log.info("📊 [DogStats] 최종 통계 (단회차+다회차) - timesApplied={}, attendedCount={}",
+                timesApplied, attendedCount);
 
         // 최종 응답
         return DogStatsResponse.builder()

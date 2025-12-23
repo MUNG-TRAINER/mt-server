@@ -89,23 +89,26 @@
         ON ta.application_id = a.application_id
         AND ta.is_deleted = 0
 
-<!--    ATTENDED 개수를 course.tags 기준으로 미리 group by 해서 가져오기-->
+<!--    ATTENDED 개수를 course.tags 기준으로 미리 group by 해서 가져오기 (dogId 조건 추가) -->
         LEFT JOIN (
-        SELECT
-        c2.tags,
-        COUNT(ta2.attendance_id) AS attended_count
-        FROM training_course c2
-        JOIN training_session s2 ON s2.course_id = c2.course_id
-        JOIN training_course_application a2 ON a2.session_id = s2.session_id
-        JOIN training_attendance ta2 ON ta2.application_id = a2.application_id
-        WHERE ta2.status = 'ATTENDED'
-        GROUP BY c2.tags
+            SELECT
+                c2.tags,
+                COUNT(ta2.attendance_id) AS attended_count
+            FROM training_course c2
+            JOIN training_session s2 ON s2.course_id = c2.course_id
+            JOIN training_course_application a2 ON a2.session_id = s2.session_id
+            JOIN training_attendance ta2 ON ta2.application_id = a2.application_id
+            WHERE ta2.status = 'ATTENDED'
+              AND a2.dog_id = #{dogId}
+              AND a2.is_deleted = 0
+              AND c2.is_deleted = 0
+            GROUP BY c2.tags
         ) attended ON attended.tags = c.tags
 
         WHERE a.dog_id = #{dogId}
-        AND c.is_deleted = 0
-        AND a.is_deleted = 0
-        AND c.type != 'MULTI'
+          AND c.is_deleted = 0
+          AND a.is_deleted = 0
+          AND c.type != 'MULTI'
 
         ORDER BY c.tags, s.session_date;
     </select>
@@ -191,16 +194,16 @@
         AND tca.dog_id = #{dogId}
         LEFT JOIN training_attendance ta ON ta.application_id = tca.application_id
         LEFT JOIN (
-        SELECT
-        ts2.course_id,
-        COUNT(DISTINCT ts2.session_id) AS totalSessions,
-        COUNT(DISTINCT CASE WHEN ta2.status = 'PRESENT' THEN ts2.session_id END) AS attendedSessions
-        FROM training_session ts2
-        JOIN training_course_application tca2
-        ON ts2.session_id = tca2.session_id
-        AND tca2.dog_id = #{dogId}
-        LEFT JOIN training_attendance ta2 ON tca2.application_id = ta2.application_id
-        GROUP BY ts2.course_id
+            SELECT
+                ts2.course_id,
+                COUNT(DISTINCT ts2.session_id) AS totalSessions,
+                COUNT(DISTINCT CASE WHEN ta2.status = 'ATTENDED' THEN ts2.session_id END) AS attendedSessions
+            FROM training_session ts2
+            JOIN training_course_application tca2
+                ON ts2.session_id = tca2.session_id
+                AND tca2.dog_id = #{dogId}
+            LEFT JOIN training_attendance ta2 ON tca2.application_id = ta2.application_id
+            GROUP BY ts2.course_id
         ) sub ON sub.course_id = tc.course_id
         WHERE tc.type = 'MULTI'
         AND tc.is_deleted = 0
@@ -228,12 +231,12 @@
         SELECT COUNT(*)
         FROM training_attendance ta
         JOIN training_course_application tca
-        ON ta.application_id = tca.application_id
+            ON ta.application_id = tca.application_id
         JOIN training_session ts
-        ON tca.session_id = ts.session_id
+            ON tca.session_id = ts.session_id
         WHERE tca.dog_id = #{dogId}
-        AND ts.course_id = #{courseId}
-        AND ta.status = 'PRESENT'
+          AND ts.course_id = #{courseId}
+          AND ta.status = 'ATTENDED'
     </select>
 
 
