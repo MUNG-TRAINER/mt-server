@@ -47,15 +47,16 @@
     <select id="findUsersByTrainerId"
             resultType="com.mungtrainer.mtserver.counseling.dto.response.TrainerUserListResponse">
         SELECT
-        u.user_id AS userId,
-        u.name AS name,
-        u.phone AS phone,
-        u.email AS email
+            u.user_id AS userId,
+            u.name AS name,
+            u.phone AS phone,
+            u.email AS email,
+            u.profile_image AS profileImage
         FROM trainer_user tu
         JOIN user u ON tu.user_id = u.user_id
         WHERE tu.trainer_id = #{trainerId}
-        AND tu.is_deleted = 0
-        AND u.is_deleted = 0
+          AND tu.is_deleted = 0
+          AND u.is_deleted = 0
         ORDER BY u.created_at DESC
     </select>
 

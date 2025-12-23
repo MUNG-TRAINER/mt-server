@@ -32,7 +32,20 @@ public class TrainerUserService {
     private final TrainingAttendanceDAO trainingAttendanceDao;
 
     public List<TrainerUserListResponse> getUsersByTrainer(Long trainerId) {
-        return trainerUserDao.findUsersByTrainerId(trainerId);
+        // 1. DB에서 회원 리스트 조회
+        List<TrainerUserListResponse> users = trainerUserDao.findUsersByTrainerId(trainerId);
+
+        if (users.isEmpty()) return List.of();
+
+        // 2. 프로필 이미지를 S3 Presigned URL로 변환
+        users.forEach(user -> {
+            if (user.getProfileImage() != null && !user.getProfileImage().isBlank()) {
+                String presignedUrl = s3Service.generateDownloadPresignedUrl(user.getProfileImage());
+                user.setProfileImage(presignedUrl);
+            }
+        });
+
+        return users;
     }
 
     // 반려견 목록 조회

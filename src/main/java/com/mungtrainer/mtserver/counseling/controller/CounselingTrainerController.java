@@ -48,7 +48,7 @@ public class CounselingTrainerController {
     }
 
     // 훈련사가 관리하는 회원 목록 조회
-    @GetMapping("/users/{trainerId}")
+    @GetMapping("/users")
     public List<TrainerUserListResponse> getTrainerUsers(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
@@ -73,6 +73,7 @@ public class CounselingTrainerController {
     ) {
         Long trainerId = userDetails.getUserId();
         DogStatsResponse dogStats = trainerService.getDogStats(dogId, trainerId);
+      System.out.println(dogStats.toString());
         return ResponseEntity.ok(dogStats);
     }
 
