@@ -74,14 +74,7 @@ public class CounselingTrainerController {
             @PathVariable("dogId") Long dogId
     ) {
         Long trainerId = userDetails.getUserId();
-        log.info("🐕 [API] 반려견 통계 조회 - trainerId={}, dogId={}", trainerId, dogId);
-
         DogStatsResponse dogStats = trainerService.getDogStats(dogId, trainerId);
-
-        log.info("📊 [Response] stats.timesApplied={}, stats.attendedCount={}",
-                dogStats.getStats().getTimesApplied(),
-                dogStats.getStats().getAttendedCount());
-
         return ResponseEntity.ok(dogStats);
     }
 

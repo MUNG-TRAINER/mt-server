@@ -97,9 +97,6 @@ public class TrainerUserService {
         List<TrainingApplicationResponse> singleApps =
                 trainerUserDao.findTrainingApplicationsByDogId(dogId);
 
-        // 디버깅: 조회된 데이터 확인
-        log.info("🔍 [DogStats] dogId={}, 단회차 신청 건수={}", dogId, singleApps.size());
-
         // 통계 계산 - 태그별로 다른 값이 나올 수 있으므로 중복 제거 후 합산
         int timesApplied = 0;
         int attendedCount = 0;
@@ -121,13 +118,7 @@ public class TrainerUserService {
                 timesApplied += (applied != null ? applied : 0);
                 attendedCount += (attended != null ? attended : 0);
             }
-
-            log.info("📊 [DogStats] 전체 통계 - timesApplied={}, attendedCount={}, 태그 수={}",
-                    timesApplied, attendedCount, tagStats.size());
-        } else {
-            log.info("ℹ️ [DogStats] 단회차 신청 내역이 없습니다.");
         }
-
         List<DogStatsResponse.TrainingSessionDto> simplified =
                 singleApps.stream()
                         .map(item -> DogStatsResponse.TrainingSessionDto.builder()
@@ -195,7 +186,7 @@ public class TrainerUserService {
 
         List<MultiCourseGroupResponse> courseList = new ArrayList<>(groupedByCourseId.values());
 
-        // ⭐ 4-2. tags(UUID)로 재그룹화 - 같은 과정을 여러 번 수강한 경우 묶기
+        // 4-2. tags(UUID)로 재그룹화 - 같은 과정을 여러 번 수강한 경우 묶기
         Map<String, List<MultiCourseGroupResponse>> groupedByUuid = new HashMap<>();
 
         for (MultiCourseGroupResponse course : courseList) {
@@ -203,7 +194,7 @@ public class TrainerUserService {
             groupedByUuid.computeIfAbsent(uuid, k -> new ArrayList<>()).add(course);
         }
 
-        // ⭐ 4-3. UUID별로 병합된 응답 생성
+        // 4-3. UUID별로 병합된 응답 생성
         List<MultiCourseGroupResponse> mergedCourses = new ArrayList<>();
 
         for (Map.Entry<String, List<MultiCourseGroupResponse>> entry : groupedByUuid.entrySet()) {
@@ -220,10 +211,18 @@ public class TrainerUserService {
 
             // 여러 번 수강한 경우 - 날짜순 정렬
             sameCourses.sort((a, b) -> {
-                LocalDate aDate = a.getSessions().isEmpty() ? LocalDate.MIN
-                    : a.getSessions().get(0).getSessionDate();
-                LocalDate bDate = b.getSessions().isEmpty() ? LocalDate.MIN
-                    : b.getSessions().get(0).getSessionDate();
+              boolean aEmpty = (a.getSessions() == null) || a.getSessions().isEmpty();
+              boolean bEmpty = (b.getSessions() == null) || b.getSessions().isEmpty();
+              if (aEmpty && bEmpty) {
+                return 0;
+              } else if (aEmpty) {
+                // 세션이 없는 과정은 세션이 있는 과정 뒤로 정렬
+                return 1;
+              } else if (bEmpty) {
+                return -1;
+              }
+              LocalDate aDate = a.getSessions().get(0).getSessionDate();
+              LocalDate bDate = b.getSessions().get(0).getSessionDate();
                 return aDate.compareTo(bDate);
             });
 
@@ -258,7 +257,6 @@ public class TrainerUserService {
                     .build());
 
                 // 전체 통계 합산
-                totalSessionsSum += (course.getTotalSessions() != null ? course.getTotalSessions() : 0);
                 attendedSessionsSum += course.getAttendedSessions();
             }
 
@@ -306,9 +304,6 @@ public class TrainerUserService {
             timesApplied += (course.getTotalSessions() != null ? course.getTotalSessions() : 0);
             attendedCount += course.getAttendedSessions();
         }
-
-        log.info("📊 [DogStats] 최종 통계 (단회차+다회차) - timesApplied={}, attendedCount={}",
-                timesApplied, attendedCount);
 
         // 최종 응답
         return DogStatsResponse.builder()
