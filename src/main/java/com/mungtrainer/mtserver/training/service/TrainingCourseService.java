@@ -6,7 +6,10 @@ import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.counseling.dao.TrainerUserDAO;
 import com.mungtrainer.mtserver.training.dao.TrainingCourseDao;
+import com.mungtrainer.mtserver.training.dao.TrainingSessionDAO;
 import com.mungtrainer.mtserver.training.dto.request.CourseSearchRequest;
+import com.mungtrainer.mtserver.training.dto.response.CalendarResponse;
+import com.mungtrainer.mtserver.training.dto.response.CalendarSessionDateDto;
 import com.mungtrainer.mtserver.training.dto.response.CourseSearchItemDto;
 import com.mungtrainer.mtserver.training.dto.response.CourseSearchResponse;
 import com.mungtrainer.mtserver.training.dto.response.TrainingCourseResponse;
@@ -14,6 +17,7 @@ import com.mungtrainer.mtserver.training.entity.TrainingCourse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Arrays;
 
@@ -24,6 +28,7 @@ public class TrainingCourseService {
     private final TrainingCourseDao trainingCourseDao;
     private final TrainerUserDAO trainerUserDAO;
     private final S3Service s3Service;
+    private final TrainingSessionDAO trainingSessionDAO;
 
     public TrainingCourseResponse getCourseById(Long courseId){
         TrainingCourse trainingCourse = trainingCourseDao.findByCourseId(courseId);
@@ -150,5 +155,73 @@ public class TrainingCourseService {
 
         // 권한이 없는 경우
         throw new CustomException(ErrorCode.UNAUTHORIZED);
+    }
+
+    /**
+     * 특정 기간의 세션 날짜 목록 조회 (달력용)
+     *
+     * @param startDate 시작 날짜
+     * @param endDate 종료 날짜
+     * @param userDetails 인증된 사용자 정보
+     * @param keyword 검색 키워드
+     * @param lessonForm 수업 형태 필터
+     * @return 달력 응답 (세션이 있는 날짜 목록)
+     */
+    public CalendarResponse getCalendarByPeriod(
+            LocalDate startDate,
+            LocalDate endDate,
+            CustomUserDetails userDetails,
+            String keyword,
+            String lessonForm) {
+
+        // 역할에 따른 trainerId 설정
+        Long trainerId = determineTrainerId(userDetails);
+
+        // 세션 날짜 목록 조회
+        List<CalendarSessionDateDto> sessionDates = trainingSessionDAO.findSessionDatesByPeriod(
+                startDate, endDate, trainerId, keyword, lessonForm);
+
+        return CalendarResponse.builder()
+                .sessionDates(sessionDates)
+                .totalDates(sessionDates.size())
+                .build();
+    }
+
+    /**
+     * 특정 날짜의 코스 목록 조회 (CourseSearchResponse 형식)
+     *
+     * @param date 조회할 날짜
+     * @param userDetails 인증된 사용자 정보
+     * @param keyword 검색 키워드
+     * @param lessonForm 수업 형태 필터
+     * @return 해당 날짜의 코스 목록 (CourseSearchResponse 형식)
+     */
+    public CourseSearchResponse getCoursesByDate(
+            LocalDate date,
+            CustomUserDetails userDetails,
+            String keyword,
+            String lessonForm) {
+
+        // 역할에 따른 trainerId 설정
+        Long trainerId = determineTrainerId(userDetails);
+
+        // 특정 날짜의 코스 목록 조회
+        List<CourseSearchItemDto> courses = trainingCourseDao.findCoursesByDate(
+                date, trainerId, keyword, lessonForm);
+
+        // S3 Presigned URL 생성
+        for (CourseSearchItemDto course : courses) {
+          String mainImage = course.getMainImage();
+          if (mainImage != null && !mainImage.isBlank()) {
+            course.setMainImage(s3Service.generateDownloadPresignedUrl(mainImage));
+          }
+        }
+
+        return CourseSearchResponse.builder()
+                .courses(courses)
+                .hasMore(false)  // 특정 날짜 조회는 페이지네이션 없음
+                .lastCourseId(null)
+                .size(courses.size())
+                .build();
     }
 }

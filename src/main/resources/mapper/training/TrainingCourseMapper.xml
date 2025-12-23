@@ -97,4 +97,51 @@
         ORDER BY tc.course_id DESC
     </select>
 
+    <!-- 특정 날짜에 세션이 있는 코스 목록 조회 (CourseSearchResponse 형식) -->
+    <select id="findCoursesByDate" resultMap="CourseSearchResultMap">
+        SELECT
+            tc.course_id,
+            tc.trainer_id,
+            u.name AS trainer_name,
+            tc.title,
+            tc.description,
+            tc.tags,
+            tc.main_image,
+            tc.type,
+            tc.lesson_form,
+            tc.status,
+            tc.difficulty,
+            tc.is_free,
+            tc.location,
+            tc.schedule,
+            tc.dog_size,
+            ts.session_id,
+            ts.start_time,
+            ts.end_time,
+            ts.location_detail,
+            ts.max_students,
+            ts.price
+        FROM training_course tc
+        INNER JOIN user u ON tc.trainer_id = u.user_id AND u.is_deleted = 0
+        INNER JOIN training_session ts ON tc.course_id = ts.course_id
+            AND ts.is_deleted = 0
+            AND ts.session_date = #{date}
+        WHERE tc.is_deleted = 0
+            <if test="trainerId != null">
+                AND tc.trainer_id = #{trainerId}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    tc.title LIKE CONCAT('%', #{keyword}, '%')
+                    OR tc.description LIKE CONCAT('%', #{keyword}, '%')
+                    OR tc.tags LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="lessonForm != null and lessonForm != ''">
+                AND tc.lesson_form = #{lessonForm}
+            </if>
+        ORDER BY ts.start_time ASC, tc.title ASC
+    </select>
+
 </mapper>
+
