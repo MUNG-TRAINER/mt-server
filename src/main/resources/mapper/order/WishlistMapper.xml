@@ -7,17 +7,41 @@
     <!-- 장바구니 리스트 조회 -->
     <select id="findWishlistResponsesByUserId" parameterType="long" resultType="com.mungtrainer.mtserver.order.dto.response.WishlistResponse">
         SELECT
-        w.user_id AS userId,
-        wd.wishlist_item_id AS wishlistItemId,
-        wd.wishlist_id AS wishlistId,
-        wd.course_id AS courseId,
-        wdd.dog_id AS dogId,
-        wd.price AS price,
-        wd.status AS status
+            w.user_id AS userId,
+            wd.wishlist_item_id AS wishlistItemId,
+            wd.wishlist_id AS wishlistId,
+            wd.course_id AS courseId,
+            wd.price AS price,
+            wd.status AS status,
+            wdd.dog_id AS dogId,
+            d.name AS dogName,
+            tc.title AS title,
+            tc.description AS description,
+            tc.tags AS tags,
+            tc.lesson_form AS lessonForm,
+            tc.main_image AS mainImage,
+            tc.type AS type,
+        CONCAT(
+        DATE_FORMAT(MIN(ts.session_date), '%Y-%m-%d'),
+        ' ~ ',
+        DATE_FORMAT(MAX(ts.session_date), '%Y-%m-%d')
+        ) AS schedule,
+            tc.location AS location
         FROM wishlist w
         JOIN wishlist_detail wd ON w.wishlist_id = wd.wishlist_id
         LEFT JOIN wishlist_detail_dog wdd ON wd.wishlist_item_id = wdd.wishlist_item_id
+        LEFT JOIN dog d ON wdd.dog_id = d.dog_id
+        LEFT JOIN training_course tc ON wd.course_id = tc.course_id
+        LEFT JOIN training_session ts ON tc.course_id = ts.course_id
         WHERE w.user_id = #{userId}
+        AND w.is_deleted = 0
+        AND wd.is_deleted = 0
+        AND wd.status = 'ACTIVE'
+        AND (wdd.is_deleted = 0 OR wdd.is_deleted IS NULL)
+        GROUP BY
+        w.user_id, wd.wishlist_item_id, wd.wishlist_id, wd.course_id, wd.price, wd.status,
+        wdd.dog_id, d.name, tc.title, tc.description, tc.tags, tc.lesson_form, tc.main_image,
+        tc.type, tc.location
     </select>
 
     <!-- userId로 wishlistId 리스트 가져오기 -->
@@ -149,6 +173,18 @@
         WHERE wdd.dog_id = #{dogId}
     </delete>
 
-
+    <select id="findDogsWithCounselingByUserId" resultType="com.mungtrainer.mtserver.order.dto.response.WishlistDogListResponse">
+        SELECT
+        d.dog_id AS dogId,
+        d.name AS name,
+        d.breed AS breed,
+        CASE WHEN c.counseling_id IS NULL THEN FALSE ELSE TRUE END AS hasCounseling
+        FROM dog d
+        LEFT JOIN counseling c
+        ON d.dog_id = c.dog_id
+        AND c.is_deleted = 0
+        WHERE d.user_id = #{userId}
+        AND d.is_deleted = 0
+    </select>
 
 </mapper>

@@ -18,43 +18,50 @@
     <select id="findApplicationListViewByUserId"
             parameterType="long"
             resultType="com.mungtrainer.mtserver.training.dto.response.ApplicationListViewResponse">
-
         SELECT
-        a.application_id      AS applicationId,
-        a.session_id          AS sessionId,
-        a.dog_id              AS dogId,
-        a.status              AS applicationStatus,
-        a.reject_reason       AS rejectReason,
+        MIN(tca.application_id)            AS applicationId,   -- 대표값
+        d.dog_id                           AS dogId,
+        CASE
+        WHEN SUM(tca.status = 'CANCELLED') > 0 THEN 'CANCELLED'
+        WHEN SUM(tca.status = 'WAITING') > 0 THEN 'WAITING'
+        WHEN SUM(tca.status = 'APPLIED') > 0 THEN 'APPLIED'
+        ELSE MIN(tca.status)
+        END                                AS applicationStatus,
+        GROUP_CONCAT(DISTINCT tca.reject_reason ORDER BY tca.reject_reason SEPARATOR ', ')
+        AS rejectReason,
 
-        c.course_id           AS courseId,
-        c.tags                AS tags,
-        c.title               AS title,
-        c.description         AS description,
-        c.main_image          AS mainImage,
-        c.location            AS location,
-        c.lesson_form            AS lessonForm,
-        c.type           AS type,
+        tc.course_id                      AS courseId,
+        tc.tags                           AS tags,
+        tc.title                          AS title,
+        tc.description                    AS description,
+        tc.main_image                     AS mainImage,
+        tc.location                       AS location,
+        tc.lesson_form                    AS lessonForm,
+        tc.type                           AS type,
 
-        CONCAT(s.session_date, ' ', s.start_time, ' ~ ', s.end_time) AS sessionSchedule,
-        s.session_no AS sessionNumber,
-        d.name                AS dogName
+        CONCAT(
+        DATE_FORMAT(MIN(ts.session_date), '%Y-%m-%d'),
+        ' ~ ',
+        DATE_FORMAT(MAX(ts.session_date), '%Y-%m-%d')
+        ) AS sessionSchedule,
 
-        FROM training_course_application a
-        JOIN training_session s
-        ON a.session_id = s.session_id
-        AND s.is_deleted = 0
-        JOIN training_course c
-        ON s.course_id = c.course_id
-        AND c.is_deleted = 0
+        SUM(ts.price)                     AS price,
+
+        d.name                            AS dogName
+        FROM training_course_application tca
         JOIN dog d
-        ON a.dog_id = d.dog_id
+        ON tca.dog_id = d.dog_id
         AND d.is_deleted = 0
-
+        JOIN training_session ts
+        ON tca.session_id = ts.session_id
+        AND ts.is_deleted = 0
+        JOIN training_course tc
+        ON ts.course_id = tc.course_id
+        AND tc.is_deleted = 0
         WHERE d.user_id = #{userId}
-        AND a.is_deleted = 0
-
-        ORDER BY a.applied_at DESC;
-
+        AND tca.is_deleted = 0
+        GROUP BY tc.course_id, d.dog_id
+        ORDER BY MAX(tca.applied_at) DESC
     </select>
 
     <!-- 신청 강아지 변경 -->
@@ -70,6 +77,15 @@
         FROM training_course_application
         WHERE application_id = #{applicationId}
           AND is_deleted = 0
+    </select>
+
+    <!-- 코스에 속한 세션 리스트 조회 -->
+    <select id="findSessionsByCourseId" resultType="com.mungtrainer.mtserver.training.entity.TrainingSession">
+        SELECT *
+        FROM training_session
+        WHERE course_id = #{courseId}
+        AND is_deleted = 0
+        ORDER BY session_date, start_time
     </select>
 
     <!-- 생성 사용자 인증 -->
@@ -206,16 +222,6 @@
         AND is_deleted = 0
     </select>
 
-    <!-- 세션 상태 업데이트 - 이미 DONE이면 건너뜀 -->
-    <update id="updateSessionStatusIfNotDone">
-        UPDATE training_session
-        SET status = #{status},
-        updated_at = NOW()
-        WHERE session_id = #{sessionId}
-        AND is_deleted = 0
-        AND status != #{status}
-    </update>
-
     <!-- 신청 상태 업데이트 - 이미 EXPIRED이면 건너뜀 -->
     <update id="updateApplicationStatusIfNotExpired">
         UPDATE training_course_application
@@ -224,4 +230,89 @@
         WHERE application_id = #{applicationId}
         AND status != #{status}
     </update>
+
+    <!-- courseIds 여러 개 처리 -->
+    <select id="findApplicationsByUserAndCourses"
+            resultType="com.mungtrainer.mtserver.training.entity.TrainingCourseApplication">
+        SELECT tca.*
+        FROM training_course_application tca
+        JOIN training_session ts ON tca.session_id = ts.session_id
+        JOIN dog d ON tca.dog_id = d.dog_id
+        WHERE d.user_id = #{userId}
+        AND tca.is_deleted = 0
+        AND ts.course_id IN
+        <foreach collection="courseIds"
+                 item="id"
+                 open="("
+                 separator=","
+                 close=")">
+            #{id}
+        </foreach>
+    </select>
+<!--  courseId로 sessionId 찾기-->
+    <select id="findSessionIdsByCourseIds" resultType="long">
+        SELECT session_id
+        FROM training_session
+        WHERE course_id IN
+        <foreach collection="courseIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND is_deleted = 0
+    </select>
+
+    <select id="findApplicationsByUserAndSessions"
+            resultType="com.mungtrainer.mtserver.training.entity.TrainingCourseApplication">
+        SELECT *
+        FROM training_course_application
+        WHERE created_by = #{userId}
+        AND session_id IN
+        <foreach collection="sessionIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND is_deleted = 0
+    </select>
+
+    <!-- 코스 기준 취소 가능한 application 조회 -->
+    <select id="findCancelableApplicationsByUserAndCourses"
+            resultType="com.mungtrainer.mtserver.training.entity.TrainingCourseApplication">
+
+        SELECT tca.*
+        FROM training_course_application tca
+        JOIN training_session ts
+        ON tca.session_id = ts.session_id
+        AND ts.is_deleted = 0
+        JOIN training_course tc
+        ON ts.course_id = tc.course_id
+        AND tc.is_deleted = 0
+        JOIN dog d
+        ON tca.dog_id = d.dog_id
+        AND d.is_deleted = 0
+        WHERE d.user_id = #{userId}
+        AND tc.course_id IN
+        <foreach collection="courseIds"
+                 item="id"
+                 open="("
+                 separator=","
+                 close=")">
+            #{id}
+        </foreach>
+        AND tca.is_deleted = 0
+        AND tca.status NOT IN ('CANCELLED','EXPIRED','REFUNDED')
+
+    </select>
+
+    <!-- wishlist_item_id로 courseId 조회 -->
+    <select id="findCourseIdByWishlistItemId" resultType="long" parameterType="long">
+        SELECT course_id
+        FROM wishlist_detail
+        WHERE wishlist_item_id = #{wishlistItemId}
+    </select>
+
+    <!-- wishlist_item_id로 dogId 조회 (wishlist_detail_dog 활용) -->
+    <select id="findDogIdsByWishlistItemId" resultType="long" parameterType="long">
+        SELECT dog_id
+        FROM wishlist_detail_dog
+        WHERE wishlist_item_id = #{wishlistItemId}
+        AND is_deleted = 0
+    </select>
 </mapper>
