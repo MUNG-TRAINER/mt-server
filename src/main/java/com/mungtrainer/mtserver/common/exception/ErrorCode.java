@@ -74,6 +74,10 @@ public enum ErrorCode {
   PAYMENT_FAILED(500, "결제 처리에 실패했습니다."),
   PAYMENT_ALREADY_COMPLETED(409, "이미 결제가 완료된 주문입니다."),
   SESSION_CANNOT_DELETE_HAS_PAYMENT(400, "결제 완료된 신청이 있습니다. 환불 처리 후 삭제해주세요."),
+  PAYMENT_AMOUNT_MISMATCH(400, "결제 금액이 일치하지 않습니다."),
+  PAYMENT_APPROVAL_FAILED(500, "결제 승인에 실패했습니다."),
+  PAYMENT_NOT_FOUND(404, "결제 정보를 찾을 수 없습니다."),
+  PAYMENT_CANCEL_FAILED(500, "결제 취소에 실패했습니다."),
 
     // 장바구니(Wishlist) 관련
     WISHLIST_NOT_FOUND(404, "장바구니 항목을 찾을 수 없습니다"),

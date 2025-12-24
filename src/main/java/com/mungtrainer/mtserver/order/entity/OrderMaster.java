@@ -22,9 +22,9 @@ public class OrderMaster extends BaseEntity {
     private Long orderId;
 
     /**
-     * 장바구니 ID (FK - wishlist.wishlist_id)
+     * 가맹점 주문번호 (Unique)
      */
-    private Long wishlistId;
+    private String merchantUid;
 
     /**
      * 사용자 ID (FK - user.user_id)
@@ -50,4 +50,10 @@ public class OrderMaster extends BaseEntity {
      * 결제 일시
      */
     private LocalDateTime paidAt;
+
+    public void updatePaymentStatus(String status, Integer paidAmount, LocalDateTime paidAt) {
+        this.orderStatus = status;
+        this.paidAmount = paidAmount;
+        this.paidAt = paidAt;
+    }
 }

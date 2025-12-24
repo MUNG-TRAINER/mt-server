@@ -8,6 +8,7 @@
     <resultMap id="paymentResultMap" type="com.mungtrainer.mtserver.order.entity.Payment">
         <id property="paymentId" column="payment_id"/>
         <result property="orderId" column="order_id"/>
+        <result property="paymentKey" column="payment_key"/>
         <result property="method" column="method"/>
         <result property="amount" column="amount"/>
         <result property="paymentStatus" column="payment_status"/>
@@ -15,6 +16,8 @@
         <result property="paidAt" column="paid_at"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="updatedBy" column="updated_by"/>
     </resultMap>
 
     <!-- PaymentLog Result Map -->
@@ -30,27 +33,70 @@
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
+    <select id="findOrderItemsByOrderId" resultType="com.mungtrainer.mtserver.order.entity.OrderItem">
+        SELECT *
+        FROM order_item
+        WHERE order_id = #{orderId}
+    </select>
+
+    <select id="getCostByCourseIds"
+            resultType="int">
+
+        SELECT COALESCE(SUM(ts.price), 0)
+        FROM training_session ts
+        JOIN training_course_application tca
+        ON tca.session_id = ts.session_id
+        JOIN dog d
+        ON d.dog_id = tca.dog_id
+        JOIN training_course tc
+        ON tc.course_id = ts.course_id
+        WHERE 1 = 1
+        AND tca.status = 'ACCEPT'
+        AND d.user_id = #{userId}
+        AND tc.status != 'CANCELED'
+        AND tc.is_deleted != 1
+
+        <if test="courseIds != null and courseIds.size() > 0">
+            AND ts.course_id IN
+            <foreach collection="courseIds"
+                     item="courseId"
+                     open="("
+                     separator=","
+                     close=")">
+                #{courseId}
+            </foreach>
+        </if>
+
+    </select>
+
+
     <!-- 결제 생성 -->
     <insert id="insertPayment" parameterType="com.mungtrainer.mtserver.order.entity.Payment"
             useGeneratedKeys="true" keyProperty="paymentId">
         INSERT INTO payment (
             order_id,
+            payment_key,
             method,
             amount,
             payment_status,
             merchant_uid,
             paid_at,
+            created_by,
+            updated_by,
             created_at,
             updated_at
         ) VALUES (
             #{orderId},
+            #{paymentKey},
             #{method},
             #{amount},
             #{paymentStatus},
             #{merchantUid},
             #{paidAt},
-            NOW(),
-            NOW()
+            #{createdBy},
+            #{updatedBy},
+                  NOW(),
+                  NOW()
         )
     </insert>
 
@@ -77,5 +123,19 @@
             NOW()
         )
     </insert>
+
+    <!-- 결제 조회 (by paymentKey) -->
+    <select id="findByPaymentKey" parameterType="string" resultMap="paymentResultMap">
+        SELECT * FROM payment WHERE payment_key = #{paymentKey}
+    </select>
+
+    <!-- 결제 정보 업데이트 -->
+    <update id="updatePayment" parameterType="com.mungtrainer.mtserver.order.entity.Payment">
+        UPDATE payment
+        SET
+            payment_status = #{paymentStatus},
+            updated_at = NOW()
+        WHERE payment_id = #{paymentId}
+    </update>
 
 </mapper>

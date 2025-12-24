@@ -46,9 +46,14 @@ public class Payment extends BaseEntity {
      */
     private String merchantUid;
 
+    private String paymentKey;
+
     /**
      * 결제 일시
      */
     private LocalDateTime paidAt;
-}
 
+    public void updateStatus(String status) {
+        this.paymentStatus = status;
+    }
+}
