@@ -1,7 +1,5 @@
 server:
   port: ${SERVER_PORT}
-  tomcat:
-    max-swallow-size:
 spring:
   jwt:
     access-secret: ${SPRING_JWT_ACCESS_SECRET}
