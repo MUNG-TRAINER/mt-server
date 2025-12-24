@@ -44,10 +44,14 @@ public class WishlistService {
         // 2. Presigned URL 발급 + key → URL 매핑
         Map<String, String> imageUrlMap = new HashMap<>();
         if (!imageKeys.isEmpty()) {
-            for (String key : imageKeys) {
-                List<String> urls = s3Service.generateDownloadPresignedUrls(Collections.singletonList(key));
-                if (urls != null && !urls.isEmpty() && urls.get(0) != null && !urls.get(0).isEmpty()) {
-                    imageUrlMap.put(key, urls.get(0));
+            List<String> urls = s3Service.generateDownloadPresignedUrls(imageKeys);
+            if (urls != null && !urls.isEmpty()) {
+                int size = Math.min(imageKeys.size(), urls.size());
+                for (int i = 0; i < size; i++) {
+                    String url = urls.get(i);
+                    if (url != null && !url.isEmpty()) {
+                        imageUrlMap.put(imageKeys.get(i), url);
+                    }
                 }
             }
         }

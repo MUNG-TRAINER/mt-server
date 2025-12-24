@@ -1,24 +1,17 @@
 package com.mungtrainer.mtserver.training.controller;
 
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
-import com.mungtrainer.mtserver.order.dto.request.WishlistDeleteRequest;
-import com.mungtrainer.mtserver.order.dto.request.WishlistUpdateRequest;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationCancelRequest;
-import com.mungtrainer.mtserver.training.dto.request.ApplicationRequest;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationListViewResponse;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationResponse;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationStatusResponse;
 import com.mungtrainer.mtserver.training.service.TrainingCourseApplicationService;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.sql.DataSource;
 import java.util.List;
 
 @Validated

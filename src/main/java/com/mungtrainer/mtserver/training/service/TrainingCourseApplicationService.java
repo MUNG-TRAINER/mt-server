@@ -141,7 +141,7 @@ public class TrainingCourseApplicationService {
                 .status(application.getStatus())
                 .build();
     }
-
+    @Transactional
     // 신청 생성
     public List<ApplicationResponse> applyCourse(Long userId, Long courseId, ApplicationRequest request) {
         // 1. 해당 강아지가 userId 소유인지 확인
@@ -336,9 +336,11 @@ public class TrainingCourseApplicationService {
 
 
                 String status;
-                if (currentCount >= maxStudent) status = "WAITING";
-                else if (!hasCounselingCompleted) status = "COUNSELING_REQUIRED";
-                else status = "APPLIED";
+                if (currentCount >= maxStudent) {
+                    status = "WAITING";
+                } else {
+                    status = "APPLIED";
+                }
 
                 TrainingCourseApplication created = TrainingCourseApplication.builder()
                         .sessionId(sessionId)
