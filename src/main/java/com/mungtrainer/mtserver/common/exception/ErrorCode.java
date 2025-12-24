@@ -93,7 +93,20 @@ public enum ErrorCode {
   SESSION_UPDATE_FAILED(500, "세션 수정에 실패했습니다."),
 
   // S3 관련
-  INVALID_REQUEST_DATA(400, "요청 데이터가 유효하지 않습니다.");
+  INVALID_REQUEST_DATA(400, "요청 데이터가 유효하지 않습니다."),
+
+  // 상담 관련
+  COUNSELING_DOG_ID_REQUIRED(400, "반려견 ID는 필수입니다."),
+  COUNSELING_DOG_NOT_OWNED(403, "존재하지 않는 반려견이거나 접근 권한이 없습니다."),
+  COUNSELING_INVALID_PHONE(400, "전화번호 형식이 올바르지 않습니다."),
+  COUNSELING_CREATE_FAILED(500, "상담 신청에 실패했습니다."),
+  COUNSELING_NOT_FOUND(404, "존재하지 않는 상담입니다."),
+  COUNSELING_ALREADY_DELETED(404, "이미 취소된 상담이거나 존재하지 않는 상담입니다."),
+  COUNSELING_NO_PERMISSION(403, "해당 상담을 취소할 권한이 없습니다."),
+  COUNSELING_CANCEL_FAILED(500, "상담 취소에 실패했습니다."),
+  COUNSELING_ALREADY_COMPLETED(409, "이미 완료된 상담입니다."),
+  COUNSELING_UPDATE_FAILED(500, "상담 내용 저장에 실패했습니다."),
+  COUNSELING_DETAIL_NOT_FOUND(404, "존재하지 않는 상담이거나 접근 권한이 없습니다.");
 
 
   public final int status;
