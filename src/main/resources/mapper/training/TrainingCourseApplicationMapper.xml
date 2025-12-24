@@ -35,8 +35,26 @@
              UPDATE training_course_application
              SET status = #{status},
                  updated_at = NOW()
-             WHERE application_id = #{applicationId} AND status = 'APPLIED'
+             WHERE application_id = #{applicationId} AND status IN ('APPLIED','ACCEPT','PAID')
          </update>
+        <!-- 여러 신청 상태 업데이트 -->
+        <update id="updateStatuses">
+            UPDATE training_course_application
+            SET status = #{status},
+                updated_at = NOW()
+            WHERE status IN ('APPLIED','ACCEPT','PAID')
+            <if test="applicationIds != null and applicationIds.size() > 0">
+                AND application_id IN
+                <foreach collection="applicationIds"
+                         item="applicationId"
+                         open="("
+                         separator=","
+                         close=")">
+                    #{applicationId}
+                </foreach>
+            </if>
+
+        </update>
 
         <select id="existsActiveByDogId" resultType="boolean">
             SELECT COUNT(*) > 0

@@ -25,7 +25,7 @@ public class UploadUrlRequest {
   @NotBlank(message = "fileName은 필수입니다.")
   @Size(max = 150, message = "파일 제목은 150자 이하이어야 합니다.")
   @Pattern(
-      regexp = "^[A-Za-z0-9._-]+\\.(jpg|jpeg|png|gif|webp|svg)$",
+      regexp = "^[A-Za-z0-9가-힣._-]+\\.(jpg|jpeg|png|gif|webp|svg)$",
       message = "jpg, jpeg, png, gif, webp, svg 확장자만 허용됩니다."
   )
   private String fileName; // 예: mybestphoto.jpg
