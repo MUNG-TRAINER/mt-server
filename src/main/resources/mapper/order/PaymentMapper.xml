@@ -50,22 +50,22 @@
         ON d.dog_id = tca.dog_id
         JOIN training_course tc
         ON tc.course_id = ts.course_id
-        WHERE 1 = 1
-        AND tca.status = 'ACCEPT'
-        AND d.user_id = #{userId}
-        AND tc.status != 'CANCELED'
-        AND tc.is_deleted != 1
-
-        <if test="courseIds != null and courseIds.size() > 0">
-            AND ts.course_id IN
-            <foreach collection="courseIds"
-                     item="courseId"
-                     open="("
-                     separator=","
-                     close=")">
-                #{courseId}
-            </foreach>
-        </if>
+        <where>
+            tca.status = 'ACCEPT'
+            AND d.user_id = #{userId}
+            AND tc.status != 'CANCELED'
+            AND tc.is_deleted != 1
+            <if test="courseIds != null and courseIds.size() > 0">
+                AND ts.course_id IN
+                <foreach collection="courseIds"
+                         item="courseId"
+                         open="("
+                         separator=","
+                         close=")">
+                    #{courseId}
+                </foreach>
+            </if>
+        </where>
 
     </select>
 

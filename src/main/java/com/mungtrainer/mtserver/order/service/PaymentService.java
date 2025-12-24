@@ -48,8 +48,6 @@ public class PaymentService {
     private final CourseDAO courseDAO;
     private final TrainingCourseApplicationDAO trainingCourseApplicationDAO;
 
-    private final StringHttpMessageConverter stringHttpMessageConverter;
-
   @Value("${toss.secret-key}")
     private String secretKey;
 
@@ -75,7 +73,7 @@ public class PaymentService {
       // 1. 가맹점 주문번호 생성 (ORD_날짜_UUID)
         String merchantUid = generateMerchantUid();
 
-        boolean is_completed = false;
+        boolean isCompleted = false;
 
         // 2. courseIds로 sessions 합계 금액 확인하기
         int cost = paymentDAO.getCostByCourseIds(request.getCourseIds(), userId);
@@ -100,13 +98,13 @@ public class PaymentService {
 
         // 이거 내일 해야 함
         if ( cost <= 0){
-          is_completed = true;
+          isCompleted = true;
           PaymentApprovalRequest paymentApprovalRequest = PaymentApprovalRequest.builder()
                                                          .paymentKey(merchantUid)
                                                          .merchantUid(merchantUid)
                                                          .amount(cost)
                                                          .build();
-//          method, approvedAt, orderName
+
           String lotOrderName = String.format("%s 외 %d 건", courseDAO.getCourseById(request.getCourseIds().get(0)).getTitle(), size - 1);
           String notLotOrderName = courseDAO.getCourseById(request.getCourseIds().get(0)).getTitle();
           String orderName = size > 2 ? lotOrderName : notLotOrderName;
@@ -121,7 +119,7 @@ public class PaymentService {
         return PaymentPrepareResponse.builder()
                 .merchantUid(merchantUid)
                 .amount(order.getTotalAmount())
-                .is_completed(is_completed)
+                .isCompleted(isCompleted)
                 .build();
     }
 
