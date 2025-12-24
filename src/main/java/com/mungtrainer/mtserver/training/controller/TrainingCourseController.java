@@ -3,22 +3,25 @@ package com.mungtrainer.mtserver.training.controller;
 import com.mungtrainer.mtserver.auth.entity.CustomUserDetails;
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
+import com.mungtrainer.mtserver.training.dto.request.ApplicationRequest;
 import com.mungtrainer.mtserver.training.dto.request.CourseSearchRequest;
+import com.mungtrainer.mtserver.training.dto.response.ApplicationResponse;
 import com.mungtrainer.mtserver.training.dto.response.CalendarResponse;
 import com.mungtrainer.mtserver.training.dto.response.CourseSearchResponse;
 import com.mungtrainer.mtserver.training.dto.response.TrainingCourseResponse;
+import com.mungtrainer.mtserver.training.service.TrainingCourseApplicationService;
 import com.mungtrainer.mtserver.training.service.TrainingCourseService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 import java.time.LocalDate;
 
@@ -27,6 +30,7 @@ import java.time.LocalDate;
 @RequestMapping("/api/course")
 public class TrainingCourseController {
     private final TrainingCourseService courseService;
+    private final TrainingCourseApplicationService applicationService;
 
     /**
      * 훈련과정 검색 (무한 스크롤)
@@ -78,6 +82,18 @@ public class TrainingCourseController {
     public ResponseEntity<TrainingCourseResponse> getCourse(@PathVariable Long courseId){
         TrainingCourseResponse courseResponse = courseService.getCourseById(courseId);
         return ResponseEntity.ok(courseResponse);
+    }
+
+    @PostMapping("/{courseId}/apply")
+    public ResponseEntity<List<ApplicationResponse>> applyCourse(
+            @PathVariable Long courseId,
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @RequestBody @Valid ApplicationRequest request
+    ) {
+        List<ApplicationResponse> created = applicationService.applyCourse(
+                principal.getUserId(), courseId, request
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     /**

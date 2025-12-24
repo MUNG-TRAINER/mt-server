@@ -23,6 +23,9 @@ public interface ApplicationDAO {
     // 생성 중복 체크
     boolean existsByDogAndSession(@Param("dogId") Long dogId, @Param("sessionId") Long sessionId);
 
+    // 코스에 속한 세션 조회
+    List<TrainingSession> findSessionsByCourseId(@Param("courseId") Long courseId);
+
     // 세션 정원 조회
     int getMaxStudentsBySessionId(@Param("sessionId") Long sessionId);
 
@@ -46,9 +49,6 @@ public interface ApplicationDAO {
 
     // wishlist_detail 상태 업데이트
     void updateWishlistDetailStatus(@Param("wishlistItemId") Long wishlistItemId, @Param("status") String status);
-    // 신청 강아지 변경
-    void updateApplicationDog(@Param("applicationId") Long applicationId,
-                              @Param("newDogId") Long newDogId);
 
     // 전체취소
     void updateApplicationStatusBatch(@Param("applicationIds") List<Long> applicationIds, @Param("status") String status);
@@ -60,10 +60,24 @@ public interface ApplicationDAO {
 
     // 세션 status 확인용
     TrainingSession findSessionById(Long sessionId);
-    // 세션 스테이터스 업데이트
-    void updateSessionStatusIfNotDone(@Param("sessionId") Long sessionId, @Param("status") String status);
-
+    // session status = done 일 경우 application status = EXPIRED
     void updateApplicationStatusIfNotExpired(@Param("applicationId") Long applicationId, @Param("status") String status);
+//    유저아이디와 코스아이디로 application 찾기
+    List<TrainingCourseApplication> findApplicationsByUserAndCourses(
+            @Param("userId") Long userId,
+            @Param("courseIds") List<Long> courseIds
+    );
 
+    List<Long> findSessionIdsByCourseIds(
+            @Param("courseIds") List<Long> courseIds
+    );
+    List<TrainingCourseApplication> findApplicationsByUserAndSessions(
+            @Param("userId") Long userId,
+            @Param("sessionIds") List<Long> sessionIds
+    );
+    List<TrainingCourseApplication> findCancelableApplicationsByUserAndCourses(
+            @Param("userId") Long userId,
+            @Param("courseIds") List<Long> courseIds
+    );
 
 }
