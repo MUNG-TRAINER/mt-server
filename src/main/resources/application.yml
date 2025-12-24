@@ -33,7 +33,7 @@ logging:
 
 aws:
   s3:
-    bucket: ${AWS_BUCKET_NAME}# 환경변수 사용
+    bucket: ${AWS_BUCKET_NAME}
     region: ${AWS_DEFAULT_REGION}
     presigned-url:
       expiration-minutes: 10
