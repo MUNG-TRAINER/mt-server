@@ -53,6 +53,17 @@
             AND is_deleted = 0
         )
     </select>
+<!--     dog Id 로 훈련사 조회-->
+    <select id="findTrainerIdByDogId" resultType="java.lang.Long">
+        SELECT tu.trainer_id
+        FROM dog d
+        JOIN trainer_user tu
+        ON d.user_id = tu.user_id
+        WHERE d.dog_id = #{dogId}
+        AND d.is_deleted = 0
+        AND tu.is_deleted = 0
+        LIMIT 1;
+    </select>
 
     <!-- 훈련사가 관리하는 회원 목록 조회 -->
     <select id="findUsersByTrainerId"
