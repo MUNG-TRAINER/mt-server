@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,7 +33,20 @@ public class TrainerUserService {
     private final TrainingAttendanceDAO trainingAttendanceDao;
 
     public List<TrainerUserListResponse> getUsersByTrainer(Long trainerId) {
-        return trainerUserDao.findUsersByTrainerId(trainerId);
+        // 1. DB에서 회원 리스트 조회
+        List<TrainerUserListResponse> users = trainerUserDao.findUsersByTrainerId(trainerId);
+
+        if (users.isEmpty()) return List.of();
+
+        // 2. 프로필 이미지를 S3 Presigned URL로 변환
+        users.forEach(user -> {
+            if (user.getProfileImage() != null && !user.getProfileImage().isBlank()) {
+                String presignedUrl = s3Service.generateDownloadPresignedUrl(user.getProfileImage());
+                user.setProfileImage(presignedUrl);
+            }
+        });
+
+        return users;
     }
 
     // 반려견 목록 조회
@@ -83,9 +97,28 @@ public class TrainerUserService {
         List<TrainingApplicationResponse> singleApps =
                 trainerUserDao.findTrainingApplicationsByDogId(dogId);
 
-        Integer timesApplied = singleApps.isEmpty() ? 0 : singleApps.get(0).getTimesApplied();
-        Integer attendedCount = singleApps.isEmpty() ? 0 : singleApps.get(0).getAttendedCount();
+        // 통계 계산 - 태그별로 다른 값이 나올 수 있으므로 중복 제거 후 합산
+        int timesApplied = 0;
+        int attendedCount = 0;
 
+        if (!singleApps.isEmpty()) {
+            // 태그별로 그룹화하여 중복 제거
+            Map<String, TrainingApplicationResponse> tagStats = singleApps.stream()
+                    .collect(Collectors.toMap(
+                            TrainingApplicationResponse::getTags,
+                            app -> app,
+                            (existing, replacement) -> existing  // 중복 시 첫 번째 값 유지
+                    ));
+
+            // 모든 태그의 통계 합산
+            for (TrainingApplicationResponse app : tagStats.values()) {
+                Integer applied = app.getTimesApplied();
+                Integer attended = app.getAttendedCount();
+
+                timesApplied += (applied != null ? applied : 0);
+                attendedCount += (attended != null ? attended : 0);
+            }
+        }
         List<DogStatsResponse.TrainingSessionDto> simplified =
                 singleApps.stream()
                         .map(item -> DogStatsResponse.TrainingSessionDto.builder()
@@ -94,10 +127,12 @@ public class TrainerUserService {
                                 .courseDescription(item.getCourseDescription())
                                 .tags(item.getTags())
                                 .type(item.getType())
+                                .difficulty(item.getDifficulty())  // 난이도 매핑
                                 .sessionId(item.getSessionId())
                                 .sessionDate(item.getSessionDate())
                                 .sessionStartTime(item.getSessionStartTime())
                                 .sessionEndTime(item.getSessionEndTime())
+                                .attendanceStatus(item.getAttendanceStatus())  // 출석 상태 매핑
                                 .build()
                         ).toList();
 
@@ -108,14 +143,14 @@ public class TrainerUserService {
                         "trainerId", trainerId
                 ));
 
-        // 4-1. 그룹핑
-        Map<Long, MultiCourseGroupResponse> grouped = new HashMap<>();
+        // 4-1. courseId로 먼저 그룹핑 (세션 병합)
+        Map<Long, MultiCourseGroupResponse> groupedByCourseId = new HashMap<>();
 
         for (MultiCourseGroupResponse row : flatRows) {
 
             Long courseId = row.getCourseId();
 
-            MultiCourseGroupResponse group = grouped.get(courseId);
+            MultiCourseGroupResponse group = groupedByCourseId.get(courseId);
 
             // 그룹 신규 생성
             if (group == null) {
@@ -140,7 +175,7 @@ public class TrainerUserService {
                 double rate = total == 0 ? 0 : attended * 100.0 / total;
                 group.setAttendanceRate(rate);
 
-                grouped.put(courseId, group);
+                groupedByCourseId.put(courseId, group);
             }
 
             // 세션 추가
@@ -149,19 +184,126 @@ public class TrainerUserService {
             }
         }
 
-        // 4-2. 그룹 리스트 변환
-        List<MultiCourseGroupResponse> multiCourses =
-                new ArrayList<>(grouped.values());
+        List<MultiCourseGroupResponse> courseList = new ArrayList<>(groupedByCourseId.values());
+
+        // 4-2. tags(UUID)로 재그룹화 - 같은 과정을 여러 번 수강한 경우 묶기
+        Map<String, List<MultiCourseGroupResponse>> groupedByUuid = new HashMap<>();
+
+        for (MultiCourseGroupResponse course : courseList) {
+            String uuid = course.getTags();
+            groupedByUuid.computeIfAbsent(uuid, k -> new ArrayList<>()).add(course);
+        }
+
+        // 4-3. UUID별로 병합된 응답 생성
+        List<MultiCourseGroupResponse> mergedCourses = new ArrayList<>();
+
+        for (Map.Entry<String, List<MultiCourseGroupResponse>> entry : groupedByUuid.entrySet()) {
+            List<MultiCourseGroupResponse> sameCourses = entry.getValue();
+
+            // 단일 수강인 경우 그대로 사용
+            if (sameCourses.size() == 1) {
+                MultiCourseGroupResponse single = sameCourses.get(0);
+                single.setEnrollmentCount(1);
+                single.setEnrollmentHistory(null);
+                mergedCourses.add(single);
+                continue;
+            }
+
+            // 여러 번 수강한 경우 - 날짜순 정렬
+            sameCourses.sort((a, b) -> {
+              boolean aEmpty = (a.getSessions() == null) || a.getSessions().isEmpty();
+              boolean bEmpty = (b.getSessions() == null) || b.getSessions().isEmpty();
+              if (aEmpty && bEmpty) {
+                return 0;
+              } else if (aEmpty) {
+                // 세션이 없는 과정은 세션이 있는 과정 뒤로 정렬
+                return 1;
+              } else if (bEmpty) {
+                return -1;
+              }
+              LocalDate aDate = a.getSessions().get(0).getSessionDate();
+              LocalDate bDate = b.getSessions().get(0).getSessionDate();
+                return aDate.compareTo(bDate);
+            });
+
+            // 수강 이력 생성
+            List<MultiCourseGroupResponse.EnrollmentHistory> histories = new ArrayList<>();
+            int totalSessionsSum = 0;
+            int attendedSessionsSum = 0;
+
+            for (int i = 0; i < sameCourses.size(); i++) {
+                MultiCourseGroupResponse course = sameCourses.get(i);
+
+                // 시작/종료일 계산
+                List<LocalDate> dates = course.getSessions().stream()
+                    .map(MultiSessionResponse::getSessionDate)
+                    .sorted()
+                    .toList();
+                LocalDate startDate = dates.isEmpty() ? null : dates.get(0);
+                LocalDate endDate = dates.isEmpty() ? null : dates.get(dates.size() - 1);
+
+                // 수강 이력 추가
+                histories.add(MultiCourseGroupResponse.EnrollmentHistory.builder()
+                    .enrollmentNumber(i + 1)
+                    .courseId(course.getCourseId())
+                    .title(course.getTitle())
+                    .description(course.getDescription())
+                    .startDate(startDate)
+                    .endDate(endDate)
+                    .totalSessions(course.getTotalSessions())
+                    .attendedSessions(course.getAttendedSessions())
+                    .attendanceRate(course.getAttendanceRate())
+                    .sessions(course.getSessions())
+                    .build());
+
+                // 전체 통계 합산
+                attendedSessionsSum += course.getAttendedSessions();
+            }
+
+            // 대표 정보 (첫 번째 수강 기준)
+            MultiCourseGroupResponse representative = sameCourses.get(0);
+
+            // 전체 평균 출석률
+            double overallRate = totalSessionsSum > 0
+                ? (attendedSessionsSum * 100.0 / totalSessionsSum)
+                : 0.0;
+
+            // 병합된 응답 생성
+            MultiCourseGroupResponse merged = MultiCourseGroupResponse.builder()
+                .courseId(representative.getCourseId())
+                .title(representative.getTitle())
+                .tags(representative.getTags())
+                .description(representative.getDescription())
+                .location(representative.getLocation())
+                .type(representative.getType())
+                .difficulty(representative.getDifficulty())
+                .mainImage(representative.getMainImage())
+                .enrollmentCount(sameCourses.size())
+                .enrollmentHistory(histories)
+                .totalSessions(totalSessionsSum)
+                .attendedSessions(attendedSessionsSum)
+                .attendanceRate(overallRate)
+                .sessions(new ArrayList<>())
+                .build();
+
+            mergedCourses.add(merged);
+        }
 
         // 5. 태그별 그룹핑
         Map<String, List<MultiCourseGroupResponse>> groupedByTag =
-                multiCourses.stream()
+                mergedCourses.stream()
                         .collect(Collectors.groupingBy(MultiCourseGroupResponse::getTags));
 
         List<MultiCourseCategoryResponse> finalGroups =
                 groupedByTag.entrySet().stream()
                         .map(e -> new MultiCourseCategoryResponse(e.getKey(), e.getValue()))
                         .toList();
+
+        // 6. 다회차 통계를 전체 통계에 합산
+        for (MultiCourseGroupResponse course : mergedCourses) {
+            timesApplied += (course.getTotalSessions() != null ? course.getTotalSessions() : 0);
+            attendedCount += course.getAttendedSessions();
+        }
 
         // 최종 응답
         return DogStatsResponse.builder()
