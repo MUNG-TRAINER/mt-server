@@ -49,10 +49,5 @@ public class DogForCounselingResponse {
      * 이미 상담 신청했는지 여부
      */
     private Boolean alreadyRequested;
-
-    /**
-     * 상담 ID (신청한 경우)
-     */
-    private Long counselingId;
 }
 

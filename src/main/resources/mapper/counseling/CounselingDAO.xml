@@ -39,7 +39,7 @@
 
     <!-- 훈련사 상담 완료 전후 반려견 리스트 조회 -->
     <select id="findDogsByCompleted" resultType="com.mungtrainer.mtserver.counseling.dto.response.CounselingDogResponse">
-        SELECT DISTINCT
+        SELECT
             c.counseling_id AS counselingId,
             d.dog_id AS dogId,
             d.name AS dogName,
@@ -138,12 +138,14 @@
             d.age AS age,
             d.gender AS gender,
             d.profile_image AS profileImage,
-            CASE WHEN c.counseling_id IS NOT NULL THEN TRUE ELSE FALSE END AS alreadyRequested,
-            c.counseling_id AS counselingId
+            EXISTS (
+                SELECT 1
+                FROM counseling c
+                WHERE c.dog_id = d.dog_id
+                AND c.created_by = #{userId}
+                AND c.is_deleted = 0
+            ) AS alreadyRequested
         FROM dog d
-        LEFT JOIN counseling c ON d.dog_id = c.dog_id
-                               AND c.created_by = #{userId}
-                               AND c.is_deleted = 0
         WHERE d.dog_id = #{dogId}
           AND d.user_id = #{userId}
           AND d.is_deleted = 0

@@ -52,7 +52,6 @@ public class CounselingUserController {
 
     // 상담 신청
     @PostMapping
-//    @PreAuthorize("#userId == #userDetails.userId")
     public CreateCounselingResponse createCounseling(@Valid @RequestBody CreateCounselingRequest requestDto,
                                                      @AuthenticationPrincipal CustomUserDetails userDetails
     ) {

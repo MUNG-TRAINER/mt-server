@@ -13,6 +13,12 @@ public interface TrainerUserDAO {
     // 유저 ID로 연결된 훈련사 ID 조회
     Long findTrainerIdByUserId(@Param("userId") Long userId);
 
+    // 훈련사와 사용자 관계 존재 여부 확인
+    boolean existsTrainerUserRelation(
+            @Param("trainerId") Long trainerId,
+            @Param("userId") Long userId
+    );
+
     // 회원 목록 조회
     List<TrainerUserListResponse> findUsersByTrainerId(@Param("trainerId") Long trainerId);
     // 반려견 신청 과정 조회 (출석 미포함, tags 기준 회차 계산)

@@ -4,6 +4,7 @@ import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.counseling.dao.CounselingDAO;
+import com.mungtrainer.mtserver.counseling.dao.TrainerUserDAO;
 import com.mungtrainer.mtserver.counseling.dto.request.CounselingPostRequest;
 import com.mungtrainer.mtserver.counseling.dto.request.CreateCounselingRequest;
 import com.mungtrainer.mtserver.counseling.dto.response.*;
@@ -24,26 +25,17 @@ public class CounselingService {
     private final CounselingDAO counselingDao;
     private final S3Service s3Service;
     private final DogDAO dogDao;
+    private final TrainerUserDAO trainerUserDao;
 
     public CreateCounselingResponse createCounseling(CreateCounselingRequest requestDto, Long userId){
 
-        // 1. 반려견 ID 검증
-        if (requestDto.getDogId() == null) {
-            throw new CustomException(ErrorCode.COUNSELING_DOG_ID_REQUIRED);
-        }
-
-        // 2. 반려견 존재 여부 및 소유권 확인
+        // 1. 반려견 존재 여부 및 소유권 확인
         DogResponse dog = dogDao.selectDogByIdAndUserId(requestDto.getDogId(), userId);
         if (dog == null) {
             throw new CustomException(ErrorCode.COUNSELING_DOG_NOT_OWNED);
         }
 
-        // 3. 전화번호 형식 검증
-        if (!requestDto.getPhone().matches("^\\d{2,3}-\\d{3,4}-\\d{4}$")) {
-            throw new CustomException(ErrorCode.COUNSELING_INVALID_PHONE);
-        }
-
-        // 4. 상담 엔티티 생성
+        // 2. 상담 엔티티 생성
         Counseling counseling = Counseling.builder()
                 .dogId(requestDto.getDogId())
                 .phone(requestDto.getPhone())
@@ -143,7 +135,7 @@ public class CounselingService {
             Long trainerId
     ) {
 
-        // 1. 상담 존재 여부 & 완료 여부 확인
+        // 1. 상담 존재 여부 확인
         Counseling counseling = counselingDao.findById(counselingId);
         if (counseling == null) {
             throw new CustomException(ErrorCode.COUNSELING_NOT_FOUND);
@@ -154,12 +146,24 @@ public class CounselingService {
             throw new CustomException(ErrorCode.COUNSELING_ALREADY_COMPLETED);
         }
 
-        // 3. 상담 내용 업데이트 + 완료 처리 + 신청 status 변경
+        // 3. 훈련사 권한 확인 - 해당 상담의 반려견 소유자와 연결되어 있는지 검증
+        Long dogOwnerId = dogDao.getUserIdByDogId(counseling.getDogId());
+        if (dogOwnerId == null) {
+            throw new CustomException(ErrorCode.COUNSELING_NOT_FOUND);
+        }
+
+        boolean hasPermission = trainerUserDao.existsTrainerUserRelation(trainerId, dogOwnerId);
+        if (!hasPermission) {
+            throw new CustomException(ErrorCode.COUNSELING_TRAINER_NO_PERMISSION);
+        }
+
+        // 4. 상담 내용 업데이트 + 완료 처리
         int updatedRows = counselingDao.updateContentAndComplete(counselingId, requestDto.getContent(), trainerId);
         if (updatedRows == 0) {
             throw new CustomException(ErrorCode.COUNSELING_UPDATE_FAILED);
         }
 
+        // 5. 연관된 훈련 신청 상태 변경
         counselingDao.updateApplicationStatusAfterCounseling(trainerId, counseling.getDogId());
 
         return new CounselingPostResponse(true, "상담 내용이 저장되었습니다.");
