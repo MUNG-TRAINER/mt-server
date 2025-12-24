@@ -47,15 +47,16 @@
     <select id="findUsersByTrainerId"
             resultType="com.mungtrainer.mtserver.counseling.dto.response.TrainerUserListResponse">
         SELECT
-        u.user_id AS userId,
-        u.name AS name,
-        u.phone AS phone,
-        u.email AS email
+            u.user_id AS userId,
+            u.name AS name,
+            u.phone AS phone,
+            u.email AS email,
+            u.profile_image AS profileImage
         FROM trainer_user tu
         JOIN user u ON tu.user_id = u.user_id
         WHERE tu.trainer_id = #{trainerId}
-        AND tu.is_deleted = 0
-        AND u.is_deleted = 0
+          AND tu.is_deleted = 0
+          AND u.is_deleted = 0
         ORDER BY u.created_at DESC
     </select>
 
@@ -63,48 +64,51 @@
     <select id="findTrainingApplicationsByDogId"
             resultType="com.mungtrainer.mtserver.counseling.dto.response.TrainingApplicationResponse">
         SELECT
-        c.course_id,
-        c.title AS course_title,
-        c.description AS course_description,
-        c.tags,
-        c.type,
+            c.course_id,
+            c.title AS course_title,
+            c.description AS course_description,
+            c.tags,
+            c.type,
+            c.difficulty,
 
-        s.session_id,
-        s.session_date,
-        s.start_time AS session_start_time,
-        s.end_time AS session_end_time,
+            s.session_id,
+            s.session_date,
+            s.start_time AS session_start_time,
+            s.end_time AS session_end_time,
 
-        COUNT(a.application_id) OVER (PARTITION BY c.tags) AS times_applied,
+            COUNT(a.application_id) OVER (PARTITION BY c.tags) AS times_applied,
 
+            attended.attended_count,
 
-        attended.attended_count,
-
-        ta.`status` AS attendance_status
+            ta.`status` AS attendance_status
 
         FROM training_course c
         JOIN training_session s ON s.course_id = c.course_id
         JOIN training_course_application a ON a.session_id = s.session_id
         LEFT JOIN training_attendance ta
-        ON ta.application_id = a.application_id
-        AND ta.is_deleted = 0
+            ON ta.application_id = a.application_id
+            AND ta.is_deleted = 0
 
-<!--    ATTENDED 개수를 course.tags 기준으로 미리 group by 해서 가져오기-->
+<!--    ATTENDED 개수를 course.tags 기준으로 미리 group by 해서 가져오기 (dogId 조건 추가) -->
         LEFT JOIN (
-        SELECT
-        c2.tags,
-        COUNT(ta2.attendance_id) AS attended_count
-        FROM training_course c2
-        JOIN training_session s2 ON s2.course_id = c2.course_id
-        JOIN training_course_application a2 ON a2.session_id = s2.session_id
-        JOIN training_attendance ta2 ON ta2.application_id = a2.application_id
-        WHERE ta2.status = 'ATTENDED'
-        GROUP BY c2.tags
+            SELECT
+                c2.tags,
+                COUNT(ta2.attendance_id) AS attended_count
+            FROM training_course c2
+            JOIN training_session s2 ON s2.course_id = c2.course_id
+            JOIN training_course_application a2 ON a2.session_id = s2.session_id
+            JOIN training_attendance ta2 ON ta2.application_id = a2.application_id
+            WHERE ta2.status = 'ATTENDED'
+              AND a2.dog_id = #{dogId}
+              AND a2.is_deleted = 0
+              AND c2.is_deleted = 0
+            GROUP BY c2.tags
         ) attended ON attended.tags = c.tags
 
         WHERE a.dog_id = #{dogId}
-        AND c.is_deleted = 0
-        AND a.is_deleted = 0
-        AND c.type != 'MULTI'
+          AND c.is_deleted = 0
+          AND a.is_deleted = 0
+          AND c.type != 'MULTI'
 
         ORDER BY c.tags, s.session_date;
     </select>
@@ -190,16 +194,16 @@
         AND tca.dog_id = #{dogId}
         LEFT JOIN training_attendance ta ON ta.application_id = tca.application_id
         LEFT JOIN (
-        SELECT
-        ts2.course_id,
-        COUNT(DISTINCT ts2.session_id) AS totalSessions,
-        COUNT(DISTINCT CASE WHEN ta2.status = 'PRESENT' THEN ts2.session_id END) AS attendedSessions
-        FROM training_session ts2
-        JOIN training_course_application tca2
-        ON ts2.session_id = tca2.session_id
-        AND tca2.dog_id = #{dogId}
-        LEFT JOIN training_attendance ta2 ON tca2.application_id = ta2.application_id
-        GROUP BY ts2.course_id
+            SELECT
+                ts2.course_id,
+                COUNT(DISTINCT ts2.session_id) AS totalSessions,
+                COUNT(DISTINCT CASE WHEN ta2.status = 'ATTENDED' THEN ts2.session_id END) AS attendedSessions
+            FROM training_session ts2
+            JOIN training_course_application tca2
+                ON ts2.session_id = tca2.session_id
+                AND tca2.dog_id = #{dogId}
+            LEFT JOIN training_attendance ta2 ON tca2.application_id = ta2.application_id
+            GROUP BY ts2.course_id
         ) sub ON sub.course_id = tc.course_id
         WHERE tc.type = 'MULTI'
         AND tc.is_deleted = 0
@@ -227,12 +231,12 @@
         SELECT COUNT(*)
         FROM training_attendance ta
         JOIN training_course_application tca
-        ON ta.application_id = tca.application_id
+            ON ta.application_id = tca.application_id
         JOIN training_session ts
-        ON tca.session_id = ts.session_id
+            ON tca.session_id = ts.session_id
         WHERE tca.dog_id = #{dogId}
-        AND ts.course_id = #{courseId}
-        AND ta.status = 'PRESENT'
+          AND ts.course_id = #{courseId}
+          AND ta.status = 'ATTENDED'
     </select>
 
 
@@ -396,6 +400,19 @@
         AND tca.status = 'APPLIED'
         AND tca.is_deleted = 0;
     </update>
+
+    <!-- 코스와 반려견으로 신청 ID 목록 조회 -->
+    <select id="findApplicationIdsByCourseAndDog" resultType="java.lang.Long">
+        SELECT tca.application_id
+        FROM training_course_application tca
+        JOIN training_session ts ON tca.session_id = ts.session_id
+        JOIN training_course tc ON ts.course_id = tc.course_id
+        WHERE tc.course_id = #{courseId}
+        AND tca.dog_id = #{dogId}
+        AND tca.status = 'ACCEPT'
+        AND tca.is_deleted = 0
+        ORDER BY ts.session_date, ts.start_time
+    </select>
 
 
 </mapper>

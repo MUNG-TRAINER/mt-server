@@ -17,6 +17,7 @@ public class TrainingApplicationResponse {
     private String courseDescription;
     private String tags;
     private String type; // 일회성 / 다회차 구분
+    private String difficulty; // 난이도
 
     // 세션 정보
     private Long sessionId;
