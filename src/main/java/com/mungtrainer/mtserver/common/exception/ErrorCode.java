@@ -29,12 +29,14 @@ public enum ErrorCode {
   INTERNAL_SERVER_ERROR(500, "고유 tags 생성에 실패했습니다."),
   TRAINER_NOT_FOUND(404, "연결된 훈련사를 찾을 수 없습니다."),
   INVALID_LESSON_FORM(400, "훈련 형태가 유효하지 않습니다. 허용된 값: WALK, GROUP, PRIVATE"),
+  INVALID_DATE_RANGE(400, "시작 날짜는 종료 날짜보다 이전이어야 합니다."),
 
   // 신청 관련
   DUPLICATE_APPLICATION(409, "이미 신청한 세션입니다."),
   APPLICATION_NOT_FOUND(404, "신청 정보를 찾을 수 없습니다."),
   UNAUTHORIZED_APPLICATION(403, "본인만 신청 가능합니다."),
   APPLICATION_CREATION_FAILED(500, "신청 생성 실패"),
+    COUNSELING_REQUIRED(409, "반려견의 상담이 필요합니다."),
 
   // 신청 승인/거절 관련
   APPLICATION_STATUS_REQUEST_EMPTY(400, "요청 데이터가 존재하지 않습니다."),
@@ -50,6 +52,7 @@ public enum ErrorCode {
 
   // 출석 관련
   ATTENDANCE_UPDATE_FAILED(500,"출석 상태 변경에 실패했습니다"),
+  ATTENDANCE_CREATION_FAILED(500, "출석 정보 생성에 실패했습니다"),
 
   // 반려견 관련
 

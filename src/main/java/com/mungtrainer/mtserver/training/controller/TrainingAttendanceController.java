@@ -5,13 +5,11 @@ import com.mungtrainer.mtserver.training.dto.response.AttendanceListResponse;
 import com.mungtrainer.mtserver.training.service.TrainingAttendanceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/trainer/course/{courseId}/session/{sessionId}/attendance")
@@ -29,8 +27,6 @@ public class TrainingAttendanceController {
             @PathVariable Long courseId,
             @PathVariable Long sessionId
     ) {
-        log.info("출석 목록 조회 요청 - courseId: {}, sessionId: {}", courseId, sessionId);
-
         List<AttendanceListResponse> attendanceList = trainingAttendanceService.getAttendanceList(sessionId);
 
         return ResponseEntity.ok(attendanceList);
@@ -48,9 +44,6 @@ public class TrainingAttendanceController {
             @PathVariable String userName,
             @Valid @RequestBody AttendanceUpdateRequest request
     ) {
-        log.info("출석 상태 변경 요청 - courseId: {}, sessionId: {}, userName: {}, status: {}",
-                courseId, sessionId, userName, request.getStatus());
-
         trainingAttendanceService.updateAttendanceStatus(sessionId, userName, request);
 
         return ResponseEntity.ok().build();

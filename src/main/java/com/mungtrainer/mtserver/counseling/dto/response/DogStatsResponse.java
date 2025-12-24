@@ -29,10 +29,12 @@ public class DogStatsResponse {
         private String courseDescription;
         private String tags;
         private String type;
+        private String difficulty;  // 난이도 (BEGINNER, INTERMEDIATE, ADVANCED)
         private Long sessionId;
         private LocalDate sessionDate;
         private LocalTime sessionStartTime;
         private LocalTime sessionEndTime;
+        private String attendanceStatus;  // 출석 상태 (ATTENDED, ABSENT, null)
 
     }
 

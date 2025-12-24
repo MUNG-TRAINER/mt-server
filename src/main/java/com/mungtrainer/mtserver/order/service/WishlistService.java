@@ -2,10 +2,12 @@ package com.mungtrainer.mtserver.order.service;
 
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
+import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.order.dao.WishlistDAO;
 import com.mungtrainer.mtserver.order.dto.request.WishlistCreateRequest;
 import com.mungtrainer.mtserver.order.dto.request.WishlistDeleteRequest;
 import com.mungtrainer.mtserver.order.dto.request.WishlistUpdateRequest;
+import com.mungtrainer.mtserver.order.dto.response.WishlistDogListResponse;
 import com.mungtrainer.mtserver.order.dto.response.WishlistResponse;
 import com.mungtrainer.mtserver.order.entity.Wishlist;
 import com.mungtrainer.mtserver.order.entity.WishlistDetail;
@@ -15,19 +17,57 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class WishlistService {
     private final WishlistDAO wishlistDao;
+    private final S3Service s3Service;
 
     // 장바구니 리스트 목록 조회
     @Transactional(readOnly = true)
     public List<WishlistResponse> getWishLists(Long userId) {
-        return wishlistDao.findWishlistResponsesByUserId(userId);
+        List<WishlistResponse> list = wishlistDao.findWishlistResponsesByUserId(userId);
+
+        if (list == null || list.isEmpty()) return Collections.emptyList();
+
+        // 1. S3 key 수집
+        List<String> imageKeys = list.stream()
+                .map(WishlistResponse::getMainImage)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 2. Presigned URL 발급 + key → URL 매핑
+        Map<String, String> imageUrlMap = new HashMap<>();
+        if (!imageKeys.isEmpty()) {
+            List<String> urls = s3Service.generateDownloadPresignedUrls(imageKeys);
+            if (urls != null && !urls.isEmpty()) {
+                int size = Math.min(imageKeys.size(), urls.size());
+                for (int i = 0; i < size; i++) {
+                    String url = urls.get(i);
+                    if (url != null && !url.isEmpty()) {
+                        imageUrlMap.put(imageKeys.get(i), url);
+                    }
+                }
+            }
+        }
+
+        // 3. URL 매핑 후 반환
+        return list.stream()
+                .map(dto -> {
+                    if (dto.getMainImage() != null) {
+                        return dto
+                                .toBuilder()
+                                .mainImage(imageUrlMap.get(dto.getMainImage()))
+                                .build();
+                    }
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
     // 장바구니 생성
@@ -151,5 +191,10 @@ public class WishlistService {
         // detailDog -> detail 순으로 지우기
         wishlistDao.deleteWishlistItemDog(requestIds);
         wishlistDao.deleteWishlistItem(requestIds);
+    }
+
+    // 위시리스트용 dogList 조회
+    public List<WishlistDogListResponse> getDogsWithCounseling(Long userId) {
+        return wishlistDao.findDogsWithCounselingByUserId(userId);
     }
 }

@@ -8,5 +8,6 @@ import java.util.List;
 @Getter
 @Setter
 public class ApplicationCancelRequest {
-    private List<Long> applicationId;
+    private List<Long> courseIds;
+
 }
