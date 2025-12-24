@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
-@Getter @Setter @ToString @Builder
+@Getter @Setter @Builder
 public class DogStatsResponse {
 
     private DogResponse dog;
@@ -16,13 +16,13 @@ public class DogStatsResponse {
     private List<TrainingSessionDto> trainingApplications; // 단회차
     private List<MultiCourseCategoryResponse> multiCourses;  // 다회차
 
-    @Getter @Setter @ToString @AllArgsConstructor
+    @Getter @Setter @AllArgsConstructor
     public static class Stats {
         private Integer timesApplied;
         private Integer attendedCount;
     }
 
-    @Getter @Setter @ToString @Builder
+    @Getter @Setter @Builder
     public static class TrainingSessionDto {
         private Long courseId;
         private String courseTitle;

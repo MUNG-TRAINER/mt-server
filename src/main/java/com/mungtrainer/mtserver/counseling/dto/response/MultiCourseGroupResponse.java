@@ -22,7 +22,7 @@ public class MultiCourseGroupResponse {
     private String difficulty;
     private String mainImage;
 
-    // ⭐ 추가: 그룹화 정보
+    // 그룹화 정보
     private Integer enrollmentCount;  // 수강 횟수
 
     private Integer totalSessions; // 전체 회차 수
@@ -31,10 +31,10 @@ public class MultiCourseGroupResponse {
     private int attendedSessions;
     private double attendanceRate;
 
-    // ⭐ 추가: 수강 이력
+    // 수강 이력
     private List<EnrollmentHistory> enrollmentHistory;
 
-    // ⭐ 내부 클래스: 개별 수강 이력
+    // 내부 클래스: 개별 수강 이력
     @Data
     @Builder
     @NoArgsConstructor
