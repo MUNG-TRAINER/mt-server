@@ -10,5 +10,5 @@ import lombok.Getter;
 public class PaymentPrepareResponse {
     private String merchantUid;
     private Integer amount;
-    private boolean is_completed;
+    private boolean isCompleted;
 }

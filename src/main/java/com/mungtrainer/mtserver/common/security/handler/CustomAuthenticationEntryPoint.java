@@ -59,7 +59,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     }
 
     if (access == null && refresh != null) {
-      if(!jwtTokenProvider.validateToken(refresh, JwtTokenProvider.TokenType.REFRESH)){
+      if(jwtTokenProvider.validateToken(refresh, JwtTokenProvider.TokenType.REFRESH)){
         code = ErrorCode.TOKEN_EXPIRED.name();
         message = ErrorCode.TOKEN_EXPIRED.getMessage();
       }else{
