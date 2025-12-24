@@ -27,9 +27,11 @@ public class CounselingTrainerController {
     // 상담 완료 전 후 리스트 조회
     @GetMapping("/counseling")
     public List<CounselingDogResponse> getCounselingDogs(
-            @RequestParam boolean completed
-            ) {
-        return counselingService.getDogsByCompleted(completed);
+            @RequestParam boolean completed,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long trainerId = userDetails.getUserId();
+        return counselingService.getDogsByCompleted(completed, trainerId);
     }
 
     // 상담 내용 작성 (훈련사 본인만 가능)

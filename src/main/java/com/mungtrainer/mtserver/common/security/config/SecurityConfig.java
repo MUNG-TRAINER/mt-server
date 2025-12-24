@@ -47,6 +47,8 @@ public class SecurityConfig {
                                    .requestMatchers(HttpMethod.PATCH,"/api/course/**").hasAnyRole("TRAINER","ADMIN")
                                    .requestMatchers(HttpMethod.DELETE,"/api/course/**").hasAnyRole("TRAINER","ADMIN")
 
+                                   .requestMatchers("/api/users/counseling/**").hasRole("USER")
+
                                     // User 인증만 받을 api
                                    .requestMatchers("/api/users/**",
                                                     "/api/applications/**",

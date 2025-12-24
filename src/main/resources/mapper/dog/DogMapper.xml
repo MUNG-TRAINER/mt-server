@@ -268,4 +268,12 @@
         )
     </select>
 
+    <!-- 반려견의 소유자 ID 조회 -->
+    <select id="getUserIdByDogId" resultType="java.lang.Long">
+        SELECT user_id
+        FROM dog
+        WHERE dog_id = #{dogId}
+          AND is_deleted = 0
+    </select>
+
 </mapper>

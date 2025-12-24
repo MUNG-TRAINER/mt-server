@@ -2,6 +2,9 @@ package com.mungtrainer.mtserver.counseling.dao;
 
 import com.mungtrainer.mtserver.counseling.dto.response.CounselingDogResponse;
 import com.mungtrainer.mtserver.counseling.dto.response.CounselingResponse;
+import com.mungtrainer.mtserver.counseling.dto.response.DogForCounselingResponse;
+import com.mungtrainer.mtserver.counseling.dto.response.UserCounselingListResponse;
+import com.mungtrainer.mtserver.counseling.dto.response.UserCounselingDetailResponse;
 import com.mungtrainer.mtserver.counseling.entity.Counseling;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -19,8 +22,11 @@ public interface CounselingDAO {
     // 상담 조회
     Counseling findById(@Param("counselingId") Long counselingId);
 
-    // 상담 완료 여부별 반려견/보호자 리스트 조회
-    List<CounselingDogResponse> findDogsByCompleted(@Param("completed") boolean completed);
+    // 상담 완료 여부별 반려견/보호자 리스트 조회 (훈련사 전용)
+    List<CounselingDogResponse> findDogsByCompleted(
+            @Param("completed") boolean completed,
+            @Param("trainerId") Long trainerId
+    );
 
     // 상담 내용 업데이트 + 완료 처리
     int updateContentAndComplete(@Param("counselingId") Long counselingId,
@@ -35,5 +41,28 @@ public interface CounselingDAO {
      */
     List<CounselingResponse> selectCounselingsByDogAndTrainer(
             @Param("dogId") Long dogId
+    );
+
+    /**
+     * 사용자의 상담 목록 조회
+     */
+    List<UserCounselingListResponse> findCounselingsByUserId(
+            @Param("userId") Long userId
+    );
+
+    /**
+     * 사용자의 상담 상세 조회
+     */
+    UserCounselingDetailResponse findCounselingDetailById(
+            @Param("counselingId") Long counselingId,
+            @Param("userId") Long userId
+    );
+
+    /**
+     * 상담 신청용 반려견 정보 조회
+     */
+    DogForCounselingResponse findDogForCounseling(
+            @Param("dogId") Long dogId,
+            @Param("userId") Long userId
     );
 }
