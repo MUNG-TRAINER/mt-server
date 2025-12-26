@@ -1,5 +1,6 @@
 package com.mungtrainer.mtserver.notification.service;
 
+import com.mungtrainer.mtserver.notification.dao.NotificationDAO;
 import com.mungtrainer.mtserver.notification.dao.NotificationSseClientDAO;
 import com.mungtrainer.mtserver.notification.entity.Notification;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SseEmitterService {
 
     private final NotificationSseClientDAO sseClientDao;
+    private final NotificationDAO notificationDao;
 
     // userId -> emitter
     private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
@@ -26,21 +29,56 @@ public class SseEmitterService {
     /**
      * SSE 연결 생성
      */
-    public SseEmitter connect(Long userId) {
+    public SseEmitter connect(Long userId, String lastEventId) {
         SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
 
         emitters.put(userId, emitter);
         sseClientDao.upsertActiveClient(userId, true, userId);
 
-        log.info("SSE 연결 생성 userId={}", userId);
+        log.info("SSE 연결 생성 userId={}, lastEventId={}", userId, lastEventId);
+
 
         emitter.onCompletion(() -> disconnect(userId));
         emitter.onTimeout(() -> handleTimeout(userId, emitter));
         emitter.onError(e -> handleError(userId, emitter, e));
 
+        // 1. 최초 연결 확인 이벤트
         sendConnectEvent(emitter);
 
+        // 2. 재연결 시 놓친 알림 재전송
+        if (lastEventId != null) {
+            resendMissedNotifications(userId, lastEventId, emitter);
+        }
+
         return emitter;
+    }
+
+    private void resendMissedNotifications(
+            Long userId,
+            String lastEventId,
+            SseEmitter emitter
+    ) {
+        try {
+            Long lastId = Long.valueOf(lastEventId);
+
+            List<Notification> missedNotifications =
+                    notificationDao.findAfterId(userId, lastId);
+
+            for (Notification notification : missedNotifications) {
+                emitter.send(
+                        SseEmitter.event()
+                                .id(notification.getNotificationId().toString())
+                                .name("notification")
+                                .data(notification)
+                );
+            }
+
+            log.info("놓친 알림 재전송 완료 userId={}, count={}",
+                    userId, missedNotifications.size());
+
+        } catch (Exception e) {
+            log.error("놓친 알림 재전송 실패 userId={}", userId, e);
+        }
     }
 
     /**

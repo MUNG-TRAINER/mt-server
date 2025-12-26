@@ -115,7 +115,7 @@ public enum ErrorCode {
   COUNSELING_TRAINER_NO_PERMISSION(403, "해당 상담에 접근할 권한이 없습니다. 담당 고객의 상담만 처리할 수 있습니다."),
 
   // 알림 관련
-  NOTIFICATION_NOT_FOUND(404, "해당 알림이 존재하지 않습니다."),
+    NOTIFICATION_NOT_FOUND(404, "해당 알림이 존재하지 않습니다."),
     NOTIFICATION_UPDATE_FAILED(500, "알림 읽음 업데이트에 실패했습니다.");
 
   public final int status;

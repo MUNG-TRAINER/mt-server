@@ -73,8 +73,17 @@
         updated_by = #{userId}
         WHERE notification_id = #{notificationId}
         AND target_user_id = #{userId}
-        AND is_read = 0
+        AND is_read = 0;
     </update>
+
+    <select id="findAfterId"
+            resultType="com.mungtrainer.mtserver.notification.entity.Notification">
+        SELECT *
+        FROM notification
+        WHERE target_user_id = #{userId}
+        AND notification_id > #{lastEventId}
+        ORDER BY notification_id ASC
+    </select>
 
 
 </mapper>

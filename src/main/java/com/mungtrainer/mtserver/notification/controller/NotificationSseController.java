@@ -18,9 +18,10 @@ public class NotificationSseController {
     private final NotificationService notificationService;
 
     @GetMapping("/subscribe")
-    public SseEmitter subscribe(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    public SseEmitter subscribe(@RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUserId();
-        return sseEmitterService.connect(userId);
+        return sseEmitterService.connect(userId,lastEventId);
     }
 
     @PatchMapping("/{notificationId}/read")

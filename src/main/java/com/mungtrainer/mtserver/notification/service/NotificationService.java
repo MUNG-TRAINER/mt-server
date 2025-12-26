@@ -8,11 +8,13 @@ import com.mungtrainer.mtserver.notification.entity.Notification;
 import com.mungtrainer.mtserver.notification.entity.NotificationCommand;
 import com.mungtrainer.mtserver.notification.entity.NotificationLog;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class NotificationService {
 
     private final NotificationDAO notificationDao;
@@ -61,24 +63,30 @@ public class NotificationService {
         );
     }
 
+    @Transactional
     public void read(Long notificationId, Long userId) {
-        // 내 알림인지 검증
+
+        // 1. 알림 존재 + 소유권 검증
         Notification notification = notificationDao.findById(notificationId);
-        if (notification == null ||
-                !notification.getTargetUserId().equals(userId)) {
+        if (notification == null
+                || !notification.getTargetUserId().equals(userId)) {
             throw new CustomException(ErrorCode.NOTIFICATION_NOT_FOUND);
         }
 
-        if (Boolean.TRUE.equals(notification.getIsRead())) {
-            return; // 이미 읽음
-        }
-
+        // 2. 읽음 처리 (멱등)
         int updated = notificationDao.markAsRead(notificationId, userId);
+
         if (updated == 0) {
-            throw new CustomException(ErrorCode.NOTIFICATION_UPDATE_FAILED);
+            log.debug("알림 이미 읽음 또는 중복 요청 notificationId={}, userId={}",
+                    notificationId, userId);
         }
 
+        // updated == 0 인 경우:
+        // - 이미 읽은 알림
+        // - 중복 요청
+        // → 정상 흐름
     }
+
 }
 
 

@@ -189,16 +189,10 @@ public class CounselingService {
         // 5. 연관된 훈련 신청 상태 변경
         counselingDao.updateApplicationStatusAfterCounseling(trainerId, counseling.getDogId());
 
-        // 2. 훈련사 조회
-        Long userId = dogOwnerId;
-        if (userId == null) {
-            throw new CustomException(ErrorCode.USER_NOT_FOUND);
-        }
-
         // 4. 상담 신청 알림 전송
         notificationService.send(
                 counselingNotificationFactory.counselingCompleted(
-                        userId,  // 알림을 보낼 대상
+                        dogOwnerId,  // 알림을 보낼 대상
                         counseling.getCounselingId(), // ← counselingId
                         trainerId                        // ← 알림을 만든 주체
                 )
