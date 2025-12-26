@@ -33,6 +33,23 @@
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
+    <select id="findLogsByUserId" parameterType="Long" resultType="com.mungtrainer.mtserver.order.dto.response.PaymentLogResponse">
+        SELECT
+            pl.payment_id,
+            om.order_name,
+            pl.status,
+            pl.amount,
+            p.payment_key,
+            pl.created_at AS paymentDate
+        FROM order_master om
+        JOIN payment p
+        ON p.order_id = om.order_id
+        JOIN payment_log pl
+        ON pl.payment_id = p.payment_id
+        WHERE om.user_id = #{userId}
+        ORDER BY pl.created_at DESC
+    </select>
+
     <select id="findOrderItemsByOrderId" resultType="com.mungtrainer.mtserver.order.entity.OrderItem">
         SELECT *
         FROM order_item
@@ -110,6 +127,8 @@
             pg_tid,
             merchant_uid,
             failure_reason,
+            created_by,
+            updated_by,
             created_at,
             updated_at
         ) VALUES (
@@ -119,6 +138,8 @@
             #{pgTid},
             #{merchantUid},
             #{failureReason},
+            #{createdBy},
+            #{updatedBy},
             NOW(),
             NOW()
         )

@@ -10,16 +10,18 @@ import com.mungtrainer.mtserver.order.dto.request.PaymentCancelRequest;
 import com.mungtrainer.mtserver.order.dto.request.PaymentPrepareRequest;
 import com.mungtrainer.mtserver.order.dto.response.PaymentApprovalResponse;
 import com.mungtrainer.mtserver.order.dto.response.PaymentCancelResponse;
+import com.mungtrainer.mtserver.order.dto.response.PaymentLogResponse;
 import com.mungtrainer.mtserver.order.dto.response.PaymentPrepareResponse;
 import com.mungtrainer.mtserver.order.entity.OrderItem;
 import com.mungtrainer.mtserver.order.entity.OrderMaster;
 import com.mungtrainer.mtserver.order.entity.Payment;
+import com.mungtrainer.mtserver.order.entity.PaymentLog;
 import com.mungtrainer.mtserver.training.dao.CourseDAO;
 import com.mungtrainer.mtserver.training.dao.TrainingCourseApplicationDAO;
+import com.mungtrainer.mtserver.training.entity.TrainingCourse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,10 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -78,11 +77,18 @@ public class PaymentService {
         // 2. courseIds로 sessions 합계 금액 확인하기
         int cost = paymentDAO.getCostByCourseIds(request.getCourseIds(), userId);
 
-        // 3. 주문 생성
+        // 3-1. orderName 정하기
+        TrainingCourse trainingCourse = courseDAO.getCourseById(request.getCourseIds().get(0));
+        String lotOrderName = String.format("%s 외 %d 건", trainingCourse.getTitle(), size - 1);
+        String notLotOrderName = trainingCourse.getTitle();
+        String orderName = size > 1 ? lotOrderName : notLotOrderName;
+
+        // 3-2. 주문 생성
         OrderMaster order = OrderMaster.builder()
                 .userId(userId)
                 .merchantUid(merchantUid)
                 .orderStatus(ORDER_STATUS_READY_TO_PAY)
+                .orderName(orderName)
                 .totalAmount(cost)
                 .paidAmount(0)
                 .createdBy(userId)
@@ -90,13 +96,13 @@ public class PaymentService {
                 .build();
 
         orderDAO.insertOrder(order);
+
         // 4. 주문 item 생성
         if (order.getOrderId() == null) {
             throw new CustomException(ErrorCode.ORDER_CREATION_FAILED);
         }
         orderDAO.insertOrderItems(request.getCourseIds(),userId,order.getOrderId());
 
-        // 이거 내일 해야 함
         if ( cost <= 0){
           isCompleted = true;
           PaymentApprovalRequest paymentApprovalRequest = PaymentApprovalRequest.builder()
@@ -105,15 +111,12 @@ public class PaymentService {
                                                          .amount(cost)
                                                          .build();
 
-          String lotOrderName = String.format("%s 외 %d 건", courseDAO.getCourseById(request.getCourseIds().get(0)).getTitle(), size - 1);
-          String notLotOrderName = courseDAO.getCourseById(request.getCourseIds().get(0)).getTitle();
-          String orderName = size > 2 ? lotOrderName : notLotOrderName;
           Map<String, Object> tossResponse = Map.of("method", "FREE",
                                                     "approvedAt", OffsetDateTime.now().toString(),
                                                     "orderName", orderName);
           savePayment(order, paymentApprovalRequest, tossResponse);
           updateOrderStatusToPaid(order,cost);
-          updateApplicationStatus(order.getOrderId(), "PAID");
+          updateApplicationStatus(order.getOrderId(), ORDER_STATUS_PAID);
         }
 
         return PaymentPrepareResponse.builder()
@@ -130,7 +133,7 @@ public class PaymentService {
             Map<String, Object> tossResponse = callTossPaymentApi(request);
             Payment payment = savePayment(order, request, tossResponse);
             updateOrderStatusToPaid(order, request.getAmount());
-            updateApplicationStatus(order.getOrderId(), "PAID");
+            updateApplicationStatus(order.getOrderId(), ORDER_STATUS_PAID);
 
             return buildApprovalResponse(request, tossResponse);
         } catch (Exception e) {
@@ -140,8 +143,14 @@ public class PaymentService {
     }
 
     @Transactional
-    public PaymentCancelResponse cancelPayment(PaymentCancelRequest request) {
-        try {
+    public PaymentCancelResponse cancelPayment(PaymentCancelRequest request, Long userId) {
+      Long owner = paymentDAO.findByPaymentKey(request.getPaymentKey())
+                             .orElseThrow(()->new CustomException(ErrorCode.PAYMENT_NOT_FOUND)).getCreatedBy();
+      if(!Objects.equals(owner, userId)){
+        throw new CustomException(ErrorCode.PAYMENT_CANCEL_FAILED);
+      }
+
+      try {
             Payment payment = findPayment(request.getPaymentKey());
             callTossCancelApi(request);
             updatePaymentStatusToCanceled(payment);
@@ -154,6 +163,10 @@ public class PaymentService {
             log.error("결제 취소 실패", e);
             throw new CustomException(ErrorCode.PAYMENT_CANCEL_FAILED);
         }
+    }
+
+    public List<PaymentLogResponse> getPaymentLogs(Long userId){
+      return paymentDAO.findLogsByUserId(userId);
     }
 
     private OrderMaster verifyOrder(String merchantUid, Integer amount) {
@@ -206,6 +219,21 @@ public class PaymentService {
                 .updatedBy(order.getUserId())
                 .build();
         paymentDAO.insertPayment(payment);
+
+        if(payment.getPaymentId() != null) {
+        PaymentLog paymentLog = PaymentLog.builder()
+                                          .paymentId(payment.getPaymentId())
+                                          .status(payment.getPaymentStatus())
+                                          .amount(payment.getAmount())
+                                          .pgTid(null)
+                                          .failureReason(null)
+                                          .merchantUid(payment.getMerchantUid())
+                                          .createdBy(payment.getCreatedBy())
+                                          .updatedBy(payment.getCreatedBy())
+                                          .build();
+
+        paymentDAO.insertPaymentLog(paymentLog);
+        }
         return payment;
     }
 
@@ -272,6 +300,21 @@ public class PaymentService {
     private void updatePaymentStatusToCanceled(Payment payment) {
         payment.updateStatus(PAYMENT_STATUS_CANCELED);
         paymentDAO.updatePayment(payment);
+
+        if(payment.getPaymentId() != null) {
+          PaymentLog paymentLog = PaymentLog.builder()
+                                            .paymentId(payment.getPaymentId())
+                                            .status(payment.getPaymentStatus())
+                                            .amount(payment.getAmount())
+                                            .pgTid(null)
+                                            .failureReason(null)
+                                            .merchantUid(payment.getMerchantUid())
+                                            .createdBy(payment.getCreatedBy())
+                                            .updatedBy(payment.getCreatedBy())
+                                            .build();
+
+          paymentDAO.insertPaymentLog(paymentLog);
+      }
     }
 
     private void updateOrderStatusAfterCancel(Payment payment, Integer cancelAmount) {

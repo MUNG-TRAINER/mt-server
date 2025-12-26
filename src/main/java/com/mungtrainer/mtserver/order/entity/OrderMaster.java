@@ -51,6 +51,18 @@ public class OrderMaster extends BaseEntity {
      */
     private LocalDateTime paidAt;
 
+    /**
+     * 주문 제목
+     */
+    private String orderName;
+
+    /**
+     * 주문의 결제 상태와 결제 금액, 결제 일시 정보를 업데이트합니다.
+     *
+     * @param status     변경할 주문 결제 상태 (예: READY_TO_PAY, PAYMENT_PENDING, PAID, CANCELLED)
+     * @param paidAmount 실제 결제된 금액
+     * @param paidAt     결제가 완료된 일시
+     */
     public void updatePaymentStatus(String status, Integer paidAmount, LocalDateTime paidAt) {
         this.orderStatus = status;
         this.paidAmount = paidAmount;
