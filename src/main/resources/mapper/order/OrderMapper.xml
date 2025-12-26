@@ -36,6 +36,7 @@
             order_status,
             total_amount,
             paid_amount,
+            order_name,
             created_by,
             updated_by,
             created_at,
@@ -46,6 +47,7 @@
             #{orderStatus},
             #{totalAmount},
             #{paidAmount},
+            #{orderName},
             #{createdBy},
             #{updatedBy},
             NOW(),
@@ -94,23 +96,6 @@
         AND tc.is_deleted != 1
     </insert>
 
-    <!-- 주문 항목 생성 -->
-    <insert id="insertOrderItem" parameterType="com.mungtrainer.mtserver.order.entity.OrderItem"
-            useGeneratedKeys="true" keyProperty="orderItemId">
-        INSERT INTO order_item (
-            order_id,
-            application_id,
-            price,
-            created_at,
-            updated_at
-        ) VALUES (
-            #{orderId},
-            #{applicationId},
-            #{price},
-            NOW(),
-            NOW()
-        )
-    </insert>
 
     <!-- 주문 상태 업데이트 -->
     <update id="updateOrderStatus" parameterType="com.mungtrainer.mtserver.order.entity.OrderMaster">

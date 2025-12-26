@@ -1,5 +1,6 @@
 package com.mungtrainer.mtserver.order.dao;
 
+import com.mungtrainer.mtserver.order.dto.response.PaymentLogResponse;
 import com.mungtrainer.mtserver.order.entity.OrderItem;
 import com.mungtrainer.mtserver.order.entity.Payment;
 import com.mungtrainer.mtserver.order.entity.PaymentLog;
@@ -24,6 +25,11 @@ public interface PaymentDAO {
    *  orderId로 orderItem 리스트 조회
    */
   List<OrderItem> findOrderItemsByOrderId(Long orderId);
+
+  /**
+   *  UserId로 Log 조회
+   */
+  List<PaymentLogResponse> findLogsByUserId(Long userId);
 
   /**
    * 결제 생성

@@ -51,6 +51,17 @@ public class OrderMaster extends BaseEntity {
      */
     private LocalDateTime paidAt;
 
+    /**
+     * 주문 제목
+     */
+    private String orderName;
+
+    /**
+     *
+     * @param status
+     * @param paidAmount
+     * @param paidAt
+     */
     public void updatePaymentStatus(String status, Integer paidAmount, LocalDateTime paidAt) {
         this.orderStatus = status;
         this.paidAmount = paidAmount;
