@@ -3,7 +3,9 @@ package com.mungtrainer.mtserver.training.service;
 import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.common.s3.S3Service;
+import com.mungtrainer.mtserver.counseling.dao.TrainerUserDAO;
 import com.mungtrainer.mtserver.training.dao.ApplicationDAO;
+import com.mungtrainer.mtserver.training.dao.TrainingAttendanceDAO;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationCancelRequest;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationRequest;
 import com.mungtrainer.mtserver.order.dto.request.WishlistApplyRequest;
@@ -13,6 +15,7 @@ import com.mungtrainer.mtserver.training.dto.response.ApplicationStatusResponse;
 import com.mungtrainer.mtserver.training.entity.TrainingCourseApplication;
 import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,12 +23,15 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TrainingCourseApplicationService {
 
     private final ApplicationDAO applicationDao;
     private final S3Service s3Service;
+    private final TrainerUserDAO trainerUserDao;  // ← 추가
+    private final TrainingAttendanceDAO trainingAttendanceDao;  // ← 추가
 
     // 엔티티를 dto로 변환
     private ApplicationResponse toResponse(TrainingCourseApplication application) {
@@ -169,17 +175,27 @@ public class TrainingCourseApplicationService {
             }
 
             // 세션 정원 및 현재 신청 인원
-            int maxStudent = applicationDao.getMaxStudentsBySessionId(sessionId);
-            int currentCount = applicationDao.countApplicationBySessionId(sessionId);
+//            int maxStudent = applicationDao.getMaxStudentsBySessionId(sessionId);
+//            int currentCount = applicationDao.countApplicationBySessionId(sessionId);
+
+            // 상담 완료 여부만 확인 (정원은 트레이너 승인 시점에 확인)
             boolean hasCounselingCompleted = applicationDao.findCounselingByDogID(request.getDogId());
 
+//            String status;
+//            if (currentCount >= maxStudent) {
+//                status = "WAITING";
+//            } else if (!hasCounselingCompleted) {
+//                status = "COUNSELING_REQUIRED";
+//            } else {
+//                status = "APPLIED";
+//            }
+
+            // 상태 결정: 상담 완료 여부만 확인
             String status;
-            if (currentCount >= maxStudent) {
-                status = "WAITING";
-            } else if (!hasCounselingCompleted) {
-                status = "COUNSELING_REQUIRED";
+            if (!hasCounselingCompleted) {
+              status = "COUNSELING_REQUIRED";
             } else {
-                status = "APPLIED";
+              status = "APPLIED";  // 정원 여부와 무관하게 모두 APPLIED
             }
 
             // 신청 엔티티 생성
@@ -200,9 +216,10 @@ public class TrainingCourseApplicationService {
             }
 
             // 대기 테이블 추가
-            if ("WAITING".equals(status)) {
-                applicationDao.insertWaiting(created.getApplicationId(), userId);
-            }
+          // 이제 waiting 테이블 등록은 트레이너 승인 시점에 처리
+//            if ("WAITING".equals(status)) {
+//                applicationDao.insertWaiting(created.getApplicationId(), userId);
+//            }
 
             createdApplications.add(toResponse(created)); // 기존에 쓰던 변환 메서드
         }
@@ -236,16 +253,35 @@ public class TrainingCourseApplicationService {
         Long sessionId = application.getSessionId();
         List<Long> waitingList = applicationDao.findWaitingBySessionId(sessionId);
 
-        // 대기자 신청으로 승격
-        if (waitingList != null && !waitingList.isEmpty()) {
-            Long nextApplicationId = waitingList.get(0); // 첫번째 대기자 applicationId
+//        // 대기자 신청으로 승격
+//        if (waitingList != null && !waitingList.isEmpty()) {
+//            Long nextApplicationId = waitingList.get(0); // 첫번째 대기자 applicationId
+//
+//            // application 테이블 상태 변경 (대기 → 신청됨)
+//            applicationDao.updateApplicationStatus(nextApplicationId, "APPLIED");
+//
+//            // waiting 테이블 상태 변경 (WAITING → ENTERED)
+//            applicationDao.updateWaitingStatus(nextApplicationId, "ENTERED");
+//        }
 
-            // application 테이블 상태 변경 (대기 → 신청됨)
-            applicationDao.updateApplicationStatus(nextApplicationId, "APPLIED");
+      // ⭐ 대기자 자동 승격 - WAITING은 이미 트레이너가 승인한 상태이므로 ACCEPT로 바로 변경
+      if (waitingList != null && !waitingList.isEmpty()) {
+        Long nextApplicationId = waitingList.get(0); // 첫번째 대기자 applicationId
 
-            // waiting 테이블 상태 변경 (WAITING → ENTERED)
-            applicationDao.updateWaitingStatus(nextApplicationId, "ENTERED");
+        // TrainerUserDAO의 새 메서드 사용 (감사 정보 제외한 단순 업데이트)
+        // 주의: TrainerUserDAO를 주입받아야 합니다
+        trainerUserDao.updateApplicationStatusSimple(nextApplicationId, "ACCEPT");
+        trainerUserDao.updateWaitingStatus(nextApplicationId, "PROMOTED");
+
+        // 출석 정보 생성 (TrainingAttendanceDAO 사용)
+        // 주의: TrainingAttendanceDAO를 주입받아야 합니다
+        try {
+          trainingAttendanceDao.insertAttendanceByApplicationId(nextApplicationId, 0L);
+        } catch (Exception e) {
+          log.error("취소 후 대기자 승격 시 출석 정보 생성 실패 - applicationId: {}", nextApplicationId, e);
+          // 출석 정보 생성 실패해도 승격은 유지
         }
+      }
     }
     // 여러 신청 취소
     @Transactional

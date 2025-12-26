@@ -12,6 +12,7 @@ import com.mungtrainer.mtserver.counseling.dto.response.*;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
 import com.mungtrainer.mtserver.dog.dao.DogDAO;
 import com.mungtrainer.mtserver.training.dao.TrainingAttendanceDAO;
+import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -381,9 +382,16 @@ public class TrainerUserService {
             throw new CustomException(ErrorCode.APPLICATION_ALREADY_PROCESSED);
         }
 
-        // 승인 시 출석 정보 생성
+//        // 승인 시 출석 정보 생성
+//        if ("ACCEPT".equals(status)) {
+//          createAttendanceRecord(applicationId, trainerId);
+//        }
+
+        // 승인/거절 처리
         if ("ACCEPT".equals(status)) {
-            createAttendanceRecord(applicationId, trainerId);
+          handleApproval(applicationId, trainerId);
+        } else if ("REJECTED".equals(status)) {
+          handleRejection(applicationId, trainerId, req.getRejectReason());
         }
     }
 
@@ -560,5 +568,161 @@ public class TrainerUserService {
         }
     }
 
+  /**
+   * 승인 처리 - 정원 확인 후 승인 또는 대기열 전환
+   *
+   * 흐름:
+   * 1. 트레이너가 "승인" 클릭
+   * 2. 정원 확인
+   *    - 여유 있음 → ACCEPT (출석 정보 생성)
+   *    - 정원 초과 → WAITING (대기열 전환, 출석 정보 생성 안함)
+   *
+   * ⭐ 중요: WAITING은 "승인했지만 정원이 꽉 차서 대기"라는 의미
+   */
+  private void handleApproval(Long applicationId, Long trainerId) {
+    log.info("승인 처리 시작 - applicationId: {}", applicationId);
 
+    // 1. 세션 정보 조회
+    Long sessionId = trainerUserDao.findSessionIdByApplicationId(applicationId);
+    if (sessionId == null) {
+      throw new CustomException(ErrorCode.SESSION_NOT_FOUND);
+    }
+
+    TrainingSession session = trainerUserDao.findSessionById(sessionId);
+    if (session == null) {
+      throw new CustomException(ErrorCode.SESSION_NOT_FOUND);
+    }
+
+    // 2. 현재 승인된 인원 확인
+    int currentCount = trainerUserDao.countApprovedApplications(sessionId);
+    int maxStudents = session.getMaxStudents();
+
+    log.info("정원 확인 - 현재: {}/{}", currentCount, maxStudents);
+
+    // 3. 정원 확인
+    if (currentCount >= maxStudents) {
+      // 정원 초과 - 대기열로 전환
+      log.info("정원 초과로 대기열 진입 - applicationId: {}", applicationId);
+
+      trainerUserDao.updateApplicationStatusSimple(applicationId, "WAITING");
+      trainerUserDao.insertWaiting(applicationId, trainerId);
+
+      // ⭐ 사용자에게 대기 진입 알림
+      // "승인되었으나 정원이 마감되어 대기 중입니다.
+      //  취소 발생 시 자동으로 승인 완료되며 결제를 진행하실 수 있습니다."
+      // TODO: notificationService.sendToUser(
+      //     userId,
+      //     "승인 완료 (대기)",
+      //     "트레이너가 승인했으나 정원이 마감되어 대기 중입니다. 자리가 생기면 자동으로 결제 가능합니다."
+      // );
+
+    } else {
+      // 정원 여유 - 승인 완료
+      log.info("승인 완료 - applicationId: {}", applicationId);
+
+      // 기존 executeStatusUpdate 메서드 활용
+      int updated = executeStatusUpdate("ACCEPT", applicationId, null, null, trainerId, null);
+      if (updated == 0) {
+        throw new CustomException(ErrorCode.APPLICATION_ALREADY_PROCESSED);
+      }
+
+      // 기존 createAttendanceRecord 메서드 활용
+      createAttendanceRecord(applicationId, trainerId);
+
+      // ⭐ 사용자에게 승인 완료 알림
+      // TODO: notificationService.sendToUser(
+      //     userId,
+      //     "승인 완료",
+      //     "훈련 신청이 승인되었습니다! 결제를 진행해주세요."
+      // );
+    }
+  }
+
+  /**
+   * 거절 처리 - 기존 거절 로직 실행 후 대기자 자동 승격
+   */
+  private void handleRejection(Long applicationId, Long trainerId, String rejectReason) {
+    log.info("거절 처리 시작 - applicationId: {}", applicationId);
+
+    // 1. 기존 거절 로직 실행
+    int updated = executeStatusUpdate("REJECTED", applicationId, null, null, trainerId, rejectReason);
+    if (updated == 0) {
+      throw new CustomException(ErrorCode.APPLICATION_ALREADY_PROCESSED);
+    }
+
+    // 2. 세션 ID 조회
+    Long sessionId = trainerUserDao.findSessionIdByApplicationId(applicationId);
+    if (sessionId == null) {
+      log.warn("세션 ID를 찾을 수 없음 - applicationId: {}", applicationId);
+      return;
+    }
+
+    // 3. 대기자 자동 승격
+    promoteNextWaiting(sessionId);
+  }
+
+  /**
+   * 대기자 자동 승격 (FIFO)
+   *
+   * 흐름:
+   * 1. 기존 신청자 취소/거절 → 정원에 자리 생김
+   * 2. 가장 오래 대기한 사람 조회
+   * 3. WAITING → ACCEPT로 바로 변경 ⭐
+   * 4. 출석 정보 생성
+   * 5. 결제 안내 알림 발송
+   *
+   * ⭐ 핵심: WAITING 상태는 이미 트레이너가 승인한 상태이므로
+   *         승격 시 APPLIED가 아닌 ACCEPT로 바로 변경
+   */
+  private void promoteNextWaiting(Long sessionId) {
+    log.info("대기자 승격 시작 - sessionId: {}", sessionId);
+
+    // 1. 세션 정보 조회
+    TrainingSession session = trainerUserDao.findSessionById(sessionId);
+    if (session == null) {
+      log.warn("세션을 찾을 수 없음 - sessionId: {}", sessionId);
+      return;
+    }
+
+    // 2. 현재 승인된 인원 확인
+    int currentCount = trainerUserDao.countApprovedApplications(sessionId);
+
+    if (currentCount >= session.getMaxStudents()) {
+      log.info("정원이 가득 차서 대기자를 승격하지 않습니다. - sessionId: {}", sessionId);
+      return;
+    }
+
+    // 3. 가장 오래 대기한 사람 조회
+    Long nextApplicationId = trainerUserDao.findOldestWaitingApplicationId(sessionId);
+
+    if (nextApplicationId == null) {
+      log.info("대기 중인 신청이 없습니다. - sessionId: {}", sessionId);
+      return;
+    }
+
+    // 4. ⭐ WAITING → ACCEPT로 바로 변경 (트레이너 승인 완료 상태)
+    trainerUserDao.updateApplicationStatusSimple(nextApplicationId, "ACCEPT");
+    trainerUserDao.updateWaitingStatus(nextApplicationId, "PROMOTED");
+
+    // 결제 기한 24시간 설정 ⭐
+    trainerUserDao.updatePaymentDeadline(nextApplicationId, 24);
+
+    // 5. 출석 정보 생성
+    try {
+      createAttendanceRecord(nextApplicationId, 0L);  // 시스템 자동 처리
+      log.info("대기자 자동 승격 완료 - applicationId: {}", nextApplicationId);
+    } catch (Exception e) {
+      log.error("출석 정보 생성 실패 - applicationId: {}", nextApplicationId, e);
+      // 출석 정보 생성 실패해도 승인은 유지
+    }
+
+    // 6. ⭐ 사용자에게 결제 안내 알림
+    // "대기가 해제되었습니다! 결제를 진행해주세요."
+    // TODO: notificationService.sendToUser(
+    //     applicationId,
+    //     "승인 완료",
+    //     "대기가 해제되어 자동으로 승인 완료되었습니다! 결제를 진행해주세요.",
+    //     "/payments/" + nextApplicationId
+    // );
+  }
 }
