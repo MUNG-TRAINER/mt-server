@@ -4,6 +4,7 @@ import com.mungtrainer.mtserver.counseling.dao.TrainerUserDAO;
 import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,14 @@ import java.util.List;
 public class PaymentDeadlineScheduler {
 
     private final TrainerUserDAO trainerUserDao;
+
+    /**
+     * 결제 기한 (시간)
+     * application.yml의 payment.deadline.hours 값 사용
+     * 기본값: 24시간
+     */
+    @Value("${payment.deadline.hours:24}")
+    private int paymentDeadlineHours;
 
     /**
      * 10분마다 결제 기한 만료 처리
@@ -93,19 +102,28 @@ public class PaymentDeadlineScheduler {
 
     /**
      * 대기자 자동 승격 (TrainerUserService의 로직과 동일)
+     *
+     *  동시성 제어: SELECT FOR UPDATE를 사용하여 세션에 락을 걸어
+     *                 여러 트랜잭션이 동시에 승격을 시도해도 정원 초과가 발생하지 않습니다.
      */
     private void promoteNextWaiting(Long sessionId) {
         log.info("대기자 승격 시작 - sessionId: {}", sessionId);
 
-        // 1. 세션 정보 조회
-        TrainingSession session = trainerUserDao.findSessionById(sessionId);
+        // 1.  세션 정보 조회 (비관적 락)
+        //    SELECT FOR UPDATE로 행 레벨 락 획득
+        TrainingSession session = trainerUserDao.findSessionByIdForUpdate(sessionId);
         if (session == null) {
             log.warn("세션을 찾을 수 없음 - sessionId: {}", sessionId);
             return;
         }
 
-        // 2. 현재 승인된 인원 확인
+        log.debug("세션 락 획득 완료 - sessionId: {}, 정원: {}", sessionId, session.getMaxStudents());
+
+        // 2.  현재 승인된 인원 확인 (락 획득 후 다시 확인)
         int currentCount = trainerUserDao.countApprovedApplications(sessionId);
+
+        log.info("정원 확인 (락 획득 후) - 현재: {}/{}, sessionId: {}",
+                 currentCount, session.getMaxStudents(), sessionId);
 
         if (currentCount >= session.getMaxStudents()) {
             log.info("정원이 가득 차서 대기자를 승격하지 않습니다. - sessionId: {}", sessionId);
@@ -123,15 +141,16 @@ public class PaymentDeadlineScheduler {
         // 4. WAITING → ACCEPT로 변경 + 결제 기한 설정
         trainerUserDao.updateApplicationStatusSimple(nextApplicationId, "ACCEPT");
         trainerUserDao.updateWaitingStatus(nextApplicationId, "PROMOTED");
-        trainerUserDao.updatePaymentDeadline(nextApplicationId, 24); // 24시간
+        trainerUserDao.updatePaymentDeadline(nextApplicationId, paymentDeadlineHours);
 
-        log.info("대기자 자동 승격 완료 - applicationId: {}, 결제 기한: 24시간", nextApplicationId);
+        log.info("대기자 자동 승격 완료 - applicationId: {}, 결제 기한: {}시간", nextApplicationId, paymentDeadlineHours);
 
         // 5. 사용자에게 결제 안내 알림
         // TODO: notificationService.sendToUser(
         //     nextApplicationId,
         //     "승인 완료",
-        //     "대기가 해제되었습니다! 24시간 내에 결제를 완료해주세요.",
+        //     "대기가 해제되었습니다! {}시간 내에 결제를 완료해주세요.",
+        //     paymentDeadlineHours,
         //     "/payments/" + nextApplicationId
         // );
     }

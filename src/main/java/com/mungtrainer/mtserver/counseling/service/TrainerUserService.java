@@ -15,6 +15,7 @@ import com.mungtrainer.mtserver.training.dao.TrainingAttendanceDAO;
 import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +33,14 @@ public class TrainerUserService {
     private final S3Service s3Service;
     private final CounselingDAO counselingDao;
     private final TrainingAttendanceDAO trainingAttendanceDao;
+
+    /**
+     * 결제 기한 (시간)
+     * application.yml의 payment.deadline.hours 값 사용
+     * 기본값: 24시간
+     */
+    @Value("${payment.deadline.hours:24}")
+    private int paymentDeadlineHours;
 
     public List<TrainerUserListResponse> getUsersByTrainer(Long trainerId) {
         // 1. DB에서 회원 리스트 조회
@@ -525,6 +534,10 @@ public class TrainerUserService {
      * @param dogId 반려견 ID
      * @param trainerId 승인한 훈련사 ID (감사 추적용)
      * @throws CustomException 출석 정보 생성 실패 시
+     *
+     * 트랜잭션: 이 메서드는 @Transactional이 선언된 updateBulkApplicationStatus()에서 호출되므로,
+     *             일괄 승인과 출석 정보 생성이 하나의 트랜잭션으로 처리됩니다.
+     *             출석 생성 실패 시 모든 승인이 롤백됩니다.
      */
     private void createBulkAttendanceRecords(Long courseId, Long dogId, Long trainerId) {
         log.info("일괄 출석 정보 생성 시작 - 코스 ID: {}, 반려견 ID: {}, 생성자: {}", courseId, dogId, trainerId);
@@ -667,28 +680,53 @@ public class TrainerUserService {
    * 흐름:
    * 1. 기존 신청자 취소/거절 → 정원에 자리 생김
    * 2. 가장 오래 대기한 사람 조회
-   * 3. WAITING → ACCEPT로 바로 변경 ⭐
+   * 3. WAITING → ACCEPT로 바로 변경
    * 4. 출석 정보 생성
    * 5. 결제 안내 알림 발송
    *
-   * ⭐ 핵심: WAITING 상태는 이미 트레이너가 승인한 상태이므로
+   *  핵심: WAITING 상태는 이미 트레이너가 승인한 상태이므로
    *         승격 시 APPLIED가 아닌 ACCEPT로 바로 변경
+   *
+   *  트랜잭션: 이 메서드는 handleRejection() 또는 PaymentDeadlineScheduler에서 호출됩니다.
+   *             - handleRejection()에서 호출 시: 상위 트랜잭션에 참여 (전체 롤백 가능)
+   *             - Scheduler에서 호출 시: Scheduler의 @Transactional 트랜잭션에 참여
+   *             상태 변경, 출석 정보 생성이 원자적으로 처리됩니다.
+   *
+   *  동시성 제어: SELECT FOR UPDATE를 사용하여 세션에 락을 걸어
+   *                 여러 트랜잭션이 동시에 승격을 시도해도 정원 초과가 발생하지 않습니다.
+   *
+   * 동시성 시나리오:
+   * - Thread A: 정원 확인 (4/5) → 승격 시도
+   * - Thread B: 정원 확인 (4/5) → 승격 시도
+   * - 비관적 락 없이: 두 스레드 모두 승격 → 정원 초과 (6/5) ❌
+   * - 비관적 락 적용: Thread A가 락 획득 → 승격 (5/5) → 락 해제
+   *                  Thread B가 락 획득 → 정원 확인 (5/5) → 승격 포기 ✅
    */
   private void promoteNextWaiting(Long sessionId) {
     log.info("대기자 승격 시작 - sessionId: {}", sessionId);
 
-    // 1. 세션 정보 조회
-    TrainingSession session = trainerUserDao.findSessionById(sessionId);
+    // 1.  세션 정보 조회 (비관적 락)
+    //    SELECT FOR UPDATE로 행 레벨 락 획득
+    //    다른 트랜잭션은 이 락이 해제될 때까지 대기
+    TrainingSession session = trainerUserDao.findSessionByIdForUpdate(sessionId);
     if (session == null) {
       log.warn("세션을 찾을 수 없음 - sessionId: {}", sessionId);
       return;
     }
 
-    // 2. 현재 승인된 인원 확인
+    log.debug("세션 락 획득 완료 - sessionId: {}, 정원: {}", sessionId, session.getMaxStudents());
+
+    // 2.  현재 승인된 인원 확인 (락 획득 후 다시 확인)
+    //    락을 획득한 시점의 최신 정원 정보로 판단
     int currentCount = trainerUserDao.countApprovedApplications(sessionId);
 
+    log.info("정원 확인 (락 획득 후) - 현재: {}/{}, sessionId: {}",
+             currentCount, session.getMaxStudents(), sessionId);
+
     if (currentCount >= session.getMaxStudents()) {
-      log.info("정원이 가득 차서 대기자를 승격하지 않습니다. - sessionId: {}", sessionId);
+      log.info("정원이 가득 차서 대기자를 승격하지 않습니다. - sessionId: {}, 정원: {}/{}",
+               sessionId, currentCount, session.getMaxStudents());
+      // 락 해제 (메서드 종료 시 자동)
       return;
     }
 
@@ -697,31 +735,43 @@ public class TrainerUserService {
 
     if (nextApplicationId == null) {
       log.info("대기 중인 신청이 없습니다. - sessionId: {}", sessionId);
+      // 락 해제 (메서드 종료 시 자동)
       return;
     }
 
-    // 4. ⭐ WAITING → ACCEPT로 바로 변경 (트레이너 승인 완료 상태)
+    // 4.  WAITING → ACCEPT로 바로 변경 (트레이너 승인 완료 상태)
+    //    이 시점에는 락을 보유하고 있으므로 정원 초과 불가능
     trainerUserDao.updateApplicationStatusSimple(nextApplicationId, "ACCEPT");
     trainerUserDao.updateWaitingStatus(nextApplicationId, "PROMOTED");
 
-    // 결제 기한 24시간 설정 ⭐
-    trainerUserDao.updatePaymentDeadline(nextApplicationId, 24);
+    // 결제 기한 설정 (application.yml 설정값 사용)
+    trainerUserDao.updatePaymentDeadline(nextApplicationId, paymentDeadlineHours);
+
+    log.info("대기자 상태 변경 완료 - applicationId: {}, 정원: {}/{}",
+             nextApplicationId, currentCount + 1, session.getMaxStudents());
 
     // 5. 출석 정보 생성
     try {
       createAttendanceRecord(nextApplicationId, 0L);  // 시스템 자동 처리
-      log.info("대기자 자동 승격 완료 - applicationId: {}", nextApplicationId);
+      log.info("대기자 자동 승격 완료 - applicationId: {}, sessionId: {}, 결제 기한: {}시간",
+               nextApplicationId, sessionId, paymentDeadlineHours);
     } catch (Exception e) {
       log.error("출석 정보 생성 실패 - applicationId: {}", nextApplicationId, e);
-      // 출석 정보 생성 실패해도 승인은 유지
+      //  출석 정보 생성 실패 시 예외를 던져 트랜잭션 롤백
+      //    승격도 함께 취소됨 (데이터 일관성 보장)
+      throw new CustomException(ErrorCode.ATTENDANCE_CREATION_FAILED);
     }
 
-    // 6. ⭐ 사용자에게 결제 안내 알림
+    // 락 해제 (메서드 종료 시 자동)
+    // 커밋 시점에 락이 해제되며, 다음 대기 중인 트랜잭션이 락을 획득
+
+    // 6. 사용자에게 결제 안내 알림
     // "대기가 해제되었습니다! 결제를 진행해주세요."
     // TODO: notificationService.sendToUser(
     //     applicationId,
     //     "승인 완료",
-    //     "대기가 해제되어 자동으로 승인 완료되었습니다! 결제를 진행해주세요.",
+    //     "대기가 해제되어 자동으로 승인 완료되었습니다! {}시간 내에 결제를 진행해주세요.",
+    //     paymentDeadlineHours,
     //     "/payments/" + nextApplicationId
     // );
   }

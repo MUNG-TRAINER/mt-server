@@ -471,6 +471,32 @@
         AND is_deleted = 0
     </select>
 
+    <!-- 세션 조회 (비관적 락) -->
+    <!-- SELECT FOR UPDATE: 행 레벨 락을 획득하여 다른 트랜잭션의 동시 접근 차단 -->
+    <!-- 대기자 승격 시 정원 확인의 동시성 문제 해결 -->
+    <select id="findSessionByIdForUpdate" resultType="com.mungtrainer.mtserver.training.entity.TrainingSession">
+        SELECT session_id,
+        course_id,
+        session_no,
+        session_date,
+        start_time,
+        end_time,
+        location_detail,
+        status,
+        max_students,
+        content,
+        price,
+        is_deleted,
+        created_by,
+        created_at,
+        updated_by,
+        updated_at
+        FROM training_session
+        WHERE session_id = #{sessionId}
+        AND is_deleted = 0
+        FOR UPDATE
+    </select>
+
     <!-- 승인된 신청 수 카운트 (ACCEPT, PAID만) -->
     <select id="countApprovedApplications" resultType="int">
         SELECT COUNT(*)
@@ -493,7 +519,9 @@
         LIMIT 1
     </select>
 
-    <!-- 신청 상태 단순 업데이트 -->
+    <!-- 신청 상태 단순 업데이트
+     주의: 이미 EXPIRED나 CANCELLED 상태인 신청은 다시 변경되지 않도록
+     현재 상태가 WAITING 또는 APPLIED인 경우에만 업데이트합니다. -->
     <update id="updateApplicationStatusSimple">
         UPDATE training_course_application
         SET status = #{status},

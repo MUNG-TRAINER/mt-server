@@ -101,6 +101,16 @@ public interface TrainerUserDAO {
     TrainingSession findSessionById(@Param("sessionId") Long sessionId);
 
     /**
+     * 세션 조회 (비관적 락)
+     * SELECT FOR UPDATE를 사용하여 동시성 제어
+     * 대기자 승격 시 경쟁 상태 방지를 위해 사용
+     *
+     * @param sessionId 세션 ID
+     * @return 세션 정보
+     */
+    TrainingSession findSessionByIdForUpdate(@Param("sessionId") Long sessionId);
+
+    /**
      * 승인된 신청 수 카운트 (ACCEPT, PAID만)
      * @param sessionId 세션 ID
      * @return 승인된 신청 수
