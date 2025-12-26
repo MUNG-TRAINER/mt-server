@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -14,4 +16,5 @@ public class CounselingDogResponse {
     private String ownerName;     // 보호자 이름
     private String dogImage;      // 반려견 프로필 이미지 URL (Presigned)
     private String content;       // 상담 내용 (상담 완료 시에만 존재)
+    private LocalDateTime createdAt; // 상담 신청일시
 }

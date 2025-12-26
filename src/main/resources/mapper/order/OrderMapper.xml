@@ -7,7 +7,7 @@
     <!-- OrderMaster Result Map -->
     <resultMap id="orderMasterResultMap" type="com.mungtrainer.mtserver.order.entity.OrderMaster">
         <id property="orderId" column="order_id"/>
-        <result property="wishlistId" column="wishlist_id"/>
+        <result property="merchantUid" column="merchant_uid"/>
         <result property="userId" column="user_id"/>
         <result property="orderStatus" column="order_status"/>
         <result property="totalAmount" column="total_amount"/>
@@ -31,41 +31,71 @@
     <insert id="insertOrder" parameterType="com.mungtrainer.mtserver.order.entity.OrderMaster"
             useGeneratedKeys="true" keyProperty="orderId">
         INSERT INTO order_master (
-            wishlist_id,
+            merchant_uid,
             user_id,
             order_status,
             total_amount,
             paid_amount,
+            order_name,
+            created_by,
+            updated_by,
             created_at,
             updated_at
         ) VALUES (
-            #{wishlistId},
+            #{merchantUid},
             #{userId},
             #{orderStatus},
             #{totalAmount},
             #{paidAmount},
+            #{orderName},
+            #{createdBy},
+            #{updatedBy},
             NOW(),
             NOW()
         )
     </insert>
 
-    <!-- 주문 항목 생성 -->
-    <insert id="insertOrderItem" parameterType="com.mungtrainer.mtserver.order.entity.OrderItem"
-            useGeneratedKeys="true" keyProperty="orderItemId">
+    <!--    주문 item 생성  -->
+    <insert id="insertOrderItems">
         INSERT INTO order_item (
-            order_id,
-            application_id,
-            price,
-            created_at,
-            updated_at
-        ) VALUES (
-            #{orderId},
-            #{applicationId},
-            #{price},
-            NOW(),
-            NOW()
+        order_id,
+        application_id,
+        price,
+        created_by,
+        updated_by,
+        created_at,
+        updated_at
         )
+        SELECT
+        #{orderId},
+        tca.application_id,
+        ts.price,
+        1,
+        1,
+        NOW(),
+        NOW()
+        FROM training_course_application tca
+        JOIN training_session ts
+        ON ts.session_id = tca.session_id
+        JOIN training_course tc
+        ON tc.course_id = ts.course_id
+        JOIN dog d
+        ON d.dog_id = tca.dog_id
+        WHERE
+        d.user_id = #{userId}
+        AND ts.course_id IN
+        <foreach collection="courseIds"
+                 item="courseId"
+                 open="("
+                 close=")"
+                 separator=",">
+            #{courseId}
+        </foreach>
+        AND tca.status = 'ACCEPT'
+        AND tc.status != 'CANCELED'
+        AND tc.is_deleted != 1
     </insert>
+
 
     <!-- 주문 상태 업데이트 -->
     <update id="updateOrderStatus" parameterType="com.mungtrainer.mtserver.order.entity.OrderMaster">
@@ -75,5 +105,26 @@
             updated_at = NOW()
         WHERE order_id = #{orderId}
     </update>
+
+    <!-- 주문 조회 (by merchantUid) -->
+    <select id="findByMerchantUid" parameterType="string" resultMap="orderMasterResultMap">
+        SELECT * FROM order_master WHERE merchant_uid = #{merchantUid}
+    </select>
+
+    <!-- 주문 마스터 정보 업데이트 -->
+    <update id="updateOrderMaster" parameterType="com.mungtrainer.mtserver.order.entity.OrderMaster">
+        UPDATE order_master
+        SET
+            order_status = #{orderStatus},
+            paid_amount = #{paidAmount},
+            paid_at = #{paidAt},
+            updated_at = NOW()
+        WHERE order_id = #{orderId}
+    </update>
+
+    <!-- 주문 조회 (by orderId) -->
+    <select id="findById" parameterType="long" resultMap="orderMasterResultMap">
+        SELECT * FROM order_master WHERE order_id = #{orderId}
+    </select>
 
 </mapper>

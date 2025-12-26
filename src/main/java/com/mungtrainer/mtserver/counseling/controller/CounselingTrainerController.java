@@ -9,6 +9,7 @@ import com.mungtrainer.mtserver.counseling.service.CounselingService;
 import com.mungtrainer.mtserver.counseling.service.TrainerUserService;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -26,9 +27,11 @@ public class CounselingTrainerController {
     // 상담 완료 전 후 리스트 조회
     @GetMapping("/counseling")
     public List<CounselingDogResponse> getCounselingDogs(
-            @RequestParam boolean completed
-            ) {
-        return counselingService.getDogsByCompleted(completed);
+            @RequestParam boolean completed,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long trainerId = userDetails.getUserId();
+        return counselingService.getDogsByCompleted(completed, trainerId);
     }
 
     // 상담 내용 작성 (훈련사 본인만 가능)
@@ -48,7 +51,7 @@ public class CounselingTrainerController {
     }
 
     // 훈련사가 관리하는 회원 목록 조회
-    @GetMapping("/users/{trainerId}")
+    @GetMapping("/users")
     public List<TrainerUserListResponse> getTrainerUsers(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {

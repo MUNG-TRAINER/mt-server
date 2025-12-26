@@ -29,12 +29,14 @@ public enum ErrorCode {
   INTERNAL_SERVER_ERROR(500, "고유 tags 생성에 실패했습니다."),
   TRAINER_NOT_FOUND(404, "연결된 훈련사를 찾을 수 없습니다."),
   INVALID_LESSON_FORM(400, "훈련 형태가 유효하지 않습니다. 허용된 값: WALK, GROUP, PRIVATE"),
+  INVALID_DATE_RANGE(400, "시작 날짜는 종료 날짜보다 이전이어야 합니다."),
 
   // 신청 관련
   DUPLICATE_APPLICATION(409, "이미 신청한 세션입니다."),
   APPLICATION_NOT_FOUND(404, "신청 정보를 찾을 수 없습니다."),
   UNAUTHORIZED_APPLICATION(403, "본인만 신청 가능합니다."),
   APPLICATION_CREATION_FAILED(500, "신청 생성 실패"),
+    COUNSELING_REQUIRED(409, "반려견의 상담이 필요합니다."),
 
   // 신청 승인/거절 관련
   APPLICATION_STATUS_REQUEST_EMPTY(400, "요청 데이터가 존재하지 않습니다."),
@@ -75,6 +77,10 @@ public enum ErrorCode {
   PAYMENT_FAILED(500, "결제 처리에 실패했습니다."),
   PAYMENT_ALREADY_COMPLETED(409, "이미 결제가 완료된 주문입니다."),
   SESSION_CANNOT_DELETE_HAS_PAYMENT(400, "결제 완료된 신청이 있습니다. 환불 처리 후 삭제해주세요."),
+  PAYMENT_AMOUNT_MISMATCH(400, "결제 금액이 일치하지 않습니다."),
+  PAYMENT_APPROVAL_FAILED(500, "결제 승인에 실패했습니다."),
+  PAYMENT_NOT_FOUND(404, "결제 정보를 찾을 수 없습니다."),
+  PAYMENT_CANCEL_FAILED(500, "결제 취소에 실패했습니다."),
 
     // 장바구니(Wishlist) 관련
     WISHLIST_NOT_FOUND(404, "장바구니 항목을 찾을 수 없습니다"),
@@ -92,8 +98,25 @@ public enum ErrorCode {
   SESSION_UPDATE_FAILED(500, "세션 수정에 실패했습니다."),
 
   // S3 관련
-  INVALID_REQUEST_DATA(400, "요청 데이터가 유효하지 않습니다.");
+  INVALID_REQUEST_DATA(400, "요청 데이터가 유효하지 않습니다."),
 
+  // 상담 관련
+  COUNSELING_DOG_ID_REQUIRED(400, "반려견 ID는 필수입니다."),
+  COUNSELING_DOG_NOT_OWNED(403, "존재하지 않는 반려견이거나 접근 권한이 없습니다."),
+  COUNSELING_INVALID_PHONE(400, "전화번호 형식이 올바르지 않습니다."),
+  COUNSELING_CREATE_FAILED(500, "상담 신청에 실패했습니다."),
+  COUNSELING_NOT_FOUND(404, "존재하지 않는 상담입니다."),
+  COUNSELING_ALREADY_DELETED(404, "이미 취소된 상담이거나 존재하지 않는 상담입니다."),
+  COUNSELING_NO_PERMISSION(403, "해당 상담을 취소할 권한이 없습니다."),
+  COUNSELING_CANCEL_FAILED(500, "상담 취소에 실패했습니다."),
+  COUNSELING_ALREADY_COMPLETED(409, "이미 완료된 상담입니다."),
+  COUNSELING_UPDATE_FAILED(500, "상담 내용 저장에 실패했습니다."),
+  COUNSELING_DETAIL_NOT_FOUND(404, "존재하지 않는 상담이거나 접근 권한이 없습니다."),
+  COUNSELING_TRAINER_NO_PERMISSION(403, "해당 상담에 접근할 권한이 없습니다. 담당 고객의 상담만 처리할 수 있습니다."),
+
+  // 알림 관련
+    NOTIFICATION_NOT_FOUND(404, "해당 알림이 존재하지 않습니다."),
+    NOTIFICATION_UPDATE_FAILED(500, "알림 읽음 업데이트에 실패했습니다.");
 
   public final int status;
   public final String message;

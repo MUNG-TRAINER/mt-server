@@ -4,6 +4,8 @@ import com.mungtrainer.mtserver.training.entity.TrainingCourseApplication;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * 훈련과정 신청 Mapper
  */
@@ -19,6 +21,11 @@ public interface TrainingCourseApplicationDAO {
      * 신청서 상태 업데이트
      */
     void updateStatus(TrainingCourseApplication application);
+
+    /**
+     * 여러 신청 상태 업데이트
+     */
+    void updateStatuses(@Param("applicationIds") List<Long> applicationIds, @Param("status") String status);
 
     /**
      * 진행 중인 훈련 신청 존재 여부 확인

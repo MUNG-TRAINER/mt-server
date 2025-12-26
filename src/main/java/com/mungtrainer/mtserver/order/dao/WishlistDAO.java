@@ -1,5 +1,6 @@
 package com.mungtrainer.mtserver.order.dao;
 
+import com.mungtrainer.mtserver.order.dto.response.WishlistDogListResponse;
 import com.mungtrainer.mtserver.order.dto.response.WishlistResponse;
 import com.mungtrainer.mtserver.order.entity.Wishlist;
 import com.mungtrainer.mtserver.order.entity.WishlistDetail;
@@ -56,4 +57,6 @@ public interface WishlistDAO {
 
     // 반려견 ID로 위시리스트 상세 하드 삭제
     int deleteByDogId(@Param("dogId") Long dogId);
+
+    List<WishlistDogListResponse> findDogsWithCounselingByUserId(@Param("userId") Long userId);
 }

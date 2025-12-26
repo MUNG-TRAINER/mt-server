@@ -84,4 +84,11 @@ public interface DogDAO {
     boolean existsByUserIdAndName(@Param("userId") Long userId,
                                   @Param("name") String name);
 
+    /**
+     * 반려견의 소유자 ID 조회
+     * @param dogId 반려견 ID
+     * @return 소유자 ID
+     */
+    Long getUserIdByDogId(@Param("dogId") Long dogId);
+
 }

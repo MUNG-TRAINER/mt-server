@@ -12,6 +12,21 @@
         (#{dogId}, #{phone}, #{content}, #{isCompleted}, #{createdBy}, #{updatedBy});
     </insert>
 
+    <select id="findTrainerIdByDogId" resultType="long">
+        SELECT tc.trainer_id
+        FROM training_course_application tca
+        JOIN training_session ts
+        ON tca.session_id = ts.session_id
+        JOIN training_course tc
+        ON ts.course_id = tc.course_id
+        WHERE tca.dog_id = #{dogId}
+        AND tca.is_deleted = 0
+        AND tca.status = 'COUNSELING_REQUIRED'
+        ORDER BY tca.created_at DESC
+        LIMIT 1
+    </select>
+
+
 
     <update id="cancelCounseling" parameterType="long">
         UPDATE counseling
@@ -40,17 +55,27 @@
     <!-- 훈련사 상담 완료 전후 반려견 리스트 조회 -->
     <select id="findDogsByCompleted" resultType="com.mungtrainer.mtserver.counseling.dto.response.CounselingDogResponse">
         SELECT
-        c.counseling_id AS counselingId,
-        d.dog_id AS dogId,
-        d.name AS dogName,
-        u.name AS ownerName,
-        d.profile_image AS dogImage,
-        c.content AS content
+            c.counseling_id AS counselingId,
+            d.dog_id AS dogId,
+            d.name AS dogName,
+            u.name AS ownerName,
+            d.profile_image AS dogImage,
+            c.content AS content,
+            c.created_at AS createdAt
         FROM counseling c
         JOIN dog d ON c.dog_id = d.dog_id AND d.is_deleted = 0
         JOIN user u ON d.user_id = u.user_id AND u.is_deleted = 0
         WHERE c.is_completed = CASE WHEN #{completed} = true THEN 1 ELSE 0 END
         AND c.is_deleted = 0
+        AND EXISTS (
+            -- 해당 반려견의 소유자가 이 훈련사와 연결되어 있는지 확인
+            SELECT 1
+            FROM trainer_user tu
+            WHERE tu.user_id = d.user_id
+            AND tu.trainer_id = #{trainerId}
+            AND tu.is_deleted = 0
+        )
+        ORDER BY c.created_at DESC
     </select>
 
 
@@ -78,5 +103,67 @@
         AND status = 'COUNSELING_REQUIRED'
         AND is_deleted = 0
     </update>
+
+    <!-- 사용자의 상담 목록 조회 -->
+    <select id="findCounselingsByUserId" resultType="com.mungtrainer.mtserver.counseling.dto.response.UserCounselingListResponse">
+        SELECT
+            c.counseling_id AS counselingId,
+            c.dog_id AS dogId,
+            d.name AS dogName,
+            d.profile_image AS dogImage,
+            c.phone AS phone,
+            c.is_completed AS isCompleted,
+            c.created_at AS createdAt,
+            c.content AS content
+        FROM counseling c
+        JOIN dog d ON c.dog_id = d.dog_id AND d.is_deleted = 0
+        WHERE c.created_by = #{userId}
+        AND c.is_deleted = 0
+        ORDER BY c.created_at DESC
+    </select>
+
+    <!-- 사용자의 상담 상세 조회 -->
+    <select id="findCounselingDetailById" resultType="com.mungtrainer.mtserver.counseling.dto.response.UserCounselingDetailResponse">
+        SELECT
+            c.counseling_id AS counselingId,
+            c.dog_id AS dogId,
+            d.name AS dogName,
+            d.breed AS breed,
+            d.age AS age,
+            d.gender AS gender,
+            d.profile_image AS dogImage,
+            c.phone AS phone,
+            c.is_completed AS isCompleted,
+            c.created_at AS createdAt,
+            c.content AS content,
+            c.updated_at AS updatedAt
+        FROM counseling c
+        JOIN dog d ON c.dog_id = d.dog_id AND d.is_deleted = 0
+        WHERE c.counseling_id = #{counselingId}
+        AND c.created_by = #{userId}
+        AND c.is_deleted = 0
+    </select>
+
+    <!-- 상담 신청용 반려견 정보 조회 -->
+    <select id="findDogForCounseling" resultType="com.mungtrainer.mtserver.counseling.dto.response.DogForCounselingResponse">
+        SELECT
+            d.dog_id AS dogId,
+            d.name AS dogName,
+            d.breed AS breed,
+            d.age AS age,
+            d.gender AS gender,
+            d.profile_image AS profileImage,
+            EXISTS (
+                SELECT 1
+                FROM counseling c
+                WHERE c.dog_id = d.dog_id
+                AND c.created_by = #{userId}
+                AND c.is_deleted = 0
+            ) AS alreadyRequested
+        FROM dog d
+        WHERE d.dog_id = #{dogId}
+          AND d.user_id = #{userId}
+          AND d.is_deleted = 0
+    </select>
 
 </mapper>

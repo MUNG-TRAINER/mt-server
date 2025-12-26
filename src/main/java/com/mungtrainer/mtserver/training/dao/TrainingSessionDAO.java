@@ -1,11 +1,13 @@
 package com.mungtrainer.mtserver.training.dao;
 
 import com.mungtrainer.mtserver.training.dto.request.UpdateSessionRequest;
+import com.mungtrainer.mtserver.training.dto.response.CalendarSessionDateDto;
 import com.mungtrainer.mtserver.training.dto.response.TrainingSessionResponse;
 import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Mapper
@@ -101,4 +103,15 @@ public interface TrainingSessionDAO {
      */
     int deleteSessionById(@Param("sessionId") Long sessionId,
                           @Param("deletedBy") Long deletedBy);
+
+    /**
+     * 특정 기간의 세션 날짜 목록 조회 (달력용)
+     */
+    List<CalendarSessionDateDto> findSessionDatesByPeriod(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("trainerId") Long trainerId,
+            @Param("keyword") String keyword,
+            @Param("lessonForm") String lessonForm);
 }
+

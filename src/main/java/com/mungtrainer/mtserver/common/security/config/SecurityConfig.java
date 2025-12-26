@@ -47,6 +47,8 @@ public class SecurityConfig {
                                    .requestMatchers(HttpMethod.PATCH,"/api/course/**").hasAnyRole("TRAINER","ADMIN")
                                    .requestMatchers(HttpMethod.DELETE,"/api/course/**").hasAnyRole("TRAINER","ADMIN")
 
+                                   .requestMatchers("/api/users/counseling/**").hasRole("USER")
+
                                     // User 인증만 받을 api
                                    .requestMatchers("/api/users/**",
                                                     "/api/applications/**",
@@ -55,7 +57,8 @@ public class SecurityConfig {
                                                     "/api/auth/logout",
                                                     "/api/presigned-url",
                                                     "/api/auth/check",
-                                                    "/api/course/search").authenticated()
+                                                    "/api/course/search",
+                                                    "/api/payments/**").hasAnyRole("TRAINER","ADMIN","USER")
 
                                     // 그 외에는 인증 패스
                                    .anyRequest().permitAll()
