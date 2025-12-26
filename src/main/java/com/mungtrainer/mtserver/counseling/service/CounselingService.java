@@ -11,6 +11,7 @@ import com.mungtrainer.mtserver.counseling.dto.response.*;
 import com.mungtrainer.mtserver.counseling.entity.Counseling;
 import com.mungtrainer.mtserver.dog.dao.DogDAO;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
+import com.mungtrainer.mtserver.notification.entity.CounselingNotificationFactory;
 import com.mungtrainer.mtserver.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,8 +29,7 @@ public class CounselingService {
     private final DogDAO dogDao;
     private final TrainerUserDAO trainerUserDao;
     private final NotificationService notificationService;
-    private final TrainerUserDAO trainerUserDAO;
-//    private final DogDao dogDao; // 반려견 DAO 주입
+    private final CounselingNotificationFactory counselingNotificationFactory;
 
     public CreateCounselingResponse createCounseling(CreateCounselingRequest requestDto, Long userId){
 
@@ -40,9 +40,9 @@ public class CounselingService {
         }
 
         // 2. 훈련사 조회
-        Long trainerId = trainerUserDAO.findTrainerIdByDogId(requestDto.getDogId());
+        Long trainerId = trainerUserDao.findTrainerIdByDogId(requestDto.getDogId());
         if (trainerId == null) {
-            throw new IllegalStateException("훈련사가 존재하지 않습니다.");
+            throw new CustomException(ErrorCode.TRAINER_NOT_FOUND);
         }
 
         Counseling counseling = Counseling.builder()
@@ -63,11 +63,16 @@ public class CounselingService {
         }
 
         // 4. ⭐ 상담 신청 알림 전송
-        notificationService.notifyCounselingRequest(
-                trainerId,
-                counseling.getCounselingId(),
-                userId
+        notificationService.send(
+                counselingNotificationFactory.counselingRequest(
+                        trainerId,
+                        counseling.getCounselingId(), // ← counselingId
+                        userId                        // ← memberId
+                )
         );
+
+
+
 
         return new CreateCounselingResponse(counseling.getCounselingId(), "상담 신청이 완료되었습니다");
     }

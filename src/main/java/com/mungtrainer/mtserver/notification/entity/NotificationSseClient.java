@@ -4,6 +4,8 @@ import com.mungtrainer.mtserver.common.entity.BaseEntity;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDateTime;
+
 /**
  * SSE 클라이언트 엔티티
  */
@@ -33,5 +35,10 @@ public class NotificationSseClient extends BaseEntity {
      * 활성화 여부
      */
     private Boolean isActive;
+
+    private Long createdBy;
+    private LocalDateTime createdAt;
+    private Long updatedBy;
+    private LocalDateTime updatedAt;
 }
 

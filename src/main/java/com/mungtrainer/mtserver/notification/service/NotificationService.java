@@ -1,7 +1,10 @@
 package com.mungtrainer.mtserver.notification.service;
 
 import com.mungtrainer.mtserver.notification.dao.NotificationDAO;
+import com.mungtrainer.mtserver.notification.dao.NotificationLogDAO;
 import com.mungtrainer.mtserver.notification.entity.Notification;
+import com.mungtrainer.mtserver.notification.entity.NotificationCommand;
+import com.mungtrainer.mtserver.notification.entity.NotificationLog;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,30 +14,49 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationService {
 
     private final NotificationDAO notificationDao;
+    private final NotificationLogDAO notificationLogDao;
     private final SseEmitterService sseEmitterService;
 
     @Transactional
-    public void notifyCounselingRequest(
-            Long trainerId,
-            Long counselingId,
-            Long createdBy
-    ) {
+    public void send(NotificationCommand command) {
+
+        // 1. Notification 생성
         Notification notification = Notification.builder()
-                .targetUserId(trainerId)
-                .type("COUNSELING_REQUEST")
-                .title("새 상담 신청")
-                .message("반려견 상담 신청이 도착했습니다.")
-                .referenceId(counselingId)
-                .referenceType("COUNSELING")
-                .actionUrl("/trainer/counseling/" + counselingId)
-                .createdBy(createdBy)
-                .updatedBy(createdBy)
+                .targetUserId(command.getTargetUserId())
+                .type(command.getType())
+                .title(command.getTitle())
+                .message(command.getMessage())
+                .referenceId(command.getReferenceId())
+                .referenceType(command.getReferenceType())
+                .actionUrl(command.getActionUrl())
+                .createdBy(command.getActorId())
+                .updatedBy(command.getActorId())
                 .build();
 
         notificationDao.insert(notification);
 
-        // SSE 실시간 전송
-        sseEmitterService.send(trainerId, notification);
+        // 2. Log 생성 (PENDING)
+        NotificationLog log = new NotificationLog();
+        log.setNotificationId(notification.getNotificationId());
+        log.setChannel("SSE");
+        log.setStatus("PENDING");
+        log.setCreatedBy(command.getActorId());
+        log.setUpdatedBy(command.getActorId());
+
+        notificationLogDao.insertLog(log);
+
+        // 3. SSE 전송
+        boolean success = sseEmitterService.send(
+                command.getTargetUserId(),
+                notification
+        );
+
+        // 4. Log 상태 업데이트
+        notificationLogDao.updateStatus(
+                log.getLogId(),
+                success ? "SUCCESS" : "FAIL"
+        );
     }
 }
+
 

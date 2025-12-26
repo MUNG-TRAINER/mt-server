@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--        사용자 SSE 연결 상태 관리-->
+<!--        마지막 수신 이벤트 ID 저장 (재연결 복구 핵심)-->
+
+    <mapper namespace="com.mungtrainer.mtserver.notification.dao.NotificationSseClientDAO">
+
+    <insert id="upsertActiveClient">
+        INSERT INTO notification_sse_client (
+        user_id,
+        is_active,
+        created_by,
+        created_at,
+        updated_by,
+        updated_at
+        )
+        VALUES (
+        #{userId},
+        #{isActive},
+        #{actorId},
+        NOW(),
+        #{actorId},
+        NOW()
+        )
+        ON DUPLICATE KEY UPDATE
+        is_active = #{isActive},
+        updated_by = #{actorId},
+        updated_at = NOW()
+    </insert>
+
+
+    <update id="updateLastEventId">
+            UPDATE notification_sse_client
+            SET last_event_id = #{lastEventId},
+            updated_at = NOW()
+            WHERE user_id = #{userId}
+        </update>
+
+        <select id="findLastEventId" resultType="long">
+            SELECT last_event_id
+            FROM notification_sse_client
+            WHERE user_id = #{userId}
+            AND is_deleted = 0
+        </select>
+
+        <update id="updateActive">
+            UPDATE notification_sse_client
+            SET is_active = #{isActive},
+            updated_at = NOW()
+            WHERE user_id = #{userId}
+        </update>
+
+    </mapper>

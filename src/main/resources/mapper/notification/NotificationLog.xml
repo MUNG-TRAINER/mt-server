@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--        알림 발송 성공 / 실패 추적-->
+<!--        장애 분석 근거 데이터-->
+<!--        알림을 실제로 보내려고 했는가? 성공했는가?”를 기록-->
+    <mapper namespace="com.mungtrainer.mtserver.notification.dao.NotificationLogDAO">
+
+    <insert id="insertLog"
+            useGeneratedKeys="true"
+            keyProperty="logId"
+            keyColumn="log_id">
+        INSERT INTO notification_log (
+        notification_id,
+        channel,
+        status,
+        sent_at,
+        created_by,
+        created_at,
+        updated_by,
+        updated_at
+        ) VALUES (
+        #{notificationId},
+        #{channel},
+        #{status},
+        NOW(),
+        #{createdBy},
+        NOW(),
+        #{createdBy},
+        NOW()
+        )
+    </insert>
+
+
+
+    <update id="updateStatus">
+            UPDATE notification_log
+            SET status = #{status},
+            updated_at = NOW()
+            WHERE log_id = #{logId}
+        </update>
+
+    </mapper>
