@@ -78,12 +78,11 @@ public class PaymentController {
   }
 
   /**
-   *  결제 로그 응답
+   * 현재 인증된 사용자의 결제 이력 로그 목록을 조회하여 반환합니다.
    */
   @GetMapping("/logs")
   public ResponseEntity<List<PaymentLogResponse>> getPaymentLogs(
-      @AuthenticationPrincipal CustomUserDetails userDetails
-                                                                ){
+      @AuthenticationPrincipal CustomUserDetails userDetails){
     List<PaymentLogResponse> response = paymentService.getPaymentLogs(userDetails.getUserId());
     return ResponseEntity.ok(response);
   }

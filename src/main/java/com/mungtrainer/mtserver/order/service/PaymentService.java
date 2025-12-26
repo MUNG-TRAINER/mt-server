@@ -18,6 +18,7 @@ import com.mungtrainer.mtserver.order.entity.Payment;
 import com.mungtrainer.mtserver.order.entity.PaymentLog;
 import com.mungtrainer.mtserver.training.dao.CourseDAO;
 import com.mungtrainer.mtserver.training.dao.TrainingCourseApplicationDAO;
+import com.mungtrainer.mtserver.training.entity.TrainingCourse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -77,8 +78,9 @@ public class PaymentService {
         int cost = paymentDAO.getCostByCourseIds(request.getCourseIds(), userId);
 
         // 3-1. orderName 정하기
-        String lotOrderName = String.format("%s 외 %d 건", courseDAO.getCourseById(request.getCourseIds().get(0)).getTitle(), size - 1);
-        String notLotOrderName = courseDAO.getCourseById(request.getCourseIds().get(0)).getTitle();
+        TrainingCourse trainingCourse = courseDAO.getCourseById(request.getCourseIds().get(0));
+        String lotOrderName = String.format("%s 외 %d 건", trainingCourse.getTitle(), size - 1);
+        String notLotOrderName = trainingCourse.getTitle();
         String orderName = size > 1 ? lotOrderName : notLotOrderName;
 
         // 3-2. 주문 생성
@@ -226,8 +228,8 @@ public class PaymentService {
                                           .pgTid(null)
                                           .failureReason(null)
                                           .merchantUid(payment.getMerchantUid())
-                                          .createdBy(1L)
-                                          .updatedBy(1L)
+                                          .createdBy(payment.getCreatedBy())
+                                          .updatedBy(payment.getCreatedBy())
                                           .build();
 
         paymentDAO.insertPaymentLog(paymentLog);
@@ -307,8 +309,8 @@ public class PaymentService {
                                             .pgTid(null)
                                             .failureReason(null)
                                             .merchantUid(payment.getMerchantUid())
-                                            .createdBy(1L)
-                                            .updatedBy(1L)
+                                            .createdBy(payment.getCreatedBy())
+                                            .updatedBy(payment.getCreatedBy())
                                             .build();
 
           paymentDAO.insertPaymentLog(paymentLog);

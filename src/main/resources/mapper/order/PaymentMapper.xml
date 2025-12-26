@@ -40,7 +40,7 @@
             pl.status,
             pl.amount,
             p.payment_key,
-            pl.created_at
+            pl.created_at AS paymentDate
         FROM order_master om
         JOIN payment p
         ON p.order_id = om.order_id
