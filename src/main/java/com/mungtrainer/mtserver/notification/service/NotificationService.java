@@ -1,5 +1,7 @@
 package com.mungtrainer.mtserver.notification.service;
 
+import com.mungtrainer.mtserver.common.exception.CustomException;
+import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.notification.dao.NotificationDAO;
 import com.mungtrainer.mtserver.notification.dao.NotificationLogDAO;
 import com.mungtrainer.mtserver.notification.entity.Notification;
@@ -29,6 +31,7 @@ public class NotificationService {
                 .referenceId(command.getReferenceId())
                 .referenceType(command.getReferenceType())
                 .actionUrl(command.getActionUrl())
+                .isRead(false)
                 .createdBy(command.getActorId())
                 .updatedBy(command.getActorId())
                 .build();
@@ -57,6 +60,26 @@ public class NotificationService {
                 success ? "SUCCESS" : "FAIL"
         );
     }
+
+    public void read(Long notificationId, Long userId) {
+        // 내 알림인지 검증
+        Notification notification = notificationDao.findById(notificationId);
+        if (notification == null ||
+                !notification.getTargetUserId().equals(userId)) {
+            throw new CustomException(ErrorCode.NOTIFICATION_NOT_FOUND);
+        }
+
+        if (Boolean.TRUE.equals(notification.getIsRead())) {
+            return; // 이미 읽음
+        }
+
+        int updated = notificationDao.markAsRead(notificationId, userId);
+        if (updated == 0) {
+            throw new CustomException(ErrorCode.NOTIFICATION_UPDATE_FAILED);
+        }
+
+    }
 }
+
 
 

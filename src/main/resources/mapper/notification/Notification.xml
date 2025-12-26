@@ -17,6 +17,7 @@
         message,
         reference_id,
         reference_type,
+        is_read,
         action_url,
         created_by,
         created_at,
@@ -29,6 +30,7 @@
         #{message},
         #{referenceId},
         #{referenceType},
+        #{isRead},
         #{actionUrl},
         #{createdBy},
         NOW(),
@@ -37,5 +39,42 @@
         )
 
     </insert>
+
+    <select id="findById"
+            parameterType="long"
+            resultType="com.mungtrainer.mtserver.notification.entity.Notification">
+        SELECT
+        notification_id,
+        target_user_id,
+        type,
+        title,
+        message,
+        reference_id,
+        reference_type,
+        is_read,
+        action_url,
+        send_at,
+        created_by,
+        created_at,
+        updated_by,
+        updated_at,
+        deleted_at,
+        is_deleted
+        FROM notification
+        WHERE notification_id = #{notificationId}
+        AND is_deleted = 0
+    </select>
+
+
+    <update id="markAsRead">
+        UPDATE notification
+        SET is_read = 1,
+        updated_at = NOW(),
+        updated_by = #{userId}
+        WHERE notification_id = #{notificationId}
+        AND target_user_id = #{userId}
+        AND is_read = 0
+    </update>
+
 
 </mapper>
