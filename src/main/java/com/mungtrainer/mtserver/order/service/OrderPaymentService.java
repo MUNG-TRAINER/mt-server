@@ -155,7 +155,6 @@ public class OrderPaymentService {
         }
 
         OrderMaster order = OrderMaster.builder()
-                .wishlistId(null)  // 직접 결제이므로 null
                 .userId(userId)
                 .orderStatus(ORDER_STATUS_PAYMENT_PENDING)
                 .totalAmount(totalAmount)

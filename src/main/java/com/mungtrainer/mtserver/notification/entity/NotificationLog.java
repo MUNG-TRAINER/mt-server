@@ -40,5 +40,10 @@ public class NotificationLog extends BaseEntity {
      * 발송 일시
      */
     private LocalDateTime sentAt;
+
+    private Long createdBy;
+    private LocalDateTime createdAt;
+    private Long updatedBy;
+    private LocalDateTime updatedAt;
 }
 

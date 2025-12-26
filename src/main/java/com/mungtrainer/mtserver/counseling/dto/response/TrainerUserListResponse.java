@@ -14,4 +14,5 @@ public class TrainerUserListResponse {
     private String name;
     private String phone;
     private String email;
+    private String profileImage;
 }
