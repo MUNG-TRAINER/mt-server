@@ -31,6 +31,7 @@ public class CounselingService {
     private final NotificationService notificationService;
     private final CounselingNotificationFactory counselingNotificationFactory;
 
+
     public CreateCounselingResponse createCounseling(CreateCounselingRequest requestDto, Long userId){
 
         // 1. 반려견 존재 여부 및 소유권 확인
@@ -62,7 +63,7 @@ public class CounselingService {
             throw new CustomException(ErrorCode.COUNSELING_CREATE_FAILED);
         }
 
-        // 4. ⭐ 상담 신청 알림 전송
+        // 4. 상담 신청 알림 전송
         notificationService.send(
                 counselingNotificationFactory.counselingRequest(
                         trainerId,
@@ -173,6 +174,7 @@ public class CounselingService {
             throw new CustomException(ErrorCode.COUNSELING_NOT_FOUND);
         }
 
+
         boolean hasPermission = trainerUserDao.existsTrainerUserRelation(trainerId, dogOwnerId);
         if (!hasPermission) {
             throw new CustomException(ErrorCode.COUNSELING_TRAINER_NO_PERMISSION);
@@ -186,6 +188,15 @@ public class CounselingService {
 
         // 5. 연관된 훈련 신청 상태 변경
         counselingDao.updateApplicationStatusAfterCounseling(trainerId, counseling.getDogId());
+
+        // 4. 상담 신청 알림 전송
+        notificationService.send(
+                counselingNotificationFactory.counselingCompleted(
+                        dogOwnerId,  // 알림을 보낼 대상
+                        counseling.getCounselingId(), // ← counselingId
+                        trainerId                        // ← 알림을 만든 주체
+                )
+        );
 
         return new CounselingPostResponse(true, "상담 내용이 저장되었습니다.");
     }

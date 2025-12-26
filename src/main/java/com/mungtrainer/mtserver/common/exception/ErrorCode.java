@@ -113,8 +113,11 @@ public enum ErrorCode {
   COUNSELING_ALREADY_COMPLETED(409, "이미 완료된 상담입니다."),
   COUNSELING_UPDATE_FAILED(500, "상담 내용 저장에 실패했습니다."),
   COUNSELING_DETAIL_NOT_FOUND(404, "존재하지 않는 상담이거나 접근 권한이 없습니다."),
-  COUNSELING_TRAINER_NO_PERMISSION(403, "해당 상담에 접근할 권한이 없습니다. 담당 고객의 상담만 처리할 수 있습니다.");
+  COUNSELING_TRAINER_NO_PERMISSION(403, "해당 상담에 접근할 권한이 없습니다. 담당 고객의 상담만 처리할 수 있습니다."),
 
+  // 알림 관련
+    NOTIFICATION_NOT_FOUND(404, "해당 알림이 존재하지 않습니다."),
+    NOTIFICATION_UPDATE_FAILED(500, "알림 읽음 업데이트에 실패했습니다.");
 
   public final int status;
   public final String message;

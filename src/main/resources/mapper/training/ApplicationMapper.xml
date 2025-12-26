@@ -60,6 +60,18 @@
         AND tc.is_deleted = 0
         WHERE d.user_id = #{userId}
         AND tca.is_deleted = 0
+        AND tca.application_id = (
+        SELECT tca2.application_id
+        FROM training_course_application tca2
+        JOIN training_session ts2
+        ON tca2.session_id = ts2.session_id
+        AND ts2.is_deleted = 0
+        WHERE tca2.dog_id = tca.dog_id
+        AND ts2.course_id = ts.course_id
+        AND tca2.is_deleted = 0
+        ORDER BY tca2.application_id DESC
+        LIMIT 1
+        )
         GROUP BY tc.course_id, d.dog_id
         ORDER BY MAX(tca.applied_at) DESC
     </select>
