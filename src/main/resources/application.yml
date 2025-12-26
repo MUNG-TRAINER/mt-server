@@ -52,3 +52,9 @@ management:
 
 toss:
   secret-key: ${TOSS_SECRET_KEY}
+
+# 결제 기한 설정
+payment:
+  deadline:
+    hours: 24  # 대기자 승격 시 결제 기한 (시간)
+
