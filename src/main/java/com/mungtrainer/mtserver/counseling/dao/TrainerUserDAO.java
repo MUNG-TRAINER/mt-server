@@ -19,6 +19,9 @@ public interface TrainerUserDAO {
             @Param("trainerId") Long trainerId,
             @Param("userId") Long userId
     );
+    // dog Id 로 훈련사 Id 조회
+    Long findTrainerIdByDogId(@Param("dogId") Long dogId);
+
 
     // 회원 목록 조회
     List<TrainerUserListResponse> findUsersByTrainerId(@Param("trainerId") Long trainerId);
