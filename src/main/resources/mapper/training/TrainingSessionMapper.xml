@@ -304,5 +304,40 @@
         ORDER BY ts.session_date ASC
     </select>
 
+    <!-- ======================================== -->
+    <!-- 수업 시작 마감 관련 쿼리 (신규)           -->
+    <!-- ======================================== -->
+
+    <!-- 수업 시작 마감 시간이 지난 신청 조회 -->
+    <select id="findApplicationsPastSessionDeadline" resultType="long">
+        <![CDATA[
+        SELECT tca.application_id
+        FROM training_course_application tca
+        JOIN training_session ts
+            ON tca.session_id = ts.session_id
+        WHERE tca.status IN ('APPLIED', 'COUNSELING_REQUIRED', 'WAITING')
+          AND tca.is_deleted = 0
+          AND ts.is_deleted = 0
+          AND CONCAT(ts.session_date, ' ', ts.start_time) < DATE_ADD(NOW(), INTERVAL #{hours} HOUR)
+        ORDER BY ts.session_date, ts.start_time
+        ]]>
+    </select>
+
+    <!-- 세션 마감 시간 초과 여부 확인 -->
+    <select id="isSessionPastDeadline" resultType="boolean">
+        <![CDATA[
+        SELECT CASE
+            WHEN CONCAT(session_date, ' ', start_time) < DATE_ADD(NOW(), INTERVAL #{hours} HOUR)
+            THEN TRUE
+            ELSE FALSE
+        END
+        FROM training_session
+        WHERE session_id = #{sessionId}
+          AND is_deleted = 0
+        ]]>
+    </select>
+
 </mapper>
+
+
 

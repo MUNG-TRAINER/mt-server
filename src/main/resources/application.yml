@@ -58,3 +58,8 @@ payment:
   deadline:
     hours: 24  # 대기자 승격 시 결제 기한 (시간)
 
+# 수업 시작 마감 설정
+session:
+  deadline:
+    enabled: true  # 기능 활성화 여부 (긴급 롤백 시 false로 변경)
+    hours: 24      # 수업 시작 전 마감 시간 (시간)

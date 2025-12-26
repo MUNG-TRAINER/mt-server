@@ -36,7 +36,8 @@ public enum ErrorCode {
   APPLICATION_NOT_FOUND(404, "신청 정보를 찾을 수 없습니다."),
   UNAUTHORIZED_APPLICATION(403, "본인만 신청 가능합니다."),
   APPLICATION_CREATION_FAILED(500, "신청 생성 실패"),
-    COUNSELING_REQUIRED(409, "반려견의 상담이 필요합니다."),
+  COUNSELING_REQUIRED(409, "반려견의 상담이 필요합니다."),
+  SESSION_DEADLINE_PASSED(400, "수업 시작 마감 시간이 지났습니다."),
 
   // 신청 승인/거절 관련
   APPLICATION_STATUS_REQUEST_EMPTY(400, "요청 데이터가 존재하지 않습니다."),
