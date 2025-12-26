@@ -2,12 +2,14 @@ package com.mungtrainer.mtserver.common.security.handler;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 
+@Slf4j
 @Component
 public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
@@ -17,7 +19,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
                      AccessDeniedException accessDeniedException) throws IOException {
     response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403
     response.setContentType("application/json;charset=UTF-8");
-
+    log.warn("Access Denied Exception");
     String body = """
                 {
                     "success": false,
