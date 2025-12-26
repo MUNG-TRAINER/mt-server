@@ -172,12 +172,13 @@ public class TrainingCourseApplicationService {
             int maxStudent = applicationDao.getMaxStudentsBySessionId(sessionId);
             int currentCount = applicationDao.countApplicationBySessionId(sessionId);
             boolean hasCounselingCompleted = applicationDao.findCounselingByDogID(request.getDogId());
+            if(!hasCounselingCompleted){
+                throw new CustomException(ErrorCode.COUNSELING_REQUIRED);
+            }
 
             String status;
             if (currentCount >= maxStudent) {
                 status = "WAITING";
-            } else if (!hasCounselingCompleted) {
-                status = "COUNSELING_REQUIRED";
             } else {
                 status = "APPLIED";
             }
