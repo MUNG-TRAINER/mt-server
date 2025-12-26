@@ -34,6 +34,8 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
              request.getRequestURI(),
              authException.getMessage());
 
+    if(response.isCommitted()) return;
+
     String access = jwtTokenProvider.resolveAccessToken(request);
     String refresh = jwtTokenProvider.resolveRefreshToken(request);
 
@@ -41,8 +43,6 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     String message;
 
     String uri = request.getRequestURI();
-
-    log.warn("Authentication failed at {} - reason: {}", uri, authException.getMessage());
 
     if ("/api/auth/check".equals(uri)) {
       response.setStatus(HttpServletResponse.SC_OK);
@@ -55,6 +55,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
                                .build()
                                          )
                                 );
+      response.getWriter().flush();
       return;
     }
 
@@ -79,7 +80,6 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
                              .message(message)
                              .build())
     );
-
   }
 
 }

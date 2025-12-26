@@ -58,7 +58,7 @@ public class SecurityConfig {
                                                     "/api/presigned-url",
                                                     "/api/auth/check",
                                                     "/api/course/search",
-                                                    "/api/payments/**").authenticated()
+                                                    "/api/payments/**").hasAnyRole("TRAINER","ADMIN","USER")
 
                                     // 그 외에는 인증 패스
                                    .anyRequest().permitAll()
