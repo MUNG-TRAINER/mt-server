@@ -85,5 +85,19 @@
         ORDER BY notification_id ASC
     </select>
 
+<!--    알림 조회-->
+    <select id="findByUserId" resultType="com.mungtrainer.mtserver.notification.entity.Notification">
+        SELECT *
+        FROM notification
+        WHERE target_user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
 
+    <select id="findUnreadByUserId" resultType="com.mungtrainer.mtserver.notification.entity.Notification">
+        SELECT *
+        FROM notification
+        WHERE target_user_id = #{userId}
+        AND is_read = 0
+        ORDER BY created_at DESC
+    </select>
 </mapper>

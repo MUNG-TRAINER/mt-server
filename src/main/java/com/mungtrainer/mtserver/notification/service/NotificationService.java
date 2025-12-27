@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -87,6 +89,13 @@ public class NotificationService {
         // → 정상 흐름
     }
 
+    // 알림 조회
+    public List<Notification> getNotifications(Long userId, boolean unreadOnly) {
+        if (unreadOnly) {
+            return notificationDao.findUnreadByUserId(userId);
+        }
+        return notificationDao.findByUserId(userId);
+    }
 }
 
 

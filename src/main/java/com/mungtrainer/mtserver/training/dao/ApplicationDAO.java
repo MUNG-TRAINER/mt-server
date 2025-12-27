@@ -80,4 +80,5 @@ public interface ApplicationDAO {
             @Param("courseIds") List<Long> courseIds
     );
 
+    Long findTrainerIdBySessionId(Long sessionId);
 }

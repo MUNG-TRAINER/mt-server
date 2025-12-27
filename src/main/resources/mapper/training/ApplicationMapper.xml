@@ -315,4 +315,12 @@
         WHERE wishlist_item_id = #{wishlistItemId}
         AND is_deleted = 0
     </select>
+
+    <select id="findTrainerIdBySessionId" resultType="java.lang.Long" parameterType="long">
+        SELECT tc.trainer_id
+        FROM training_session ts
+        JOIN training_course tc ON ts.course_id = tc.course_id
+        WHERE ts.session_id = #{sessionId}
+        LIMIT 1
+    </select>
 </mapper>

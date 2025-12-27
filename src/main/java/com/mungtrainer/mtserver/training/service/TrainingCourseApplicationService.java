@@ -4,6 +4,9 @@ import com.mungtrainer.mtserver.common.exception.CustomException;
 import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.counseling.dao.TrainerUserDAO;
+import com.mungtrainer.mtserver.notification.entity.TrainingNotificationFactory;
+import com.mungtrainer.mtserver.notification.service.NotificationService;
+import com.mungtrainer.mtserver.notification.service.NotificationService;
 import com.mungtrainer.mtserver.training.dao.ApplicationDAO;
 import com.mungtrainer.mtserver.training.dao.TrainingAttendanceDAO;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationCancelRequest;
@@ -32,6 +35,8 @@ public class TrainingCourseApplicationService {
     private final S3Service s3Service;
     private final TrainerUserDAO trainerUserDao;  // ← 추가
     private final TrainingAttendanceDAO trainingAttendanceDao;  // ← 추가
+    private final NotificationService notificationService;
+    private final TrainingNotificationFactory trainingNotificationFactory;
 
     // 엔티티를 dto로 변환
     private ApplicationResponse toResponse(TrainingCourseApplication application) {
@@ -215,6 +220,18 @@ public class TrainingCourseApplicationService {
                 throw new CustomException(ErrorCode.APPLICATION_CREATION_FAILED);
             }
 
+//            // 알림 서비스 추가
+//            // 트레이너 아이디 조회
+            Long trainerId = applicationDao.findTrainerIdBySessionId(sessionId);
+            if (trainerId != null) {
+                notificationService.send(
+                        trainingNotificationFactory.trainingRequest(
+                                trainerId,
+                                sessionId,  // referenceId: 세션 ID
+                                userId      // 행동 주체: 신청 회원
+                        )
+                );
+            }
             // 대기 테이블 추가
           // 이제 waiting 테이블 등록은 트레이너 승인 시점에 처리
 //            if ("WAITING".equals(status)) {

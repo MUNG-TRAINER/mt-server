@@ -21,4 +21,7 @@ public interface NotificationDAO {
             @Param("lastEventId") Long lastEventId
     );
 
+    List<Notification> findUnreadByUserId(Long userId);
+
+    List<Notification> findByUserId(Long userId);
 }

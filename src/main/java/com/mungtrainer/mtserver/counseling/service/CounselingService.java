@@ -64,13 +64,13 @@ public class CounselingService {
         }
 
         // 4. 상담 신청 알림 전송
-        notificationService.send(
-                counselingNotificationFactory.counselingRequest(
-                        trainerId,
-                        counseling.getCounselingId(), // ← counselingId
-                        userId                        // ← memberId
-                )
-        );
+//        notificationService.send(
+//                counselingNotificationFactory.counselingRequest(
+//                        trainerId,
+//                        counseling.getCounselingId(), // ← counselingId
+//                        userId                        // ← memberId
+//                )
+//        );
 
 
 
@@ -190,13 +190,13 @@ public class CounselingService {
         counselingDao.updateApplicationStatusAfterCounseling(trainerId, counseling.getDogId());
 
         // 4. 상담 신청 알림 전송
-        notificationService.send(
-                counselingNotificationFactory.counselingCompleted(
-                        dogOwnerId,  // 알림을 보낼 대상
-                        counseling.getCounselingId(), // ← counselingId
-                        trainerId                        // ← 알림을 만든 주체
-                )
-        );
+//        notificationService.send(
+//                counselingNotificationFactory.counselingCompleted(
+//                        dogOwnerId,  // 알림을 보낼 대상
+//                        counseling.getCounselingId(), // ← counselingId
+//                        trainerId                        // ← 알림을 만든 주체
+//                )
+//        );
 
         return new CounselingPostResponse(true, "상담 내용이 저장되었습니다.");
     }
