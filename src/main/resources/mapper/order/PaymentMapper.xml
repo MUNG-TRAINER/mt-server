@@ -35,19 +35,17 @@
 
     <select id="findLogsByUserId" parameterType="Long" resultType="com.mungtrainer.mtserver.order.dto.response.PaymentLogResponse">
         SELECT
-            pl.payment_id,
+            p.payment_id,
             om.order_name,
-            pl.status,
-            pl.amount,
+            p.payment_status AS status,
+            p.amount,
             p.payment_key,
-            pl.created_at AS paymentDate
+            p.created_at AS paymentDate
         FROM order_master om
         JOIN payment p
         ON p.order_id = om.order_id
-        JOIN payment_log pl
-        ON pl.payment_id = p.payment_id
         WHERE om.user_id = #{userId}
-        ORDER BY pl.created_at DESC
+        ORDER BY p.created_at DESC;
     </select>
 
     <select id="findOrderItemsByOrderId" resultType="com.mungtrainer.mtserver.order.entity.OrderItem">
