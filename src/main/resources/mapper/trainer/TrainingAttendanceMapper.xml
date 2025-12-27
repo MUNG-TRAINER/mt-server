@@ -28,7 +28,7 @@
                 <result property="createdAt" column="created_at"/>
             </resultMap>
 
-            <!-- 특정 세션의 모든 출석 목록 조회 -->
+            <!-- 특정 세션의 모든 출석 목록 조회 (결제 완료된 신청만) -->
             <select id="findBySessionId" resultMap="AttendanceListResultMap">
                 SELECT
                     ta.attendance_id,
@@ -45,11 +45,12 @@
                 INNER JOIN dog d ON tca.dog_id = d.dog_id
                 INNER JOIN user u ON d.user_id = u.user_id
                 WHERE tca.session_id = #{sessionId}
+                AND tca.status = 'PAID'
                 AND ta.deleted_at IS NULL
                 ORDER BY u.name, ta.created_at DESC
             </select>
 
-            <!-- 특정 세션에서 특정 사용자의 출석 정보 조회 -->
+            <!-- 특정 세션에서 특정 사용자의 출석 정보 조회 (결제 완료된 신청만) -->
             <select id="findBySessionIdAndUserName" resultMap="TrainingAttendanceResultMap">
                 SELECT
                     ta.attendance_id,
@@ -66,10 +67,11 @@
                 INNER JOIN user u ON d.user_id = u.user_id
                 WHERE tca.session_id = #{sessionId}
                 AND u.name = #{userName}
+                AND tca.status = 'PAID'
                 AND ta.deleted_at IS NULL
             </select>
 
-            <!-- 출석 상태 업데이트 -->
+            <!-- 출석 상태 업데이트 (결제 완료된 신청만) -->
             <update id="updateStatus">
                 UPDATE training_attendance ta
                 INNER JOIN training_course_application tca ON ta.application_id = tca.application_id
@@ -80,6 +82,7 @@
                     ta.updated_at = NOW()
                 WHERE tca.session_id = #{sessionId}
                 AND u.name = #{userName}
+                AND tca.status = 'PAID'
                 AND ta.deleted_at IS NULL
             </update>
 

@@ -1,6 +1,8 @@
 package com.mungtrainer.mtserver.training.scheduler;
 
 import com.mungtrainer.mtserver.counseling.dao.TrainerUserDAO;
+import com.mungtrainer.mtserver.notification.entity.TrainingApplicationNotificationFactory;
+import com.mungtrainer.mtserver.notification.service.NotificationService;
 import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,8 @@ import java.util.List;
 public class PaymentDeadlineScheduler {
 
     private final TrainerUserDAO trainerUserDao;
+    private final NotificationService notificationService;
+    private final TrainingApplicationNotificationFactory trainingApplicationNotificationFactory;
 
     /**
      * 결제 기한 (시간)
@@ -89,11 +93,15 @@ public class PaymentDeadlineScheduler {
             promoteNextWaiting(sessionId);
 
             // 4. 사용자에게 알림 발송
-            // TODO: notificationService.sendToUser(
-            //     applicationId,
-            //     "결제 기한 만료",
-            //     "결제 기한이 지나 신청이 만료되었습니다. 다시 신청해주세요."
-            // );
+            Long userId = trainerUserDao.findUserIdByApplicationId(applicationId);
+            if (userId != null) {
+                notificationService.send(
+                    trainingApplicationNotificationFactory.paymentExpired(
+                        userId,
+                        applicationId
+                    )
+                );
+            }
 
         } catch (Exception e) {
             log.error("신청 만료 처리 실패 - applicationId: {}", applicationId, e);
@@ -146,13 +154,16 @@ public class PaymentDeadlineScheduler {
         log.info("대기자 자동 승격 완료 - applicationId: {}, 결제 기한: {}시간", nextApplicationId, paymentDeadlineHours);
 
         // 5. 사용자에게 결제 안내 알림
-        // TODO: notificationService.sendToUser(
-        //     nextApplicationId,
-        //     "승인 완료",
-        //     "대기가 해제되었습니다! {}시간 내에 결제를 완료해주세요.",
-        //     paymentDeadlineHours,
-        //     "/payments/" + nextApplicationId
-        // );
+        Long userId = trainerUserDao.findUserIdByApplicationId(nextApplicationId);
+        if (userId != null) {
+            notificationService.send(
+                trainingApplicationNotificationFactory.waitingPromoted(
+                    userId,
+                    nextApplicationId,
+                    paymentDeadlineHours
+                )
+            );
+        }
     }
 }
 

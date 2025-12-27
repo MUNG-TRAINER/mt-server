@@ -87,6 +87,13 @@ public interface TrainerUserDAO {
      */
 
     /**
+     * 신청 ID로 사용자 ID 조회
+     * @param applicationId 신청 ID
+     * @return 사용자 ID
+     */
+    Long findUserIdByApplicationId(@Param("applicationId") Long applicationId);
+
+    /**
      * 신청 ID로 세션 ID 조회
      * @param applicationId 신청 ID
      * @return 세션 ID
