@@ -37,7 +37,7 @@ public enum ErrorCode {
   UNAUTHORIZED_APPLICATION(403, "본인만 신청 가능합니다."),
   APPLICATION_CREATION_FAILED(500, "신청 생성 실패"),
   COUNSELING_REQUIRED(409, "반려견의 상담이 필요합니다."),
-  SESSION_DEADLINE_PASSED(400, "수업 시작 마감 시간이 지났습니다."),
+  SESSION_DEADLINE_PASSED(400, "해당 수업의 신청 가능 시간이 지났습니다. (수업 시작 24시간 전까지 신청 가능)"),
 
   // 신청 승인/거절 관련
   APPLICATION_STATUS_REQUEST_EMPTY(400, "요청 데이터가 존재하지 않습니다."),

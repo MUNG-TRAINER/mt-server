@@ -1,15 +1,10 @@
 package com.mungtrainer.mtserver.training.scheduler;
 
-import com.mungtrainer.mtserver.training.dao.ApplicationDAO;
-import com.mungtrainer.mtserver.training.dao.TrainingSessionDAO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * 수업 시작 마감 자동 처리 스케줄러
@@ -30,8 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SessionDeadlineScheduler {
 
-    private final TrainingSessionDAO trainingSessionDAO;
-    private final ApplicationDAO applicationDAO;
+    private final SessionDeadlineService sessionDeadlineService;
 
     /**
      * 마감 시간 (시간)
@@ -50,7 +44,7 @@ public class SessionDeadlineScheduler {
     private boolean sessionDeadlineEnabled;
 
     /**
-     * 10분마다 수업 시작 마감 처리
+     * 10분마다 수업 시작 마감 처리 (스케줄러 진입점)
      *
      * <p>cron 표현식: "0 * /10 * * * *"
      * <ul>
@@ -61,9 +55,11 @@ public class SessionDeadlineScheduler {
      *   <li>월: * (매월)</li>
      *   <li>요일: * (매일)</li>
      * </ul>
+     *
+     * <p>주의: 이 메서드는 예외 처리만 담당합니다.
+     * 실제 트랜잭션 로직은 {@link SessionDeadlineService#processSessionDeadline(int)}에서 수행됩니다.
      */
     @Scheduled(cron = "0 */10 * * * *")
-    @Transactional
     public void processSessionDeadline() {
         // 기능 비활성화 체크 (긴급 롤백용)
         if (!sessionDeadlineEnabled) {
@@ -74,32 +70,15 @@ public class SessionDeadlineScheduler {
         log.info("=== 수업 시작 마감 처리 시작 ===");
 
         try {
-            // 1. 마감 시간이 지난 신청 조회
-            List<Long> expiredApplicationIds =
-                trainingSessionDAO.findApplicationsPastSessionDeadline(sessionDeadlineHours);
-
-            if (expiredApplicationIds == null || expiredApplicationIds.isEmpty()) {
-                log.info("마감 대상 신청 없음");
-                return;
-            }
-
-            log.info("마감 대상 신청 {}건 발견", expiredApplicationIds.size());
-            log.debug("마감 대상 신청 ID 목록: {}", expiredApplicationIds);
-
-            // 2. 일괄 EXPIRED 처리
-            applicationDAO.updateApplicationStatusBatch(expiredApplicationIds, "EXPIRED");
-
-            log.info("=== 수업 시작 마감 처리 완료 - {}건 처리 ===", expiredApplicationIds.size());
-
-            // TODO: 알림 발송 (선택 사항)
-            // for (Long applicationId : expiredApplicationIds) {
-            //     notificationService.sendSessionDeadlineExpiredNotification(applicationId);
-            // }
+            // 실제 처리 로직 호출 (트랜잭션 적용)
+            sessionDeadlineService.processSessionDeadline(sessionDeadlineHours);
 
         } catch (Exception e) {
-            log.error("수업 시작 마감 처리 중 오류 발생", e);
-            // 예외를 다시 던지지 않음 - 다음 스케줄링 시 재시도
+            log.error("수업 시작 마감 처리 중 오류 발생 - 다음 스케줄링 시 재시도", e);
+            // 예외를 다시 던지지 않음 - 스케줄러가 중단되지 않도록 함
         }
+
+        log.info("=== 수업 시작 마감 처리 종료 ===");
     }
 }
 
