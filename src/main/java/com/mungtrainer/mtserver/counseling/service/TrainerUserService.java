@@ -590,7 +590,7 @@ public class TrainerUserService {
    *    - 여유 있음 → ACCEPT (출석 정보 생성)
    *    - 정원 초과 → WAITING (대기열 전환, 출석 정보 생성 안함)
    *
-   * ⭐ 중요: WAITING은 "승인했지만 정원이 꽉 차서 대기"라는 의미
+   *  중요: WAITING은 "승인했지만 정원이 꽉 차서 대기"라는 의미
    */
   private void handleApproval(Long applicationId, Long trainerId) {
     log.info("승인 처리 시작 - applicationId: {}", applicationId);
@@ -620,7 +620,7 @@ public class TrainerUserService {
       trainerUserDao.updateApplicationStatusSimple(applicationId, "WAITING");
       trainerUserDao.insertWaiting(applicationId, trainerId);
 
-      // ⭐ 사용자에게 대기 진입 알림
+      //  사용자에게 대기 진입 알림
       // "승인되었으나 정원이 마감되어 대기 중입니다.
       //  취소 발생 시 자동으로 승인 완료되며 결제를 진행하실 수 있습니다."
       // TODO: notificationService.sendToUser(
