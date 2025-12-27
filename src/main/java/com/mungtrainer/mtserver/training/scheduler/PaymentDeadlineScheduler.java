@@ -1,8 +1,6 @@
 package com.mungtrainer.mtserver.training.scheduler;
 
 import com.mungtrainer.mtserver.counseling.dao.TrainerUserDAO;
-import com.mungtrainer.mtserver.notification.entity.TrainingApplicationNotificationFactory;
-import com.mungtrainer.mtserver.notification.service.NotificationService;
 import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,8 +26,6 @@ import java.util.List;
 public class PaymentDeadlineScheduler {
 
     private final TrainerUserDAO trainerUserDao;
-    private final NotificationService notificationService;
-    private final TrainingApplicationNotificationFactory trainingApplicationNotificationFactory;
 
     /**
      * 결제 기한 (시간)
@@ -92,16 +88,6 @@ public class PaymentDeadlineScheduler {
             // 3. 다음 대기자 승격
             promoteNextWaiting(sessionId);
 
-            // 4. 사용자에게 알림 발송
-            Long userId = trainerUserDao.findUserIdByApplicationId(applicationId);
-            if (userId != null) {
-                notificationService.send(
-                    trainingApplicationNotificationFactory.paymentExpired(
-                        userId,
-                        applicationId
-                    )
-                );
-            }
 
         } catch (Exception e) {
             log.error("신청 만료 처리 실패 - applicationId: {}", applicationId, e);
@@ -152,18 +138,7 @@ public class PaymentDeadlineScheduler {
         trainerUserDao.updatePaymentDeadline(nextApplicationId, paymentDeadlineHours);
 
         log.info("대기자 자동 승격 완료 - applicationId: {}, 결제 기한: {}시간", nextApplicationId, paymentDeadlineHours);
-
-        // 5. 사용자에게 결제 안내 알림
-        Long userId = trainerUserDao.findUserIdByApplicationId(nextApplicationId);
-        if (userId != null) {
-            notificationService.send(
-                trainingApplicationNotificationFactory.waitingPromoted(
-                    userId,
-                    nextApplicationId,
-                    paymentDeadlineHours
-                )
-            );
-        }
+        
     }
 }
 
