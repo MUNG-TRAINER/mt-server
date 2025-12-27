@@ -640,6 +640,10 @@ public class TrainerUserService {
 
   /**
    * 거절 처리 - 기존 거절 로직 실행 후 대기자 자동 승격
+   *
+   *  트랜잭션: 상위 메서드(updateApplicationStatus)의 트랜잭션에 참여
+   *             거절 처리와 대기자 승격이 하나의 트랜잭션으로 처리됩니다.
+   *             대기자 승격 실패 시 거절도 함께 롤백됩니다.
    */
   private void handleRejection(Long applicationId, Long trainerId, String rejectReason) {
     log.info("거절 처리 시작 - applicationId: {}", applicationId);

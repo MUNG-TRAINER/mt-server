@@ -28,6 +28,7 @@ public class CounselingService {
     private final TrainerUserDAO trainerUserDao;
 
 
+    @Transactional
     public CreateCounselingResponse createCounseling(CreateCounselingRequest requestDto, Long userId){
 
         // 1. 반려견 존재 여부 및 소유권 확인
@@ -73,6 +74,7 @@ public class CounselingService {
      * @param userId 사용자 ID
      * @return 취소 성공 여부 메시지
      */
+    @Transactional
     public CancelCounselingResponse cancelCounseling(Long counselingId, Long userId) {
         // 1. 상담 조회
         Counseling counseling = counselingDao.findById(counselingId);
@@ -102,6 +104,7 @@ public class CounselingService {
      * @param trainerId 훈련사 ID
      * @return 상담 반려견 목록
      */
+    @Transactional(readOnly = true)
     public List<CounselingDogResponse> getDogsByCompleted(boolean completed, Long trainerId) {
         // 1. DB에서 반려견 리스트 조회 (훈련사가 관리하는 훈련 과정에 신청한 반려견만)
         List<CounselingDogResponse> dogs = counselingDao.findDogsByCompleted(completed, trainerId);
@@ -187,6 +190,7 @@ public class CounselingService {
      * @param userId 사용자 ID
      * @return 반려견 정보 + 상담 신청 여부
      */
+    @Transactional(readOnly = true)
     public DogForCounselingResponse getDogForCounseling(Long dogId, Long userId) {
         // 1. DB에서 반려견 정보 + 상담 신청 여부 조회
         DogForCounselingResponse dog = counselingDao.findDogForCounseling(dogId, userId);
@@ -209,6 +213,7 @@ public class CounselingService {
      * @param userId 사용자 ID
      * @return 상담 목록
      */
+    @Transactional(readOnly = true)
     public List<UserCounselingListResponse> getUserCounselings(Long userId) {
         // 1. DB에서 상담 목록 조회
         List<UserCounselingListResponse> counselings = counselingDao.findCounselingsByUserId(userId);
@@ -245,6 +250,7 @@ public class CounselingService {
      * @param userId 사용자 ID
      * @return 상담 상세 정보
      */
+    @Transactional(readOnly = true)
     public UserCounselingDetailResponse getUserCounselingDetail(Long counselingId, Long userId) {
         // 1. DB에서 상담 상세 조회
         UserCounselingDetailResponse counseling = counselingDao.findCounselingDetailById(counselingId, userId);
