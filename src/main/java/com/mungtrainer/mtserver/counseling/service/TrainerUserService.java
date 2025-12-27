@@ -11,8 +11,6 @@ import com.mungtrainer.mtserver.counseling.dto.request.BulkApplicationStatusRequ
 import com.mungtrainer.mtserver.counseling.dto.response.*;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
 import com.mungtrainer.mtserver.dog.dao.DogDAO;
-import com.mungtrainer.mtserver.notification.entity.TrainingApplicationNotificationFactory;
-import com.mungtrainer.mtserver.notification.service.NotificationService;
 import com.mungtrainer.mtserver.training.dao.TrainingAttendanceDAO;
 import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import lombok.RequiredArgsConstructor;
@@ -35,8 +33,7 @@ public class TrainerUserService {
     private final S3Service s3Service;
     private final CounselingDAO counselingDao;
     private final TrainingAttendanceDAO trainingAttendanceDao;
-    private final NotificationService notificationService;
-    private final TrainingApplicationNotificationFactory trainingApplicationNotificationFactory;
+
 
     /**
      * 결제 기한 (시간)
@@ -624,17 +621,6 @@ public class TrainerUserService {
       trainerUserDao.updateApplicationStatusSimple(applicationId, "WAITING");
       trainerUserDao.insertWaiting(applicationId, trainerId);
 
-      // 사용자에게 대기 진입 알림
-      Long userId = trainerUserDao.findUserIdByApplicationId(applicationId);
-      if (userId != null) {
-        notificationService.send(
-            trainingApplicationNotificationFactory.approvalWithWaiting(
-                userId,
-                applicationId,
-                trainerId
-            )
-        );
-      }
 
     } else {
       // 정원 여유 - 승인 완료
@@ -649,17 +635,6 @@ public class TrainerUserService {
       // 기존 createAttendanceRecord 메서드 활용
       createAttendanceRecord(applicationId, trainerId);
 
-      // 사용자에게 승인 완료 알림
-      Long userId = trainerUserDao.findUserIdByApplicationId(applicationId);
-      if (userId != null) {
-        notificationService.send(
-            trainingApplicationNotificationFactory.approvalCompleted(
-                userId,
-                applicationId,
-                trainerId
-            )
-        );
-      }
     }
   }
 
@@ -774,19 +749,6 @@ public class TrainerUserService {
       throw new CustomException(ErrorCode.ATTENDANCE_CREATION_FAILED);
     }
 
-    // 락 해제 (메서드 종료 시 자동)
-    // 커밋 시점에 락이 해제되며, 다음 대기 중인 트랜잭션이 락을 획득
 
-    // 6. 사용자에게 결제 안내 알림
-    Long userId = trainerUserDao.findUserIdByApplicationId(nextApplicationId);
-    if (userId != null) {
-      notificationService.send(
-          trainingApplicationNotificationFactory.waitingPromoted(
-              userId,
-              nextApplicationId,
-              paymentDeadlineHours
-          )
-      );
-    }
   }
 }
