@@ -1,5 +1,8 @@
 package com.mungtrainer.mtserver.training.scheduler;
 
+import com.mungtrainer.mtserver.counseling.dao.TrainerUserDAO;
+import com.mungtrainer.mtserver.notification.entity.TrainingApplicationNotificationFactory;
+import com.mungtrainer.mtserver.notification.service.NotificationService;
 import com.mungtrainer.mtserver.training.dao.ApplicationDAO;
 import com.mungtrainer.mtserver.training.dao.TrainingSessionDAO;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +28,9 @@ public class SessionDeadlineService {
 
     private final TrainingSessionDAO trainingSessionDAO;
     private final ApplicationDAO applicationDAO;
+    private final TrainerUserDAO trainerUserDAO;
+    private final NotificationService notificationService;
+    private final TrainingApplicationNotificationFactory trainingApplicationNotificationFactory;
 
     /**
      * 수업 시작 마감 처리 실제 로직 (트랜잭션 적용)
@@ -52,10 +58,23 @@ public class SessionDeadlineService {
 
         log.info("수업 시작 마감 처리 완료 - {}건 처리", expiredApplicationIds.size());
 
-        // TODO: 알림 발송 (선택 사항)
-        // for (Long applicationId : expiredApplicationIds) {
-        //     notificationService.sendSessionDeadlineExpiredNotification(applicationId);
-        // }
+        // 3. 사용자에게 알림 발송
+        for (Long applicationId : expiredApplicationIds) {
+            try {
+                Long userId = trainerUserDAO.findUserIdByApplicationId(applicationId);
+                if (userId != null) {
+                    notificationService.send(
+                        trainingApplicationNotificationFactory.sessionDeadlineExpired(
+                            userId,
+                            applicationId
+                        )
+                    );
+                }
+            } catch (Exception e) {
+                // 알림 발송 실패는 로그만 남기고 계속 진행
+                log.error("알림 발송 실패 - applicationId: {}", applicationId, e);
+            }
+        }
     }
 }
 

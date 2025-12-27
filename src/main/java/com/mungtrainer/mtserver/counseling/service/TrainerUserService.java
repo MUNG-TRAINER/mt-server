@@ -11,6 +11,8 @@ import com.mungtrainer.mtserver.counseling.dto.request.BulkApplicationStatusRequ
 import com.mungtrainer.mtserver.counseling.dto.response.*;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
 import com.mungtrainer.mtserver.dog.dao.DogDAO;
+import com.mungtrainer.mtserver.notification.entity.TrainingApplicationNotificationFactory;
+import com.mungtrainer.mtserver.notification.service.NotificationService;
 import com.mungtrainer.mtserver.training.dao.TrainingAttendanceDAO;
 import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,8 @@ public class TrainerUserService {
     private final S3Service s3Service;
     private final CounselingDAO counselingDao;
     private final TrainingAttendanceDAO trainingAttendanceDao;
+    private final NotificationService notificationService;
+    private final TrainingApplicationNotificationFactory trainingApplicationNotificationFactory;
 
     /**
      * 결제 기한 (시간)
@@ -620,14 +624,17 @@ public class TrainerUserService {
       trainerUserDao.updateApplicationStatusSimple(applicationId, "WAITING");
       trainerUserDao.insertWaiting(applicationId, trainerId);
 
-      //  사용자에게 대기 진입 알림
-      // "승인되었으나 정원이 마감되어 대기 중입니다.
-      //  취소 발생 시 자동으로 승인 완료되며 결제를 진행하실 수 있습니다."
-      // TODO: notificationService.sendToUser(
-      //     userId,
-      //     "승인 완료 (대기)",
-      //     "트레이너가 승인했으나 정원이 마감되어 대기 중입니다. 자리가 생기면 자동으로 결제 가능합니다."
-      // );
+      // 사용자에게 대기 진입 알림
+      Long userId = trainerUserDao.findUserIdByApplicationId(applicationId);
+      if (userId != null) {
+        notificationService.send(
+            trainingApplicationNotificationFactory.approvalWithWaiting(
+                userId,
+                applicationId,
+                trainerId
+            )
+        );
+      }
 
     } else {
       // 정원 여유 - 승인 완료
@@ -642,12 +649,17 @@ public class TrainerUserService {
       // 기존 createAttendanceRecord 메서드 활용
       createAttendanceRecord(applicationId, trainerId);
 
-      // ⭐ 사용자에게 승인 완료 알림
-      // TODO: notificationService.sendToUser(
-      //     userId,
-      //     "승인 완료",
-      //     "훈련 신청이 승인되었습니다! 결제를 진행해주세요."
-      // );
+      // 사용자에게 승인 완료 알림
+      Long userId = trainerUserDao.findUserIdByApplicationId(applicationId);
+      if (userId != null) {
+        notificationService.send(
+            trainingApplicationNotificationFactory.approvalCompleted(
+                userId,
+                applicationId,
+                trainerId
+            )
+        );
+      }
     }
   }
 
@@ -766,13 +778,15 @@ public class TrainerUserService {
     // 커밋 시점에 락이 해제되며, 다음 대기 중인 트랜잭션이 락을 획득
 
     // 6. 사용자에게 결제 안내 알림
-    // "대기가 해제되었습니다! 결제를 진행해주세요."
-    // TODO: notificationService.sendToUser(
-    //     applicationId,
-    //     "승인 완료",
-    //     "대기가 해제되어 자동으로 승인 완료되었습니다! {}시간 내에 결제를 진행해주세요.",
-    //     paymentDeadlineHours,
-    //     "/payments/" + nextApplicationId
-    // );
+    Long userId = trainerUserDao.findUserIdByApplicationId(nextApplicationId);
+    if (userId != null) {
+      notificationService.send(
+          trainingApplicationNotificationFactory.waitingPromoted(
+              userId,
+              nextApplicationId,
+              paymentDeadlineHours
+          )
+      );
+    }
   }
 }

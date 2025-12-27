@@ -440,6 +440,15 @@
      대기 로직 개선을 위한 쿼리 추가
      ======================================== -->
 
+    <!-- 신청 ID로 사용자 ID 조회 -->
+    <select id="findUserIdByApplicationId" resultType="long">
+        SELECT d.user_id
+        FROM training_course_application tca
+        INNER JOIN dog d ON tca.dog_id = d.dog_id
+        WHERE tca.application_id = #{applicationId}
+        AND tca.is_deleted = 0
+    </select>
+
     <!-- 신청 ID로 세션 ID 조회 -->
     <select id="findSessionIdByApplicationId" resultType="long">
         SELECT session_id
