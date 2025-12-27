@@ -6,6 +6,7 @@ import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.counseling.dao.TrainerUserDAO;
 import com.mungtrainer.mtserver.training.dao.ApplicationDAO;
 import com.mungtrainer.mtserver.training.dao.TrainingAttendanceDAO;
+import com.mungtrainer.mtserver.training.dao.TrainingSessionDAO;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationCancelRequest;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationRequest;
 import com.mungtrainer.mtserver.order.dto.request.WishlistApplyRequest;
@@ -16,10 +17,12 @@ import com.mungtrainer.mtserver.training.entity.TrainingCourseApplication;
 import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,8 +33,17 @@ public class TrainingCourseApplicationService {
 
     private final ApplicationDAO applicationDao;
     private final S3Service s3Service;
-    private final TrainerUserDAO trainerUserDao;  // ← 추가
-    private final TrainingAttendanceDAO trainingAttendanceDao;  // ← 추가
+    private final TrainerUserDAO trainerUserDao;
+    private final TrainingAttendanceDAO trainingAttendanceDao;
+    private final TrainingSessionDAO trainingSessionDao;
+
+    /**
+     * 수업 시작 마감 시간 (시간)
+     * application.yml의 session.deadline.hours 값 사용
+     * 기본값: 24시간
+     */
+    @Value("${session.deadline.hours:24}")
+    private int sessionDeadlineHours;
 
     // 엔티티를 dto로 변환
     private ApplicationResponse toResponse(TrainingCourseApplication application) {
@@ -167,6 +179,24 @@ public class TrainingCourseApplicationService {
         // 3. 각 세션별 신청 처리
         for (TrainingSession session : sessions) {
             Long sessionId = session.getSessionId();
+
+            // ========================================
+            // 수업 시작 마감 시간 검증
+            // ========================================
+            LocalDateTime sessionStart = LocalDateTime.of(
+                session.getSessionDate(),
+                session.getStartTime()
+            );
+            LocalDateTime deadline = sessionStart.minusHours(sessionDeadlineHours);
+
+            if (LocalDateTime.now().isAfter(deadline)) {
+                // 다회차의 경우 일부 회차만 마감되어도 전체 신청 불가
+                log.warn("수업 마감 시간 초과 - 회차: {}, 마감 시간: {}",
+                    session.getSessionNo(),
+                    deadline.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+                throw new CustomException(ErrorCode.SESSION_DEADLINE_PASSED);
+            }
+            // ========================================
 
             // 중복 신청 체크
             boolean exists = applicationDao.existsByDogAndSession(request.getDogId(), sessionId);
