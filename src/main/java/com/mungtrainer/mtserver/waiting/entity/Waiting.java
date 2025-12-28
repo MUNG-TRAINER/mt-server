@@ -23,5 +23,10 @@ public class Waiting extends BaseEntity {
      * 상태 (WAITING, READY, ENTERED, CANCELLED, EXPIRED)
      */
     private String status;
-}
 
+    /**
+     * 미리 승인 여부 (훈련사가 대기 중인 신청을 미리 승인한 경우 true)
+     * 자동 승격 시 이 값이 true이면 바로 ACCEPT 상태로 전환
+     */
+    private Boolean isApproved;
+}
