@@ -1,13 +1,20 @@
 package com.mungtrainer.mtserver.order.dto.request;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
 @Getter
+@Setter
 @NoArgsConstructor
 public class PaymentPrepareRequest {
-    private Integer amount;
-    private List<Long> courseIds;
+    private List<PaymentRequestItem> paymentRequestItems;
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class PaymentRequestItem {
+      private Long courseId;
+      private Long applicationId;
+    }
 }

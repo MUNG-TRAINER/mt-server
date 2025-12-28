@@ -54,6 +54,30 @@
         WHERE order_id = #{orderId}
     </select>
 
+    <select id="getCostByApplicationIds" resultType="int">
+        SELECT COALESCE(SUM(ts.price), 0)
+        FROM training_session ts
+        JOIN training_course_application tca
+        ON tca.session_id = ts.session_id
+        JOIN dog d
+        ON d.dog_id = tca.dog_id
+        <where>
+            tca.status = 'ACCEPT'
+            AND d.user_id = #{userId}
+            AND ts.is_deleted != 1
+            <if test="applicationIds != null and applicationIds.size() > 0">
+                AND tca.application_id IN
+                <foreach collection="applicationIds"
+                         item="applicationId"
+                         open="("
+                         separator=","
+                         close=")">
+                    #{applicationId}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
     <select id="getCostByCourseIds"
             resultType="int">
 

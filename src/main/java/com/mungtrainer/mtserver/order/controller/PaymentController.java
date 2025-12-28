@@ -35,7 +35,7 @@ public class PaymentController {
       @RequestBody PaymentPrepareRequest request,
       @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
-      log.info("결제 준비 요청 - userId: {}, courseIds: {}", userDetails.getUserId(), request.getCourseIds());
+      log.info("결제 준비 요청 - userId: {}", userDetails.getUserId());
 
       PaymentPrepareResponse response = paymentService.preparePayment(request, userDetails.getUserId());
 

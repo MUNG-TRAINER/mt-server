@@ -70,30 +70,30 @@
         #{orderId},
         tca.application_id,
         ts.price,
-        1,
-        1,
+        #{userId},
+        #{userId},
         NOW(),
         NOW()
         FROM training_course_application tca
         JOIN training_session ts
         ON ts.session_id = tca.session_id
-        JOIN training_course tc
-        ON tc.course_id = ts.course_id
         JOIN dog d
         ON d.dog_id = tca.dog_id
         WHERE
         d.user_id = #{userId}
-        AND ts.course_id IN
-        <foreach collection="courseIds"
-                 item="courseId"
-                 open="("
-                 close=")"
-                 separator=",">
-            #{courseId}
-        </foreach>
+          <if test="applicationIds != null and applicationIds.size() > 0">
+            AND tca.application_id IN
+            <foreach collection="applicationIds"
+                     item="applicationId"
+                     open="("
+                     close=")"
+                     separator=",">
+                #{applicationId}
+            </foreach>
+          </if>
         AND tca.status = 'ACCEPT'
-        AND tc.status != 'CANCELED'
-        AND tc.is_deleted != 1
+        AND ts.status = 'SCHEDULED'
+        AND ts.is_deleted != 1
     </insert>
 
 
