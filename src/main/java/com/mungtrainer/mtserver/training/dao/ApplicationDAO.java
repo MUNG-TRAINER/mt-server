@@ -77,7 +77,8 @@ public interface ApplicationDAO {
     );
     List<TrainingCourseApplication> findCancelableApplicationsByUserAndCourses(
             @Param("userId") Long userId,
-            @Param("courseIds") List<Long> courseIds
+            @Param("courseIds") List<Long> courseIds,
+            @Param("dogId") Long dogId  // 특정 반려견의 신청만 조회
     );
 
 }

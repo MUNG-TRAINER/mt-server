@@ -9,5 +9,5 @@ import java.util.List;
 @Setter
 public class ApplicationCancelRequest {
     private List<Long> courseIds;
-
+    private Long dogId; // 특정 반려견의 신청만 취소하기 위한 필드
 }

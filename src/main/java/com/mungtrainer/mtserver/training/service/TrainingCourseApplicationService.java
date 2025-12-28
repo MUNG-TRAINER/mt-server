@@ -333,15 +333,17 @@ public class TrainingCourseApplicationService {
             ApplicationCancelRequest request
     ) {
         List<Long> courseIds = request.getCourseIds();
+        Long dogId = request.getDogId();
 
         if (courseIds == null || courseIds.isEmpty()) {
             throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
         }
 
         // 1️⃣ 코스 기준으로 취소 가능한 application 조회
+        // dogId가 있으면 특정 반려견만, 없으면 사용자의 모든 반려견
         List<TrainingCourseApplication> apps =
                 applicationDao.findCancelableApplicationsByUserAndCourses(
-                        userId, courseIds
+                        userId, courseIds, dogId
                 );
 
         if (apps.isEmpty()) {

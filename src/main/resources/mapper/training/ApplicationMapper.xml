@@ -285,6 +285,7 @@
     </select>
 
     <!-- 코스 기준 취소 가능한 application 조회 -->
+    <!-- dogId 조건 추가: 같은 사용자의 다른 반려견 신청이 함께 취소되는 버그 방지 -->
     <select id="findCancelableApplicationsByUserAndCourses"
             resultType="com.mungtrainer.mtserver.training.entity.TrainingCourseApplication">
 
@@ -300,6 +301,9 @@
         ON tca.dog_id = d.dog_id
         AND d.is_deleted = 0
         WHERE d.user_id = #{userId}
+        <if test="dogId != null">
+        AND tca.dog_id = #{dogId}
+        </if>
         AND tc.course_id IN
         <foreach collection="courseIds"
                  item="id"
