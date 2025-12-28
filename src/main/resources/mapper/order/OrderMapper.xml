@@ -81,16 +81,16 @@
         ON d.dog_id = tca.dog_id
         WHERE
         d.user_id = #{userId}
-          <if test="applicationIds != null and applicationIds.size() > 0">
-            AND tca.application_id IN
-            <foreach collection="applicationIds"
-                     item="applicationId"
-                     open="("
-                     close=")"
-                     separator=",">
-                #{applicationId}
-            </foreach>
-          </if>
+            <if test="applicationIds != null and applicationIds.size() > 0">
+                AND tca.application_id IN
+                <foreach collection="applicationIds"
+                         item="applicationId"
+                         open="("
+                         close=")"
+                         separator=",">
+                    #{applicationId}
+                </foreach>
+            </if>
         AND tca.status = 'ACCEPT'
         AND ts.status = 'SCHEDULED'
         AND ts.is_deleted != 1

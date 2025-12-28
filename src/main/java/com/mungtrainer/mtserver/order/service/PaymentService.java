@@ -67,14 +67,14 @@ public class PaymentService {
      */
     @Transactional
     public PaymentPrepareResponse preparePayment(PaymentPrepareRequest request, Long userId) {
-        if(request.getPaymentRequestItems().isEmpty()){
+        if (request.getPaymentRequestItems().isEmpty()) {
           throw new CustomException(ErrorCode.ORDER_NOT_FOUND);
         }
         int size = request.getPaymentRequestItems().size();
-      // 1. 가맹점 주문번호 생성 (ORD_날짜_UUID)
+        // 1. 가맹점 주문번호 생성 (ORD_날짜_UUID)
         String merchantUid = generateMerchantUid();
-
         boolean isCompleted = false;
+
         List<Long> applicationIds = request.getPaymentRequestItems()
                                            .stream()
                                            .map(PaymentPrepareRequest.PaymentRequestItem::getApplicationId)
@@ -108,8 +108,7 @@ public class PaymentService {
         }
         orderDAO.insertOrderItems(applicationIds,userId,order.getOrderId());
 
-        if (cost <= 0L){
-          isCompleted = true;
+        if (cost <= 0) {
           PaymentApprovalRequest paymentApprovalRequest = PaymentApprovalRequest.builder()
                                                          .paymentKey(merchantUid)
                                                          .merchantUid(merchantUid)
@@ -122,6 +121,7 @@ public class PaymentService {
           savePayment(order, paymentApprovalRequest, tossResponse);
           updateOrderStatusToPaid(order,cost);
           updateApplicationStatus(order.getOrderId(), ORDER_STATUS_PAID);
+          isCompleted = true;
         }
 
         return PaymentPrepareResponse.builder()
