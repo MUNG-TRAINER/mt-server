@@ -141,7 +141,7 @@ public class CounselingService {
      * @return 작성 성공 여부
      */
     @Transactional
-    // <============ (훈련사) 상담 내용 작성 ==============>
+    // <============ (훈련사) 상담 내용 작성 및 수정 ==============>
     public CounselingPostResponse addCounselingContent(
             Long counselingId,
             CounselingPostRequest requestDto,
@@ -154,12 +154,7 @@ public class CounselingService {
             throw new CustomException(ErrorCode.COUNSELING_NOT_FOUND);
         }
 
-        // 2. 완료 여부 확인
-        if (Boolean.TRUE.equals(counseling.getIsCompleted())) {
-            throw new CustomException(ErrorCode.COUNSELING_ALREADY_COMPLETED);
-        }
-
-        // 3. 훈련사 권한 확인 - 해당 상담의 반려견 소유자와 연결되어 있는지 검증
+        // 2. 훈련사 권한 확인 - 해당 상담의 반려견 소유자와 연결되어 있는지 검증
         Long dogOwnerId = dogDao.getUserIdByDogId(counseling.getDogId());
         if (dogOwnerId == null) {
             throw new CustomException(ErrorCode.COUNSELING_NOT_FOUND);
@@ -171,14 +166,16 @@ public class CounselingService {
             throw new CustomException(ErrorCode.COUNSELING_TRAINER_NO_PERMISSION);
         }
 
-        // 4. 상담 내용 업데이트 + 완료 처리
+        // 3. 상담 내용 업데이트 + 완료 처리 (첫 작성 시에만 완료 처리)
         int updatedRows = counselingDao.updateContentAndComplete(counselingId, requestDto.getContent(), trainerId);
         if (updatedRows == 0) {
             throw new CustomException(ErrorCode.COUNSELING_UPDATE_FAILED);
         }
 
-        // 5. 연관된 훈련 신청 상태 변경
-        counselingDao.updateApplicationStatusAfterCounseling(trainerId, counseling.getDogId());
+        // 4. 연관된 훈련 신청 상태 변경 (미완료 상담이었을 경우에만)
+        if (Boolean.FALSE.equals(counseling.getIsCompleted())) {
+            counselingDao.updateApplicationStatusAfterCounseling(trainerId, counseling.getDogId());
+        }
 
 
         return new CounselingPostResponse(true, "상담 내용이 저장되었습니다.");

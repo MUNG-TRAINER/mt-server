@@ -45,7 +45,7 @@ public class TrainingCourseApplicationController {
         return ResponseEntity.ok().build();
     }
 
-    // 훈련과정 신청 삭제 (여러 개)
+    // 훈련과정 신청 취소 (여러 개) - applicationId 기반
     @DeleteMapping
     public ResponseEntity<Void> deleteApplicationList( @AuthenticationPrincipal CustomUserDetails principal,@RequestBody ApplicationCancelRequest request) {
         Long userId = principal.getUserId();

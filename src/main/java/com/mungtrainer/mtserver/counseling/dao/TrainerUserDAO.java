@@ -81,6 +81,13 @@ public interface TrainerUserDAO {
                                                  @Param("dogId") Long dogId);
 
     /**
+     * 코스와 반려견으로 WAITING 상태 신청 ID 목록 조회
+     * 일괄 승인 시 대기 중인 신청들을 미리 승인 처리
+     */
+    List<Long> findWaitingApplicationIdsByCourseAndDog(@Param("courseId") Long courseId,
+                                                         @Param("dogId") Long dogId);
+
+    /**
      * ========================================
      * 대기 로직 개선을 위한 메서드 추가
      * ========================================
@@ -99,6 +106,13 @@ public interface TrainerUserDAO {
      * @return 세션 ID
      */
     Long findSessionIdByApplicationId(@Param("applicationId") Long applicationId);
+
+    /**
+     * 신청 정보 조회 (상태 포함)
+     * @param applicationId 신청 ID
+     * @return 신청 상태
+     */
+    String findApplicationStatus(@Param("applicationId") Long applicationId);
 
     /**
      * 세션 조회
@@ -150,6 +164,14 @@ public interface TrainerUserDAO {
         @Param("applicationId") Long applicationId,
         @Param("status") String status
     );
+
+    /**
+     * 대기 중인 신청을 미리 승인 처리
+     * waiting 테이블의 is_approved = 1로 설정
+     * 자동 승격 시 바로 ACCEPT 상태로 전환됨
+     * @param applicationId 신청 ID
+     */
+    void approveWaitingApplication(@Param("applicationId") Long applicationId);
 
     /**
      * 대기 테이블 등록

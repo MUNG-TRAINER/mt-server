@@ -79,12 +79,12 @@
     </select>
 
 
-<!--    훈련사 상담 내용 작성-->
+<!--    훈련사 상담 내용 작성 및 수정-->
     <update id="updateContentAndComplete">
         UPDATE counseling
         SET
         content = #{content},
-        is_completed = 1,
+        is_completed = CASE WHEN is_completed = 0 THEN 1 ELSE is_completed END,
         updated_by = #{trainerId},
         updated_at = NOW()
         WHERE
