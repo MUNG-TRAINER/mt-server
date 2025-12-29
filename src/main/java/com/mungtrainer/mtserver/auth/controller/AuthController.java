@@ -84,7 +84,6 @@ public class AuthController {
 		// 2-A) DB에 저장
 		CustomUserDetails userDetails = (CustomUserDetails)authentication.getPrincipal();
 		authService.updateRefreshToken(userDetails.getUserId(), refreshToken);
-		authService.updateFcmToken(userDetails.getUserId(), userDetails.getUsername(), loginRequest.getFcmToken());
 
 		long atMaxAge = jwtTokenProvider.getAccessTokenValidityInMs() / 1000;
 		long rtMaxAge = jwtTokenProvider.getRefreshTokenValidityInMs() / 1000;

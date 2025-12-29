@@ -73,7 +73,7 @@
         WHERE user_id = #{userId}
     </update>
     
-    <!-- 사용자 FCM TOKEN 조 -->
+    <!-- 사용자 FCM TOKEN 조회 -->
     <select id="findUserFCMToken" parameterType="long" resultType="String">
       SELECT fcm_token
       FROM user
