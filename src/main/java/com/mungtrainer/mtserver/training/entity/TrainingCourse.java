@@ -63,9 +63,9 @@ public class TrainingCourse extends BaseEntity {
     private Boolean isFree;
 
     /**
-     * 난이도
+     * 난이도 (BASIC, STANDARD, EXPERT)
      */
-    @Pattern(regexp = "초급|중급|고급", message = "유효하지 않은 상태입니다.")
+    @Pattern(regexp = "BASIC|STANDARD|EXPERT", message = "유효하지 않은 난이도입니다.")
     private String difficulty;
 
     /**
@@ -99,9 +99,9 @@ public class TrainingCourse extends BaseEntity {
     private String items;
 
     /**
-     * 반려견 크기
+     * 반려견 크기 (SMALL, MEDIUM, LARGE)
      */
-    @Pattern(regexp = "소형견|중형견|대형견", message = "유효하지 않은 상태입니다.")
+    @Pattern(regexp = "SMALL|MEDIUM|LARGE", message = "유효하지 않은 반려견 크기입니다.")
     private String dogSize;
 }
 
