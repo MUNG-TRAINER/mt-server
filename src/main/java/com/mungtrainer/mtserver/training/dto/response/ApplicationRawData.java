@@ -30,7 +30,7 @@ public class ApplicationRawData {
 
     // 세션 정보
     private String sessionSchedule;
-    private Integer price;
+    private Long price;
 
     // 반려견 정보
     private String dogName;

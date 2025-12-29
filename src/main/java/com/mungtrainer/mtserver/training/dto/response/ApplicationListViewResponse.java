@@ -39,7 +39,7 @@ public class ApplicationListViewResponse {
 
         // 신청 상태
         private String applicationStatus;
-        private Integer price;
+        private Long price;
 
         // 세션 정보
         private String sessionSchedule;
