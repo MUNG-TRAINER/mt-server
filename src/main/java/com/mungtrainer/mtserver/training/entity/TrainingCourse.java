@@ -52,9 +52,9 @@ public class TrainingCourse extends BaseEntity {
     private String lessonForm;
 
     /**
-     * 상태 (SCHEDULED, CANCELLED, DONE)
+     * 상태 (SCHEDULED, IN_PROGRESS, CANCELLED, DONE)
      */
-    @Pattern(regexp = "SCHEDULED|CANCELLED|DONE", message = "유효하지 않은 상태입니다.")
+    @Pattern(regexp = "SCHEDULED|IN_PROGRESS|CANCELLED|DONE", message = "유효하지 않은 상태입니다.")
     private String status;
 
     /**

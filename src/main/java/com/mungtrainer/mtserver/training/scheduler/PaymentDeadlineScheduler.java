@@ -38,8 +38,9 @@ public class PaymentDeadlineScheduler {
     /**
      * 10분마다 결제 기한 만료 처리
      * cron: 초 분 시 일 월 요일
+     * 실행 시간: 3분, 13분, 23분, 33분, 43분, 53분 (SessionDeadlineScheduler와 시간 분산)
      */
-    @Scheduled(cron = "0 */10 * * * *")  // 매 10분마다
+    @Scheduled(cron = "0 3/10 * * * *")  // 매 10분마다 (3분부터 시작)
     @Transactional
     public void processExpiredPayments() {
         log.info("결제 기한 만료 처리 시작");

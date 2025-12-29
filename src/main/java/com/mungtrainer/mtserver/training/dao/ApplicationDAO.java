@@ -26,6 +26,9 @@ public interface ApplicationDAO {
     // 코스에 속한 세션 조회
     List<TrainingSession> findSessionsByCourseId(@Param("courseId") Long courseId);
 
+    // 코스 상태 조회 (신청 가능 여부 확인용)
+    String getCourseStatusById(@Param("courseId") Long courseId);
+
     // 세션 정원 조회
     int getMaxStudentsBySessionId(@Param("sessionId") Long sessionId);
 

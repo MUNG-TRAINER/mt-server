@@ -307,4 +307,38 @@
         DELETE FROM wishlist_detail
         WHERE course_id = #{courseId}
     </delete>
+
+    <!-- 과정 상태 자동 업데이트 -->
+    <!-- SCHEDULED -> IN_PROGRESS: 첫 번째 세션이 시작된 과정 -->
+    <update id="updateCourseStatusToInProgress">
+        UPDATE training_course c
+        INNER JOIN (
+            SELECT s.course_id
+            FROM training_session s
+            WHERE s.is_deleted = 0
+              AND s.status = 'SCHEDULED'
+              AND CONCAT(s.session_date, ' ', s.start_time) &lt;= NOW()
+            GROUP BY s.course_id
+        ) AS started_sessions ON c.course_id = started_sessions.course_id
+        SET c.status = 'IN_PROGRESS',
+            c.updated_at = NOW()
+        WHERE c.status = 'SCHEDULED'
+          AND c.is_deleted = 0
+    </update>
+
+    <!-- IN_PROGRESS -> DONE: 모든 세션이 종료된 과정 -->
+    <update id="updateCourseStatusToCompleted">
+        UPDATE training_course c
+        INNER JOIN (
+            SELECT s.course_id
+            FROM training_session s
+            WHERE s.is_deleted = 0
+            GROUP BY s.course_id
+            HAVING MAX(CONCAT(s.session_date, ' ', s.end_time)) &lt;= NOW()
+        ) AS completed_sessions ON c.course_id = completed_sessions.course_id
+        SET c.status = 'DONE',
+            c.updated_at = NOW()
+        WHERE c.status = 'IN_PROGRESS'
+          AND c.is_deleted = 0
+    </update>
 </mapper>

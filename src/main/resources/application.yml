@@ -62,3 +62,9 @@ session:
   deadline:
     enabled: true  # 기능 활성화 여부 (긴급 롤백 시 false로 변경)
     hours: 24      # 수업 시작 전 마감 시간 (시간)
+
+# 과정 상태 자동 업데이트 설정
+course:
+  status:
+    update:
+      enabled: true  # 기능 활성화 여부 (긴급 롤백 시 false로 변경)
