@@ -116,20 +116,24 @@ public class UserController {
 	}
 
 	// 유저의 FCM Token 조회
-	@GetMapping("/fcm-token/{userId}")
+	@GetMapping("/fcm-token/{targetId}")
 	public ResponseEntity<UserFCMTokenResponse> findUserFCMToken(
+		@AuthenticationPrincipal
+		CustomUserDetails customUserDetails,
 		@PathVariable
-		Long userId) {
-		UserFCMTokenResponse userFCMToken = userService.findUserFCMToken(userId);
+		Long targetId) {
+		UserFCMTokenResponse userFCMToken = userService.findUserFCMToken(customUserDetails.getUserId(), targetId);
 		return ResponseEntity.ok(userFCMToken);
 	}
 
 	// 유저의 FCM Token 조회
-	@GetMapping("/fcm-token/{userName}/byname")
-	public ResponseEntity<UserFCMTokenResponse> findUserFCMToken(
+	@GetMapping("/fcm-token/userName/{userName}")
+	public ResponseEntity<UserFCMTokenResponse> findUserFCMTokenByUserName(
+		@AuthenticationPrincipal
+		CustomUserDetails customUserDetails,
 		@PathVariable
 		String userName) {
-		UserFCMTokenResponse userFCMToken = userService.findUserFCMTokenByUserName(userName);
+		UserFCMTokenResponse userFCMToken = userService.findUserFCMTokenByUserName(customUserDetails.getUserId(), userName);
 		return ResponseEntity.ok(userFCMToken);
 	}
 
