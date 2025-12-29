@@ -337,6 +337,16 @@
         ]]>
     </select>
 
+    <!-- SCHEDULED/CANCELLED 이외 → DONE: 종료 시간이 지난 세션 -->
+    <update id="updateSessionStatusToDone">
+        UPDATE training_session
+        SET status = 'DONE',
+            updated_at = NOW()
+        WHERE is_deleted = 0
+          AND status NOT IN ('DONE', 'CANCELLED')
+          AND CONCAT(session_date, ' ', end_time) &lt;= NOW()
+    </update>
+
 </mapper>
 
 
