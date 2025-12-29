@@ -104,6 +104,14 @@
         ORDER BY session_date, start_time
     </select>
 
+    <!-- 코스 상태 조회 (신청 가능 여부 확인용) -->
+    <select id="getCourseStatusById" resultType="string">
+        SELECT status
+        FROM training_course
+        WHERE course_id = #{courseId}
+          AND is_deleted = 0
+    </select>
+
     <!-- 생성 사용자 인증 -->
   <select id="findOwnerByDogId" parameterType="long" resultType="long">
       SELECT user_id
