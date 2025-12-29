@@ -88,12 +88,6 @@ public class PaymentDeadlineScheduler {
             // 3. 다음 대기자 승격
             promoteNextWaiting(sessionId);
 
-            // 4. 사용자에게 알림 발송
-            // TODO: notificationService.sendToUser(
-            //     applicationId,
-            //     "결제 기한 만료",
-            //     "결제 기한이 지나 신청이 만료되었습니다. 다시 신청해주세요."
-            // );
 
         } catch (Exception e) {
             log.error("신청 만료 처리 실패 - applicationId: {}", applicationId, e);
@@ -144,15 +138,7 @@ public class PaymentDeadlineScheduler {
         trainerUserDao.updatePaymentDeadline(nextApplicationId, paymentDeadlineHours);
 
         log.info("대기자 자동 승격 완료 - applicationId: {}, 결제 기한: {}시간", nextApplicationId, paymentDeadlineHours);
-
-        // 5. 사용자에게 결제 안내 알림
-        // TODO: notificationService.sendToUser(
-        //     nextApplicationId,
-        //     "승인 완료",
-        //     "대기가 해제되었습니다! {}시간 내에 결제를 완료해주세요.",
-        //     paymentDeadlineHours,
-        //     "/payments/" + nextApplicationId
-        // );
+        
     }
 }
 

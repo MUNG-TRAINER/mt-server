@@ -113,5 +113,25 @@ public interface TrainingSessionDAO {
             @Param("trainerId") Long trainerId,
             @Param("keyword") String keyword,
             @Param("lessonForm") String lessonForm);
+
+    /**
+     * 수업 시작 마감 시간이 지난 신청 조회
+     *
+     * @param hours 마감 시간 (시간 단위)
+     * @return 마감된 신청 ID 목록
+     */
+    List<Long> findApplicationsPastSessionDeadline(@Param("hours") int hours);
+
+    /**
+     * 세션의 마감 시간 초과 여부 확인
+     *
+     * @param sessionId 세션 ID
+     * @param hours 마감 시간 (시간 단위)
+     * @return true: 마감 시간 지남, false: 마감 전
+     */
+    Boolean isSessionPastDeadline(
+        @Param("sessionId") Long sessionId,
+        @Param("hours") int hours
+    );
 }
 

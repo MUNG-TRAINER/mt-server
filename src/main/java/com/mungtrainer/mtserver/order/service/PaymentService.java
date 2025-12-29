@@ -19,6 +19,7 @@ import com.mungtrainer.mtserver.order.entity.PaymentLog;
 import com.mungtrainer.mtserver.training.dao.CourseDAO;
 import com.mungtrainer.mtserver.training.dao.TrainingCourseApplicationDAO;
 import com.mungtrainer.mtserver.training.entity.TrainingCourse;
+import com.mungtrainer.mtserver.user.dao.UserDAO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +46,7 @@ public class PaymentService {
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final CourseDAO courseDAO;
+    private final UserDAO userDAO;
     private final TrainingCourseApplicationDAO trainingCourseApplicationDAO;
 
   @Value("${toss.secret-key}")
@@ -146,7 +148,8 @@ public class PaymentService {
     public PaymentCancelResponse cancelPayment(PaymentCancelRequest request, Long userId) {
       Long owner = paymentDAO.findByPaymentKey(request.getPaymentKey())
                              .orElseThrow(()->new CustomException(ErrorCode.PAYMENT_NOT_FOUND)).getCreatedBy();
-      if(!Objects.equals(owner, userId)){
+      boolean isTrainer = userDAO.isConnectedToTrainer(owner,userId);
+      if(!Objects.equals(owner, userId) && !isTrainer){
         throw new CustomException(ErrorCode.PAYMENT_CANCEL_FAILED);
       }
 

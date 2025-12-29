@@ -11,8 +11,6 @@ import com.mungtrainer.mtserver.counseling.dto.response.*;
 import com.mungtrainer.mtserver.counseling.entity.Counseling;
 import com.mungtrainer.mtserver.dog.dao.DogDAO;
 import com.mungtrainer.mtserver.dog.dto.response.DogResponse;
-import com.mungtrainer.mtserver.notification.entity.CounselingNotificationFactory;
-import com.mungtrainer.mtserver.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,10 +26,9 @@ public class CounselingService {
     private final S3Service s3Service;
     private final DogDAO dogDao;
     private final TrainerUserDAO trainerUserDao;
-    private final NotificationService notificationService;
-    private final CounselingNotificationFactory counselingNotificationFactory;
 
 
+    @Transactional
     public CreateCounselingResponse createCounseling(CreateCounselingRequest requestDto, Long userId){
 
         // 1. 반려견 존재 여부 및 소유권 확인
@@ -63,14 +60,6 @@ public class CounselingService {
             throw new CustomException(ErrorCode.COUNSELING_CREATE_FAILED);
         }
 
-        // 4. 상담 신청 알림 전송
-        notificationService.send(
-                counselingNotificationFactory.counselingRequest(
-                        trainerId,
-                        counseling.getCounselingId(), // ← counselingId
-                        userId                        // ← memberId
-                )
-        );
 
 
 
@@ -85,6 +74,7 @@ public class CounselingService {
      * @param userId 사용자 ID
      * @return 취소 성공 여부 메시지
      */
+    @Transactional
     public CancelCounselingResponse cancelCounseling(Long counselingId, Long userId) {
         // 1. 상담 조회
         Counseling counseling = counselingDao.findById(counselingId);
@@ -114,6 +104,7 @@ public class CounselingService {
      * @param trainerId 훈련사 ID
      * @return 상담 반려견 목록
      */
+    @Transactional(readOnly = true)
     public List<CounselingDogResponse> getDogsByCompleted(boolean completed, Long trainerId) {
         // 1. DB에서 반려견 리스트 조회 (훈련사가 관리하는 훈련 과정에 신청한 반려견만)
         List<CounselingDogResponse> dogs = counselingDao.findDogsByCompleted(completed, trainerId);
@@ -150,7 +141,7 @@ public class CounselingService {
      * @return 작성 성공 여부
      */
     @Transactional
-    // <============ (훈련사) 상담 내용 작성 ==============>
+    // <============ (훈련사) 상담 내용 작성 및 수정 ==============>
     public CounselingPostResponse addCounselingContent(
             Long counselingId,
             CounselingPostRequest requestDto,
@@ -163,12 +154,7 @@ public class CounselingService {
             throw new CustomException(ErrorCode.COUNSELING_NOT_FOUND);
         }
 
-        // 2. 완료 여부 확인
-        if (Boolean.TRUE.equals(counseling.getIsCompleted())) {
-            throw new CustomException(ErrorCode.COUNSELING_ALREADY_COMPLETED);
-        }
-
-        // 3. 훈련사 권한 확인 - 해당 상담의 반려견 소유자와 연결되어 있는지 검증
+        // 2. 훈련사 권한 확인 - 해당 상담의 반려견 소유자와 연결되어 있는지 검증
         Long dogOwnerId = dogDao.getUserIdByDogId(counseling.getDogId());
         if (dogOwnerId == null) {
             throw new CustomException(ErrorCode.COUNSELING_NOT_FOUND);
@@ -180,23 +166,17 @@ public class CounselingService {
             throw new CustomException(ErrorCode.COUNSELING_TRAINER_NO_PERMISSION);
         }
 
-        // 4. 상담 내용 업데이트 + 완료 처리
+        // 3. 상담 내용 업데이트 + 완료 처리 (첫 작성 시에만 완료 처리)
         int updatedRows = counselingDao.updateContentAndComplete(counselingId, requestDto.getContent(), trainerId);
         if (updatedRows == 0) {
             throw new CustomException(ErrorCode.COUNSELING_UPDATE_FAILED);
         }
 
-        // 5. 연관된 훈련 신청 상태 변경
-        counselingDao.updateApplicationStatusAfterCounseling(trainerId, counseling.getDogId());
+        // 4. 연관된 훈련 신청 상태 변경 (미완료 상담이었을 경우에만)
+        if (Boolean.FALSE.equals(counseling.getIsCompleted())) {
+            counselingDao.updateApplicationStatusAfterCounseling(trainerId, counseling.getDogId());
+        }
 
-        // 4. 상담 신청 알림 전송
-        notificationService.send(
-                counselingNotificationFactory.counselingCompleted(
-                        dogOwnerId,  // 알림을 보낼 대상
-                        counseling.getCounselingId(), // ← counselingId
-                        trainerId                        // ← 알림을 만든 주체
-                )
-        );
 
         return new CounselingPostResponse(true, "상담 내용이 저장되었습니다.");
     }
@@ -207,6 +187,7 @@ public class CounselingService {
      * @param userId 사용자 ID
      * @return 반려견 정보 + 상담 신청 여부
      */
+    @Transactional(readOnly = true)
     public DogForCounselingResponse getDogForCounseling(Long dogId, Long userId) {
         // 1. DB에서 반려견 정보 + 상담 신청 여부 조회
         DogForCounselingResponse dog = counselingDao.findDogForCounseling(dogId, userId);
@@ -229,6 +210,7 @@ public class CounselingService {
      * @param userId 사용자 ID
      * @return 상담 목록
      */
+    @Transactional(readOnly = true)
     public List<UserCounselingListResponse> getUserCounselings(Long userId) {
         // 1. DB에서 상담 목록 조회
         List<UserCounselingListResponse> counselings = counselingDao.findCounselingsByUserId(userId);
@@ -265,6 +247,7 @@ public class CounselingService {
      * @param userId 사용자 ID
      * @return 상담 상세 정보
      */
+    @Transactional(readOnly = true)
     public UserCounselingDetailResponse getUserCounselingDetail(Long counselingId, Long userId) {
         // 1. DB에서 상담 상세 조회
         UserCounselingDetailResponse counseling = counselingDao.findCounselingDetailById(counselingId, userId);

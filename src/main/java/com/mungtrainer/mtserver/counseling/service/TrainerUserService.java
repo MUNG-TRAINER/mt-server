@@ -34,6 +34,7 @@ public class TrainerUserService {
     private final CounselingDAO counselingDao;
     private final TrainingAttendanceDAO trainingAttendanceDao;
 
+
     /**
      * 결제 기한 (시간)
      * application.yml의 payment.deadline.hours 값 사용
@@ -383,24 +384,34 @@ public class TrainerUserService {
         // 상태 및 거절 사유 검증
         String status = validateApplicationStatusRequest(req.getStatus(), req.getRejectReason());
 
-        // DB 반영
-        int updated = executeStatusUpdate(status, applicationId, null, null, trainerId, req.getRejectReason());
+        // 현재 신청 상태 조회
+        String currentStatus = trainerUserDao.findApplicationStatus(applicationId);
+        if (currentStatus == null) {
+            throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
+        }
 
-        // DB 반영 결과 검증
-        if (updated == 0) {
+        // 승인 처리
+        if ("ACCEPT".equals(status)) {
+            // WAITING 상태인 경우: 미리 승인만 표시 (is_approved = 1)
+            if ("WAITING".equals(currentStatus)) {
+                trainerUserDao.approveWaitingApplication(applicationId);
+                log.info("대기 중인 신청 미리 승인 처리 완료 - applicationId: {}", applicationId);
+                return;
+            }
+
+            // APPLIED 상태인 경우: 기존 로직 수행
+            if ("APPLIED".equals(currentStatus)) {
+                handleApproval(applicationId, trainerId);
+                return;
+            }
+
+            // 그 외 상태는 처리 불가
             throw new CustomException(ErrorCode.APPLICATION_ALREADY_PROCESSED);
         }
 
-//        // 승인 시 출석 정보 생성
-//        if ("ACCEPT".equals(status)) {
-//          createAttendanceRecord(applicationId, trainerId);
-//        }
-
-        // 승인/거절 처리
-        if ("ACCEPT".equals(status)) {
-          handleApproval(applicationId, trainerId);
-        } else if ("REJECTED".equals(status)) {
-          handleRejection(applicationId, trainerId, req.getRejectReason());
+        // 거절 처리
+        if ("REJECTED".equals(status)) {
+            handleRejection(applicationId, trainerId, req.getRejectReason());
         }
     }
 
@@ -421,17 +432,34 @@ public class TrainerUserService {
         // 상태 및 거절 사유 검증
         String status = validateApplicationStatusRequest(req.getStatus(), req.getRejectReason());
 
-        // DB 일괄 반영
-        int updated = executeStatusUpdate(status, null, courseId, dogId, trainerId, req.getRejectReason());
+        // 승인 처리
+        if ("ACCEPT".equals(status)) {
+            // 1. APPLIED 상태 일괄 승인 (ACCEPT로 변경)
+            int appliedUpdated = executeStatusUpdate(status, null, courseId, dogId, trainerId, null);
 
-        // DB 반영 결과 검증
-        if (updated == 0) {
-            throw new CustomException(ErrorCode.APPLICATION_NO_MATCHING_RECORD);
+            // 2. WAITING 상태 미리 승인 (is_approved = 1로 설정, 상태는 WAITING 유지)
+            List<Long> waitingApplicationIds = trainerUserDao.findWaitingApplicationIdsByCourseAndDog(courseId, dogId);
+            for (Long applicationId : waitingApplicationIds) {
+                trainerUserDao.approveWaitingApplication(applicationId);
+            }
+
+            log.info("일괄 승인 완료 - 코스 ID: {}, 반려견 ID: {}, APPLIED 처리: {}건, WAITING 미리 승인: {}건",
+                     courseId, dogId, appliedUpdated, waitingApplicationIds.size());
+
+            // 3. ACCEPT 상태 신청에 대해 출석 정보 생성
+            if (appliedUpdated > 0) {
+                createBulkAttendanceRecords(courseId, dogId, trainerId);
+            }
+
+            return;
         }
 
-        // 승인 시 해당 코스의 모든 신청에 대해 출석 정보 일괄 생성
-        if ("ACCEPT".equals(status)) {
-            createBulkAttendanceRecords(courseId, dogId, trainerId);
+        // 거절 처리
+        if ("REJECTED".equals(status)) {
+            int updated = executeStatusUpdate(status, null, courseId, dogId, trainerId, req.getRejectReason());
+            if (updated == 0) {
+                throw new CustomException(ErrorCode.APPLICATION_NO_MATCHING_RECORD);
+            }
         }
     }
 
@@ -590,7 +618,7 @@ public class TrainerUserService {
    *    - 여유 있음 → ACCEPT (출석 정보 생성)
    *    - 정원 초과 → WAITING (대기열 전환, 출석 정보 생성 안함)
    *
-   * ⭐ 중요: WAITING은 "승인했지만 정원이 꽉 차서 대기"라는 의미
+   *  중요: WAITING은 "승인했지만 정원이 꽉 차서 대기"라는 의미
    */
   private void handleApproval(Long applicationId, Long trainerId) {
     log.info("승인 처리 시작 - applicationId: {}", applicationId);
@@ -620,14 +648,6 @@ public class TrainerUserService {
       trainerUserDao.updateApplicationStatusSimple(applicationId, "WAITING");
       trainerUserDao.insertWaiting(applicationId, trainerId);
 
-      // ⭐ 사용자에게 대기 진입 알림
-      // "승인되었으나 정원이 마감되어 대기 중입니다.
-      //  취소 발생 시 자동으로 승인 완료되며 결제를 진행하실 수 있습니다."
-      // TODO: notificationService.sendToUser(
-      //     userId,
-      //     "승인 완료 (대기)",
-      //     "트레이너가 승인했으나 정원이 마감되어 대기 중입니다. 자리가 생기면 자동으로 결제 가능합니다."
-      // );
 
     } else {
       // 정원 여유 - 승인 완료
@@ -642,17 +662,15 @@ public class TrainerUserService {
       // 기존 createAttendanceRecord 메서드 활용
       createAttendanceRecord(applicationId, trainerId);
 
-      // ⭐ 사용자에게 승인 완료 알림
-      // TODO: notificationService.sendToUser(
-      //     userId,
-      //     "승인 완료",
-      //     "훈련 신청이 승인되었습니다! 결제를 진행해주세요."
-      // );
     }
   }
 
   /**
    * 거절 처리 - 기존 거절 로직 실행 후 대기자 자동 승격
+   *
+   *  트랜잭션: 상위 메서드(updateApplicationStatus)의 트랜잭션에 참여
+   *             거절 처리와 대기자 승격이 하나의 트랜잭션으로 처리됩니다.
+   *             대기자 승격 실패 시 거절도 함께 롤백됩니다.
    */
   private void handleRejection(Long applicationId, Long trainerId, String rejectReason) {
     log.info("거절 처리 시작 - applicationId: {}", applicationId);
@@ -762,17 +780,6 @@ public class TrainerUserService {
       throw new CustomException(ErrorCode.ATTENDANCE_CREATION_FAILED);
     }
 
-    // 락 해제 (메서드 종료 시 자동)
-    // 커밋 시점에 락이 해제되며, 다음 대기 중인 트랜잭션이 락을 획득
 
-    // 6. 사용자에게 결제 안내 알림
-    // "대기가 해제되었습니다! 결제를 진행해주세요."
-    // TODO: notificationService.sendToUser(
-    //     applicationId,
-    //     "승인 완료",
-    //     "대기가 해제되어 자동으로 승인 완료되었습니다! {}시간 내에 결제를 진행해주세요.",
-    //     paymentDeadlineHours,
-    //     "/payments/" + nextApplicationId
-    // );
   }
 }

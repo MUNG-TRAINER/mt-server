@@ -27,7 +27,7 @@ public interface PaymentDAO {
   List<OrderItem> findOrderItemsByOrderId(Long orderId);
 
   /**
-   *  UserId로 Log 조회
+   *  UserId로 payments 조회
    */
   List<PaymentLogResponse> findLogsByUserId(Long userId);
 

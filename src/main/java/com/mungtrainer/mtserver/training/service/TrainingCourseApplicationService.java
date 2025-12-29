@@ -6,6 +6,7 @@ import com.mungtrainer.mtserver.common.s3.S3Service;
 import com.mungtrainer.mtserver.counseling.dao.TrainerUserDAO;
 import com.mungtrainer.mtserver.training.dao.ApplicationDAO;
 import com.mungtrainer.mtserver.training.dao.TrainingAttendanceDAO;
+import com.mungtrainer.mtserver.training.dao.TrainingSessionDAO;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationCancelRequest;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationRequest;
 import com.mungtrainer.mtserver.order.dto.request.WishlistApplyRequest;
@@ -16,10 +17,12 @@ import com.mungtrainer.mtserver.training.entity.TrainingCourseApplication;
 import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,8 +33,17 @@ public class TrainingCourseApplicationService {
 
     private final ApplicationDAO applicationDao;
     private final S3Service s3Service;
-    private final TrainerUserDAO trainerUserDao;  // ← 추가
-    private final TrainingAttendanceDAO trainingAttendanceDao;  // ← 추가
+    private final TrainerUserDAO trainerUserDao;
+    private final TrainingAttendanceDAO trainingAttendanceDao;
+    private final TrainingSessionDAO trainingSessionDao;
+
+    /**
+     * 수업 시작 마감 시간 (시간)
+     * application.yml의 session.deadline.hours 값 사용
+     * 기본값: 24시간
+     */
+    @Value("${session.deadline.hours:24}")
+    private int sessionDeadlineHours;
 
     // 엔티티를 dto로 변환
     private ApplicationResponse toResponse(TrainingCourseApplication application) {
@@ -168,6 +180,24 @@ public class TrainingCourseApplicationService {
         for (TrainingSession session : sessions) {
             Long sessionId = session.getSessionId();
 
+            // ========================================
+            // 수업 시작 마감 시간 검증
+            // ========================================
+            LocalDateTime sessionStart = LocalDateTime.of(
+                session.getSessionDate(),
+                session.getStartTime()
+            );
+            LocalDateTime deadline = sessionStart.minusHours(sessionDeadlineHours);
+
+            if (LocalDateTime.now().isAfter(deadline)) {
+                // 다회차의 경우 일부 회차만 마감되어도 전체 신청 불가
+                log.warn("수업 마감 시간 초과 - 회차: {}, 마감 시간: {}",
+                    session.getSessionNo(),
+                    deadline.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+                throw new CustomException(ErrorCode.SESSION_DEADLINE_PASSED);
+            }
+            // ========================================
+
             // 중복 신청 체크
             boolean exists = applicationDao.existsByDogAndSession(request.getDogId(), sessionId);
             if (exists) {
@@ -293,32 +323,49 @@ public class TrainingCourseApplicationService {
       }
     }
     /**
-     * 여러 신청 일괄 취소 및 대기자 자동 승격
+     * 여러 신청 일괄 취소 및 대기자 자동 승격 (applicationId 기반)
      *
      * 트랜잭션: @Transactional이므로 출석 정보 생성 실패 시 전체 롤백됩니다.
+     *
+     * 보안:
+     * - 소유권 검증: 본인의 신청만 취소 가능
+     * - 상태 검증: APPLIED, WAITING, ACCEPT 상태만 취소 가능
      */
     @Transactional
     public void cancelApplicationsByCourses(
             Long userId,
             ApplicationCancelRequest request
     ) {
-        List<Long> courseIds = request.getCourseIds();
+        List<Long> applicationIds = request.getApplicationIds();
 
-        if (courseIds == null || courseIds.isEmpty()) {
+        if (applicationIds == null || applicationIds.isEmpty()) {
             throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
         }
 
-        // 1️⃣ 코스 기준으로 취소 가능한 application 조회
+        log.info("신청 취소 요청 - userId: {}, applicationIds: {}", userId, applicationIds);
+
+        // 1️⃣ applicationId 기준으로 취소 가능한 application 조회
+        // 소유권 및 상태 검증이 쿼리에서 처리됨 (dog.user_id = userId, status IN ('APPLIED', 'WAITING', 'ACCEPT'))
         List<TrainingCourseApplication> apps =
-                applicationDao.findCancelableApplicationsByUserAndCourses(
-                        userId, courseIds
+                applicationDao.findCancelableApplicationsByIds(
+                        userId, applicationIds
                 );
 
         if (apps.isEmpty()) {
+            log.warn("취소 가능한 신청이 없음 - userId: {}, applicationIds: {}", userId, applicationIds);
             throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
         }
 
-        // 2️⃣ session 단위 그룹핑 (대기자 승격용)
+        // 2️⃣ 요청한 모든 applicationId가 유효한지 확인 (소유권 또는 상태 문제)
+        if (apps.size() != applicationIds.size()) {
+            log.warn("일부 신청 취소 불가 - 요청: {}, 취소 가능: {} (소유권 또는 상태 문제)",
+                    applicationIds.size(), apps.size());
+            throw new CustomException(ErrorCode.UNAUTHORIZED_APPLICATION);
+        }
+
+        log.info("취소 가능한 신청 확인 완료 - {} 건", apps.size());
+
+        // 3️⃣ session 단위 그룹핑 (대기자 승격용)
         Map<Long, List<Long>> sessionMap = new HashMap<>();
 
         for (TrainingCourseApplication app : apps) {
@@ -327,20 +374,20 @@ public class TrainingCourseApplicationService {
                     .add(app.getApplicationId());
         }
 
-        // 3️⃣ 세션별 취소 + 대기자 승격
+        // 4️⃣ 세션별 취소 + 대기자 승격
         for (Map.Entry<Long, List<Long>> entry : sessionMap.entrySet()) {
             Long sessionId = entry.getKey();
-            List<Long> applicationIds = entry.getValue();
+            List<Long> appIds = entry.getValue();
 
             // 신청 취소
-            applicationDao.updateApplicationStatusBatch(applicationIds, "CANCELLED");
-            applicationDao.updateWaitingStatusBatch(applicationIds, "CANCELLED");
+            applicationDao.updateApplicationStatusBatch(appIds, "CANCELLED");
+            applicationDao.updateWaitingStatusBatch(appIds, "CANCELLED");
 
             // 대기자 승격 (새 로직: WAITING → ACCEPT)
             List<Long> waitingList = applicationDao.findWaitingBySessionId(sessionId);
 
             // 취소된 인원만큼 대기자 승격
-            int promotionCount = Math.min(applicationIds.size(), waitingList.size());
+            int promotionCount = Math.min(appIds.size(), waitingList.size());
 
             for (int i = 0; i < promotionCount; i++) {
                 Long nextApplicationId = waitingList.get(i);
