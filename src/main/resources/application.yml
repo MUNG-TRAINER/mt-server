@@ -26,12 +26,17 @@ mybatis:
     default-fetch-size: 100 # 한번에 가져올 DB row 수
     default-statement-timeout: 30 # 쿼리 실행 제한 시간 (초)
   mapper-locations: classpath:mapper/**/*.xml
-
+logging:
+  level:
+    org.mybatis: debug
+    org.apache.ibatis: debug
 
 aws:
   s3:
     bucket: ${AWS_BUCKET_NAME}
     region: ${AWS_DEFAULT_REGION}
+    accessKeyId: ${AWS_ACCESS_KEY_ID}
+    secretAccessKey: ${AWS_SECRET_ACCESS_KEY}
     presigned-url:
       expiration-minutes: 10
 # ===== Actuator 설정 추가 =====
@@ -57,3 +62,9 @@ session:
   deadline:
     enabled: true  # 기능 활성화 여부 (긴급 롤백 시 false로 변경)
     hours: 24      # 수업 시작 전 마감 시간 (시간)
+
+# 과정 상태 자동 업데이트 설정
+course:
+  status:
+    update:
+      enabled: true  # 기능 활성화 여부 (긴급 롤백 시 false로 변경)
