@@ -86,13 +86,15 @@
                 AND ta.deleted_at IS NULL
             </update>
 
-            <!-- 출석 상태 업데이트 (attendanceId 기반) -->
+            <!-- 출석 상태 업데이트 (attendanceId 기반, 결제 완료된 신청만) -->
             <update id="updateStatusByAttendanceId">
                 UPDATE training_attendance ta
+                INNER JOIN training_course_application tca ON ta.application_id = tca.application_id
                 SET ta.status = #{status},
                     ta.memo = #{memo},
                     ta.updated_at = NOW()
                 WHERE ta.attendance_id = #{attendanceId}
+                AND tca.status = 'PAID'
                 AND ta.deleted_at IS NULL
             </update>
 

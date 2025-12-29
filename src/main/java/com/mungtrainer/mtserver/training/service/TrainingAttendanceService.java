@@ -29,11 +29,9 @@ package com.mungtrainer.mtserver.training.service;
              List<AttendanceListResponse> attendanceList = trainingAttendanceMapper.findBySessionId(sessionId);
 
              // 반려견 프로필 이미지를 Presigned URL로 변환
-             List<AttendanceListResponse> result = attendanceList.stream()
+             return attendanceList.stream()
                      .map(this::convertProfileImageToPresignedUrl)
                      .collect(Collectors.toList());
-
-             return result;
          }
 
          /**
