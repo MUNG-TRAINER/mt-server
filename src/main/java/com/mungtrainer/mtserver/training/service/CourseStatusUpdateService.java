@@ -1,6 +1,7 @@
 package com.mungtrainer.mtserver.training.service;
 
 import com.mungtrainer.mtserver.training.dao.CourseDAO;
+import com.mungtrainer.mtserver.training.dao.TrainingSessionDAO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,19 @@ import org.springframework.transaction.annotation.Transactional;
 public class CourseStatusUpdateService {
 
     private final CourseDAO courseDAO;
+    private final TrainingSessionDAO trainingSessionDAO;
+
+    /**
+     * 세션 상태를 DONE으로 변경 (별도 트랜잭션)
+     *
+     * <p>종료 시간이 지난 세션을 DONE으로 변경
+     *
+     * @return 변경된 세션 수
+     */
+    @Transactional
+    public int updateSessionToDone() {
+        return trainingSessionDAO.updateSessionStatusToDone();
+    }
 
     /**
      * 과정 상태를 IN_PROGRESS로 변경 (별도 트랜잭션)

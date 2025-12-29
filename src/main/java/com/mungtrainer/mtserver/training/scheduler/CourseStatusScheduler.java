@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
  * <p>주기: 10분마다 실행
  * <p>기능:
  * <ul>
+ *   <li>세션 종료 시간이 지난 세션: → DONE</li>
  *   <li>첫 번째 세션이 시작된 과정: SCHEDULED → IN_PROGRESS</li>
  *   <li>모든 세션이 종료된 과정: IN_PROGRESS → DONE</li>
  *   <li>진행중(IN_PROGRESS) 과정은 신청 불가</li>
@@ -70,10 +71,21 @@ public class CourseStatusScheduler {
             return;
         }
 
-        log.info("=== 훈련 과정 상태 업데이트 시작 ===");
+        log.info("=== 훈련 과정/세션 상태 업데이트 시작 ===");
 
+        int sessionDoneCount = 0;
         int inProgressCount = 0;
         int completedCount = 0;
+
+        // 0. 세션 종료 (Session → DONE) - 별도 트랜잭션
+        try {
+            sessionDoneCount = courseStatusUpdateService.updateSessionToDone();
+            if (sessionDoneCount > 0) {
+                log.info("종료로 변경된 세션: {}건", sessionDoneCount);
+            }
+        } catch (Exception e) {
+            log.error("세션 종료 상태 변경 중 오류 발생 - 다음 스케줄링 시 재시도", e);
+        }
 
         // 1. SCHEDULED → IN_PROGRESS (첫 세션 시작됨) - 별도 트랜잭션
         try {
@@ -95,12 +107,10 @@ public class CourseStatusScheduler {
             log.error("과정 종료 상태 변경 중 오류 발생 - 다음 스케줄링 시 재시도", e);
         }
 
-        if (inProgressCount == 0 && completedCount == 0) {
-            log.debug("상태 변경이 필요한 과정이 없습니다.");
+        if (sessionDoneCount == 0 && inProgressCount == 0 && completedCount == 0) {
+            log.debug("상태 변경이 필요한 과정/세션이 없습니다.");
         }
 
-
-        log.info("=== 훈련 과정 상태 업데이트 종료 ===");
+        log.info("=== 훈련 과정/세션 상태 업데이트 종료 ===");
     }
 }
-
