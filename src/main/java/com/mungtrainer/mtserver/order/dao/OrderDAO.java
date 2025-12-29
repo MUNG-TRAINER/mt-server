@@ -22,7 +22,7 @@ public interface OrderDAO {
     /**
      * 주문 item 생성
      */
-    void insertOrderItems(@Param("courseIds") List<Long> courseIds, Long userId, Long orderId);
+    void insertOrderItems(@Param("applicationIds") List<Long> applicationIds, Long userId, Long orderId);
 
   /**
      * 주문 항목 생성
