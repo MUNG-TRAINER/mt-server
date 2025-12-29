@@ -152,6 +152,8 @@ public class UserService {
 		User user = userMapper.findById(userId)
 			.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 		Optional<String> fcmToken = userMapper.findUserFCMTokenByUserName(userName);
+		System.out.println(userName);
+		System.out.println(fcmToken);
 		return UserFCMTokenResponse.builder().fcmToken(fcmToken.orElse(null)).build();
 	}
 

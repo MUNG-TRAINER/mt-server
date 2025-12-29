@@ -29,11 +29,9 @@ package com.mungtrainer.mtserver.training.service;
              List<AttendanceListResponse> attendanceList = trainingAttendanceMapper.findBySessionId(sessionId);
 
              // 반려견 프로필 이미지를 Presigned URL로 변환
-             List<AttendanceListResponse> result = attendanceList.stream()
+             return attendanceList.stream()
                      .map(this::convertProfileImageToPresignedUrl)
                      .collect(Collectors.toList());
-
-             return result;
          }
 
          /**
@@ -57,15 +55,14 @@ package com.mungtrainer.mtserver.training.service;
          }
 
          /**
-          * 특정 세션의 특정 회원 출석 상태 변경
+          * 특정 반려견의 출석 상태 변경
           */
          @Transactional
-         public void updateAttendanceStatus(Long sessionId, String userName, AttendanceUpdateRequest request) {
+         public void updateAttendanceStatus(Long attendanceId, AttendanceUpdateRequest request) {
 
-             // 출석 상태 업데이트
-             int updatedCount = trainingAttendanceMapper.updateStatus(
-                 sessionId,
-                 userName,
+             // 출석 상태 업데이트 (attendanceId로 직접 업데이트)
+             int updatedCount = trainingAttendanceMapper.updateStatusByAttendanceId(
+                 attendanceId,
                  request.getStatus(),
                  request.getMemo()
              );
