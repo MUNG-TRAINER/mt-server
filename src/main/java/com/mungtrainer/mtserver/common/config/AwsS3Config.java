@@ -8,12 +8,6 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 public class AwsS3Config {
 
-  @Value("${aws.s3.accessKeyId}")
-  private String accessKey;
-
-  @Value("${aws.s3.secretAccessKey}")
-  private String secretKey;
-
   @Value("${aws.s3.region}")
   private String region;
 
