@@ -16,6 +16,7 @@ import com.mungtrainer.mtserver.order.entity.OrderItem;
 import com.mungtrainer.mtserver.order.entity.OrderMaster;
 import com.mungtrainer.mtserver.order.entity.Payment;
 import com.mungtrainer.mtserver.order.entity.PaymentLog;
+import com.mungtrainer.mtserver.trainer.dao.TrainerDAO;
 import com.mungtrainer.mtserver.training.dao.CourseDAO;
 import com.mungtrainer.mtserver.training.dao.TrainingCourseApplicationDAO;
 import com.mungtrainer.mtserver.training.entity.TrainingCourse;
@@ -47,6 +48,7 @@ public class PaymentService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final CourseDAO courseDAO;
     private final UserDAO userDAO;
+    private final TrainerDAO trainerDAO;
     private final TrainingCourseApplicationDAO trainingCourseApplicationDAO;
 
   @Value("${toss.secret-key}")
@@ -79,7 +81,7 @@ public class PaymentService {
                                            .map(PaymentPrepareRequest.PaymentRequestItem::getApplicationId)
                                            .toList();
         int size = paymentDAO.getSizeByApplicationIds(applicationIds, userId);
-
+        Long trainerId = trainerDAO.findTrainerIdByUserId(userId);
         // 2. applicationIds로 sessions 합계 금액 확인하기
         int cost = paymentDAO.getCostByApplicationIds(applicationIds, userId);
         // 3-1. orderName 정하기
@@ -129,6 +131,7 @@ public class PaymentService {
                 .amount(order.getTotalAmount())
                 .isCompleted(isCompleted)
                 .orderName(orderName)
+                .trainerId(trainerId)
                 .build();
     }
 
