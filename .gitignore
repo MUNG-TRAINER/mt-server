@@ -1,3 +1,6 @@
+.classpath
+.project
+mt-server.iml
 HELP.md
 .gradle
 build/

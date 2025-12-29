@@ -1,5 +1,13 @@
 package com.mungtrainer.mtserver.auth.service;
 
+import java.security.SecureRandom;
+import java.util.Objects;
+import java.util.Random;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.mungtrainer.mtserver.auth.dao.AuthDAO;
 import com.mungtrainer.mtserver.auth.dto.request.AuthTrainerJoinRequest;
 import com.mungtrainer.mtserver.auth.dto.request.AuthUserJoinRequest;
@@ -11,193 +19,195 @@ import com.mungtrainer.mtserver.common.exception.ErrorCode;
 import com.mungtrainer.mtserver.trainer.entity.TrainerProfile;
 import com.mungtrainer.mtserver.trainer.entity.TrainerUser;
 import com.mungtrainer.mtserver.user.entity.User;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
-import java.util.Random;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-  private final AuthDAO authDAO;
-  private final PasswordEncoder passwordEncoder;
+	private final AuthDAO authDAO;
+	private final PasswordEncoder passwordEncoder;
 
-  public enum Role {
-    USER, TRAINER, ADMIN
-  }
+	public enum Role {
+		USER, TRAINER, ADMIN
+	}
 
-  @Transactional
-  public void passwordChange(PasswordChangeRequest request, String userName){
-    User user = authDAO.findByUserName(userName);
-    // 유저 확인
-    if (user == null) {
-      throw new CustomException(ErrorCode.NOT_FOUND_USERNAME);
-    }
-    // 기존 비밀번호 확인
-    if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
-      throw new CustomException(ErrorCode.INVALID_OLD_PASSWORD);
-    }
+	@Transactional
+	public void passwordChange(PasswordChangeRequest request, String userName) {
+		User user = authDAO.findByUserName(userName);
+		// 유저 확인
+		if (user == null) {
+			throw new CustomException(ErrorCode.NOT_FOUND_USERNAME);
+		}
+		// 기존 비밀번호 확인
+		if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+			throw new CustomException(ErrorCode.INVALID_OLD_PASSWORD);
+		}
 
-    // 새로운 비밀번호 확인
-    if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-      throw new CustomException(ErrorCode.INVALID_CONFIRM_PASSWORD);
-    }
+		// 새로운 비밀번호 확인
+		if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+			throw new CustomException(ErrorCode.INVALID_CONFIRM_PASSWORD);
+		}
 
-    // 새 비밀번호 암호화 후 저장
-    String password = passwordEncoder.encode(request.getNewPassword());
-    authDAO.updatePassword(user.getUserId(), password);
+		// 새 비밀번호 암호화 후 저장
+		String password = passwordEncoder.encode(request.getNewPassword());
+		authDAO.updatePassword(user.getUserId(), password);
 
-  }
+	}
 
-  @Transactional
-  public AuthDuplicatedCheckResponse emailDuplicatedCheck(String email) {
-    boolean isValid = !authDAO.existsEmail(email);
-    return AuthDuplicatedCheckResponse.builder()
-        .isValid(isValid)
-        .message(isValid ? "사용 가능 이메일입니다." : "사용 중인 이메일입니다.")
-        .build();
-  }
+	@Transactional
+	public AuthDuplicatedCheckResponse emailDuplicatedCheck(String email) {
+		boolean isValid = !authDAO.existsEmail(email);
+		return AuthDuplicatedCheckResponse.builder()
+			.isValid(isValid)
+			.message(isValid ? "사용 가능 이메일입니다." : "사용 중인 이메일입니다.")
+			.build();
+	}
 
-  @Transactional(readOnly = true)
-  public AuthDuplicatedCheckResponse userNameDuplicatedCheck(String userName) {
-    boolean isValid = !authDAO.existsUsername(userName);
-    return AuthDuplicatedCheckResponse.builder()
-        .isValid(isValid)
-        .message(isValid ? "사용 가능한 아이디입니다." : "사용 중인 아이디입니다.")
-        .build();
-  }
+	@Transactional(readOnly = true)
+	public AuthDuplicatedCheckResponse userNameDuplicatedCheck(String userName) {
+		boolean isValid = !authDAO.existsUsername(userName);
+		return AuthDuplicatedCheckResponse.builder()
+			.isValid(isValid)
+			.message(isValid ? "사용 가능한 아이디입니다." : "사용 중인 아이디입니다.")
+			.build();
+	}
 
-  @Transactional
-  public AuthJoinResponse userJoin(AuthUserJoinRequest req) {
-    // 비밀번호 암호화
-    String encodePassword = passwordEncoder.encode(req.getPassword());
+	@Transactional
+	public AuthJoinResponse userJoin(AuthUserJoinRequest req) {
+		// 비밀번호 암호화
+		String encodePassword = passwordEncoder.encode(req.getPassword());
 
-    // trainer_id 검색
-    if (!authDAO.existsRegistCode(req.getRegistCode())){
-      throw new CustomException(ErrorCode.INVALID_REGIST_CODE);
-    }
-    long trainerId = authDAO.findTrainerIdByRegistCode(req.getRegistCode());
+		// trainer_id 검색
+		if (!authDAO.existsRegistCode(req.getRegistCode())) {
+			throw new CustomException(ErrorCode.INVALID_REGIST_CODE);
+		}
+		long trainerId = authDAO.findTrainerIdByRegistCode(req.getRegistCode());
 
-    // userName 중복 확인
-    if (authDAO.existsUsername(req.getUserName())) {
-      throw new CustomException(ErrorCode.USER_USERNAME_DUPLICATE);
-    }
-    // Email 중복 확인
-    if (authDAO.existsEmail(req.getEmail())) {
-      throw new CustomException(ErrorCode.USER_EMAIL_DUPLICATE);
-    }
+		// userName 중복 확인
+		if (authDAO.existsUsername(req.getUserName())) {
+			throw new CustomException(ErrorCode.USER_USERNAME_DUPLICATE);
+		}
+		// Email 중복 확인
+		if (authDAO.existsEmail(req.getEmail())) {
+			throw new CustomException(ErrorCode.USER_EMAIL_DUPLICATE);
+		}
 
-    User user = User.builder()
-                    .userName(req.getUserName())
-                    .name(req.getName())
-                    .birth(req.getBirth())
-                    .email(req.getEmail())
-                    .phone(req.getPhone())
-                    .password(encodePassword)
-                    .role(Role.USER.name())
-                    .isAgree(req.getIsAgree())
-                    .sido(req.getSido())
-                    .sigungu(req.getSigungu())
-                    .roadname(req.getRoadname())
-                    .restAddress(req.getRestAddress())
-                    .postcode(req.getPostcode())
-                    .createdBy(1L)
-                    .updatedBy(1L)
-                    .build();
+		User user = User.builder()
+			.userName(req.getUserName())
+			.name(req.getName())
+			.birth(req.getBirth())
+			.email(req.getEmail())
+			.phone(req.getPhone())
+			.password(encodePassword)
+			.role(Role.USER.name())
+			.isAgree(req.getIsAgree())
+			.sido(req.getSido())
+			.sigungu(req.getSigungu())
+			.roadname(req.getRoadname())
+			.restAddress(req.getRestAddress())
+			.postcode(req.getPostcode())
+			.createdBy(1L)
+			.updatedBy(1L)
+			.build();
 
-    authDAO.insertUser(user);
+		authDAO.insertUser(user);
 
-    authDAO.insertTrainerUser(TrainerUser.builder()
-                                  .userId(user.getUserId())
-                                  .trainerId(trainerId)
-                                  .createdBy(user.getUserId())
-                                  .updatedBy(user.getUserId())
-                                  .build());
+		authDAO.insertTrainerUser(TrainerUser.builder()
+			.userId(user.getUserId())
+			.trainerId(trainerId)
+			.createdBy(user.getUserId())
+			.updatedBy(user.getUserId())
+			.build());
 
-    return AuthJoinResponse.builder()
-                           .userId(user.getUserId())
-                           .userName(user.getUserName())
-                           .email(user.getEmail())
-                           .build();
-  }
+		return AuthJoinResponse.builder()
+			.userId(user.getUserId())
+			.userName(user.getUserName())
+			.email(user.getEmail())
+			.build();
+	}
 
-  @Transactional
-  public AuthJoinResponse trainerJoin(AuthTrainerJoinRequest req) {
+	@Transactional
+	public AuthJoinResponse trainerJoin(AuthTrainerJoinRequest req) {
 
-    // 비밀번호 암호화
-    String encodePassword = passwordEncoder.encode(req.getPassword());
+		// 비밀번호 암호화
+		String encodePassword = passwordEncoder.encode(req.getPassword());
 
-    // 가입 코드 생성
-    String registCode;
-    do {
-      registCode = generateRegistCode(8);
-    } while (authDAO.existsRegistCode((registCode)));
+		// 가입 코드 생성
+		String registCode;
+		do {
+			registCode = generateRegistCode(8);
+		} while (authDAO.existsRegistCode((registCode)));
 
+		User user = User.builder()
+			.userName(req.getUserName())
+			.name(req.getName())
+			.birth(req.getBirth())
+			.email(req.getEmail())
+			.phone(req.getPhone())
+			.password(encodePassword)
+			.role(Role.TRAINER.name())
+			.isAgree(req.getIsAgree())
+			.sido(req.getSido())
+			.sigungu(req.getSigungu())
+			.roadname(req.getRoadname())
+			.restAddress(req.getRestAddress())
+			.postcode(req.getPostcode())
+			.createdBy(1L)
+			.updatedBy(1L)
+			.build();
 
-    User user = User.builder()
-        .userName(req.getUserName())
-        .name(req.getName())
-        .birth(req.getBirth())
-        .email(req.getEmail())
-        .phone(req.getPhone())
-        .password(encodePassword)
-        .role(Role.TRAINER.name())
-        .isAgree(req.getIsAgree())
-        .sido(req.getSido())
-        .sigungu(req.getSigungu())
-        .roadname(req.getRoadname())
-        .restAddress(req.getRestAddress())
-        .postcode(req.getPostcode())
-        .createdBy(1L)
-        .updatedBy(1L)
-        .build();
+		authDAO.insertUser(user);
 
-    authDAO.insertUser(user);
+		TrainerProfile profile = TrainerProfile.builder()
+			.trainerId(user.getUserId())
+			.careerInfo(req.getCareerInfo())
+			.introduce(req.getIntroduce())
+			.description(req.getDescription())
+			.style(req.getStyle())
+			.tag(req.getTag())
+			.registCode(registCode)
+			.certificationImageUrl(req.getCertificationImageUrl())
+			.createdBy(user.getUserId())
+			.updatedBy(user.getUserId())
+			.build();
 
-    TrainerProfile profile = TrainerProfile.builder()
-        .trainerId(user.getUserId())
-        .careerInfo(req.getCareerInfo())
-        .introduce(req.getIntroduce())
-        .description(req.getDescription())
-        .style(req.getStyle())
-        .tag(req.getTag())
-        .registCode(registCode)
-        .certificationImageUrl(req.getCertificationImageUrl())
-        .createdBy(user.getUserId())
-        .updatedBy(user.getUserId())
-        .build();
+		authDAO.insertTrainerProfile(profile);
 
-    authDAO.insertTrainerProfile(profile);
+		return AuthJoinResponse.builder()
+			.userId(user.getUserId())
+			.userName(user.getUserName())
+			.email(user.getEmail())
+			.build();
+	}
 
-    return AuthJoinResponse.builder()
-        .userId(user.getUserId())
-        .userName(user.getUserName())
-        .email(user.getEmail())
-        .build();
-  }
+	@Transactional
+	public void updateRefreshToken(Long userId, String refreshToken) {
+		authDAO.updateRefreshToken(userId, refreshToken);
+	}
 
-  @Transactional
-  public void updateRefreshToken(Long userId, String refreshToken) {
-    authDAO.updateRefreshToken(userId, refreshToken);
-  }
+	@Transactional
+	public void updateFcmToken(Long userId, String userName, String fcmToken) {
+		User user = authDAO.findByUserName(userName);
+		if (Objects.equals(user.getFcmToken(), fcmToken)) {
+			return;
+		}
+		authDAO.updateFcmToken(userId, fcmToken);
+	}
 
-  // TODO: User에 옮겨야 함.
-  public User findByUserName(String userName) {
-    return authDAO.findByUserName(userName);
-  }
+	// TODO: User에 옮겨야 함.
+	public User findByUserName(String userName) {
+		return authDAO.findByUserName(userName);
+	}
 
-  private String generateRegistCode(int length) {
-    String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    StringBuilder sb = new StringBuilder();
+	private String generateRegistCode(int length) {
+		String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+		StringBuilder sb = new StringBuilder();
 
-    Random random = new SecureRandom();
-    for (int i = 0; i < length; i++) {
-      sb.append(chars.charAt(random.nextInt(chars.length())));
-    }
-    return sb.toString();
-  }
+		Random random = new SecureRandom();
+		for (int i = 0; i < length; i++) {
+			sb.append(chars.charAt(random.nextInt(chars.length())));
+		}
+		return sb.toString();
+	}
 }
-

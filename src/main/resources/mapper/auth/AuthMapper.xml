@@ -107,4 +107,12 @@
         INSERT INTO trainer_user (user_id, trainer_id, created_at,updated_at,created_by,updated_by)
         VALUES (#{userId}, #{trainerId},NOW(),NOW(),#{createdBy},#{updatedBy})
     </insert>
+     <update id="updateFcmToken">
+        UPDATE user
+        SET
+        fcm_token = #{fcmToken},
+        updated_by = #{userId},
+        updated_at = NOW()
+        WHERE user_id = #{userId}
+    </update>
 </mapper>
