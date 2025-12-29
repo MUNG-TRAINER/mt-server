@@ -11,6 +11,7 @@ import com.mungtrainer.mtserver.training.dto.request.ApplicationCancelRequest;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationRequest;
 import com.mungtrainer.mtserver.order.dto.request.WishlistApplyRequest;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationListViewResponse;
+import com.mungtrainer.mtserver.training.dto.response.ApplicationRawData;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationResponse;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationStatusResponse;
 import com.mungtrainer.mtserver.training.entity.TrainingCourseApplication;
@@ -25,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.LinkedHashMap;
 
 @Slf4j
 @Service
@@ -92,18 +94,26 @@ public class TrainingCourseApplicationService {
             updateApplicationStatusIfExpired(app);
         }
 
-        // 1. DAO에서 리스트 조회
-        List<ApplicationListViewResponse> list = applicationDao.findApplicationListViewByUserId(userId);
-        if (list == null || list.isEmpty()) return Collections.emptyList();
+        // 1. DAO에서 세션별 Raw Data 조회
+        List<ApplicationRawData> rawDataList = applicationDao.findApplicationListViewByUserId(userId);
+        if (rawDataList == null || rawDataList.isEmpty()) return Collections.emptyList();
 
-        // 2. S3 key 수집
-        List<String> imageKeys = list.stream()
-                .map(ApplicationListViewResponse::getMainImage)
+        // 2. 과정(courseId + dogId) 단위로 그룹핑
+        Map<String, List<ApplicationRawData>> groupedByCourseAndDog = rawDataList.stream()
+                .collect(Collectors.groupingBy(
+                        data -> data.getCourseId() + "_" + data.getDogId(),
+                        LinkedHashMap::new, // 순서 유지
+                        Collectors.toList()
+                ));
+
+        // 3. S3 key 수집
+        List<String> imageKeys = rawDataList.stream()
+                .map(ApplicationRawData::getMainImage)
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
 
-        // 3~4. Presigned URL 발급 + key → URL 매핑 안전하게
+        // 4. Presigned URL 발급 + key → URL 매핑
         Map<String, String> imageUrlMap = new HashMap<>();
         if (!imageKeys.isEmpty()) {
             for (String key : imageKeys) {
@@ -113,19 +123,62 @@ public class TrainingCourseApplicationService {
                 }
             }
         }
-        // 5. toBuilder() 사용해서 새 DTO 생성 + URL 매핑
-        List<ApplicationListViewResponse> mappedList = list.stream()
-                .map(dto -> {
-                    if (dto.getMainImage() != null) {
-                        return dto.toBuilder()
-                                .mainImage(imageUrlMap.get(dto.getMainImage()))
-                                .build();
-                    }
-                    return dto;
+
+        // 5. 과정 단위로 ApplicationListViewResponse 생성
+        List<ApplicationListViewResponse> result = groupedByCourseAndDog.values().stream()
+                .map(courseApplications -> {
+                    // 첫 번째 항목에서 과정 정보 추출
+                    ApplicationRawData first = courseApplications.get(0);
+
+                    // ApplicationItem 리스트 생성
+                    List<ApplicationListViewResponse.ApplicationItem> items = courseApplications.stream()
+                            .map(data -> ApplicationListViewResponse.ApplicationItem.builder()
+                                    .applicationId(data.getApplicationId())
+                                    .applicationStatus(data.getApplicationStatus())
+                                    .price(data.getPrice())
+                                    .sessionSchedule(data.getSessionSchedule())
+                                    .rejectReason(data.getRejectReason())
+                                    .build())
+                            .collect(Collectors.toList());
+
+                    // 총 금액 계산
+                    Long totalAmount = courseApplications.stream()
+                            .mapToLong(data -> data.getPrice() != null ? data.getPrice() : 0L)
+                            .sum();
+
+                    // 세션 일정 범위 (첫 번째 ~ 마지막)
+                    String sessionSchedule = courseApplications.size() == 1
+                            ? first.getSessionSchedule()
+                            : first.getSessionSchedule() + " 외 " + (courseApplications.size() - 1) + "회";
+
+                    // 거절 사유 수집 (있는 경우만)
+                    String rejectReason = courseApplications.stream()
+                            .map(ApplicationRawData::getRejectReason)
+                            .filter(Objects::nonNull)
+                            .distinct()
+                            .collect(Collectors.joining(", "));
+
+                    // ApplicationListViewResponse 생성
+                    return ApplicationListViewResponse.builder()
+                            .courseId(first.getCourseId())
+                            .tags(first.getTags())
+                            .title(first.getTitle())
+                            .description(first.getDescription())
+                            .mainImage(first.getMainImage() != null ? imageUrlMap.get(first.getMainImage()) : null)
+                            .location(first.getLocation())
+                            .lessonForm(first.getLessonForm())
+                            .type(first.getType())
+                            .totalAmount(totalAmount)
+                            .sessionSchedule(sessionSchedule)
+                            .rejectReason(rejectReason.isEmpty() ? null : rejectReason)
+                            .dogName(first.getDogName())
+                            .dogId(first.getDogId())
+                            .applicationItems(items)
+                            .build();
                 })
                 .collect(Collectors.toList());
 
-        return mappedList;
+        return result;
     }
 
     // 신청 상세 조회

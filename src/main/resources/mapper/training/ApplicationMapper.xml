@@ -14,33 +14,15 @@
         ORDER BY a.applied_at DESC
     </select>
 
-        <!-- UI 카드용 리스트 조회용-->
+        <!-- UI 카드용 리스트 조회용 - 세션별 신청 정보 조회 -->
     <select id="findApplicationListViewByUserId"
             parameterType="long"
-            resultType="com.mungtrainer.mtserver.training.dto.response.ApplicationListViewResponse">
-        WITH LatestApplications AS (
-            SELECT
-                tca.dog_id,
-                ts.course_id,
-                MAX(tca.applied_at) AS max_applied_at
-            FROM training_course_application tca
-            JOIN training_session ts ON tca.session_id = ts.session_id AND ts.is_deleted = 0
-            JOIN dog d ON tca.dog_id = d.dog_id AND d.is_deleted = 0
-            WHERE d.user_id = #{userId}
-              AND tca.is_deleted = 0
-            GROUP BY tca.dog_id, ts.course_id
-        )
+            resultType="com.mungtrainer.mtserver.training.dto.response.ApplicationRawData">
         SELECT
-            MIN(tca.application_id)            AS applicationId,
-            d.dog_id                           AS dogId,
-            CASE
-                WHEN SUM(tca.status = 'CANCELLED') > 0 THEN 'CANCELLED'
-                WHEN SUM(tca.status = 'WAITING') > 0 THEN 'WAITING'
-                WHEN SUM(tca.status = 'APPLIED') > 0 THEN 'APPLIED'
-                ELSE MIN(tca.status)
-            END                                AS applicationStatus,
-            GROUP_CONCAT(DISTINCT tca.reject_reason ORDER BY tca.reject_reason SEPARATOR ', ')
-                                              AS rejectReason,
+            tca.application_id                AS applicationId,
+            d.dog_id                          AS dogId,
+            tca.status                        AS applicationStatus,
+            tca.reject_reason                 AS rejectReason,
 
             tc.course_id                      AS courseId,
             tc.tags                           AS tags,
@@ -52,12 +34,14 @@
             tc.type                           AS type,
 
             CONCAT(
-                DATE_FORMAT(MIN(ts.session_date), '%Y-%m-%d'),
+                DATE_FORMAT(ts.session_date, '%Y-%m-%d'),
+                ' ',
+                DATE_FORMAT(ts.start_time, '%H:%i'),
                 ' ~ ',
-                DATE_FORMAT(MAX(ts.session_date), '%Y-%m-%d')
+                DATE_FORMAT(ts.end_time, '%H:%i')
             )                                 AS sessionSchedule,
 
-            SUM(ts.price)                     AS price,
+            ts.price                          AS price,
 
             d.name                            AS dogName
         FROM training_course_application tca
@@ -70,14 +54,9 @@
         JOIN training_course tc
             ON ts.course_id = tc.course_id
             AND tc.is_deleted = 0
-        JOIN LatestApplications la
-            ON la.dog_id = tca.dog_id
-            AND la.course_id = tc.course_id
-            AND la.max_applied_at = tca.applied_at
         WHERE d.user_id = #{userId}
           AND tca.is_deleted = 0
-        GROUP BY tc.course_id, d.dog_id, d.name, tc.tags, tc.title, tc.description, tc.main_image, tc.location, tc.lesson_form, tc.type
-        ORDER BY MAX(tca.applied_at) DESC
+        ORDER BY tca.applied_at DESC, ts.session_date ASC
     </select>
 
     <!-- 신청 강아지 변경 -->
