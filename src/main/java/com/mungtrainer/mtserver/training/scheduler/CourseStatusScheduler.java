@@ -1,12 +1,11 @@
 package com.mungtrainer.mtserver.training.scheduler;
 
-import com.mungtrainer.mtserver.training.dao.CourseDAO;
+import com.mungtrainer.mtserver.training.service.CourseStatusUpdateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 훈련 과정 상태 자동 업데이트 스케줄러
@@ -27,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CourseStatusScheduler {
 
-    private final CourseDAO courseDAO;
+    private final CourseStatusUpdateService courseStatusUpdateService;
 
     /**
      * 기능 활성화 플래그
@@ -55,9 +54,15 @@ public class CourseStatusScheduler {
      *   <li>PaymentDeadlineScheduler: 3분, 13분, 23분...</li>
      *   <li>CourseStatusScheduler: 6분, 16분, 26분...</li>
      * </ul>
+     *
+     * <p>트랜잭션 처리:
+     * <ul>
+     *   <li>각 업데이트는 별도 트랜잭션으로 실행</li>
+     *   <li>부분 실패 시에도 성공한 작업은 커밋됨</li>
+     *   <li>독립적인 업데이트 작업 보장</li>
+     * </ul>
      */
     @Scheduled(cron = "0 6/10 * * * *")
-    @Transactional
     public void updateCourseStatus() {
         // 기능 비활성화 체크
         if (!courseStatusUpdateEnabled) {
@@ -67,27 +72,33 @@ public class CourseStatusScheduler {
 
         log.info("=== 훈련 과정 상태 업데이트 시작 ===");
 
+        int inProgressCount = 0;
+        int completedCount = 0;
+
+        // 1. SCHEDULED → IN_PROGRESS (첫 세션 시작됨) - 별도 트랜잭션
         try {
-            // 1. SCHEDULED → IN_PROGRESS (첫 세션 시작됨)
-            int inProgressCount = courseDAO.updateCourseStatusToInProgress();
+            inProgressCount = courseStatusUpdateService.updateToInProgress();
             if (inProgressCount > 0) {
                 log.info("진행중으로 변경된 과정: {}건", inProgressCount);
             }
+        } catch (Exception e) {
+            log.error("과정 진행중 상태 변경 중 오류 발생 - 다음 스케줄링 시 재시도", e);
+        }
 
-            // 2. IN_PROGRESS → DONE (모든 세션 종료됨)
-            int completedCount = courseDAO.updateCourseStatusToCompleted();
+        // 2. IN_PROGRESS → DONE (모든 세션 종료됨) - 별도 트랜잭션
+        try {
+            completedCount = courseStatusUpdateService.updateToCompleted();
             if (completedCount > 0) {
                 log.info("종료로 변경된 과정: {}건", completedCount);
             }
-
-            if (inProgressCount == 0 && completedCount == 0) {
-                log.debug("상태 변경이 필요한 과정이 없습니다.");
-            }
-
         } catch (Exception e) {
-            log.error("훈련 과정 상태 업데이트 중 오류 발생 - 다음 스케줄링 시 재시도", e);
-            // 예외를 다시 던지지 않음 - 스케줄러가 중단되지 않도록 함
+            log.error("과정 종료 상태 변경 중 오류 발생 - 다음 스케줄링 시 재시도", e);
         }
+
+        if (inProgressCount == 0 && completedCount == 0) {
+            log.debug("상태 변경이 필요한 과정이 없습니다.");
+        }
+
 
         log.info("=== 훈련 과정 상태 업데이트 종료 ===");
     }

@@ -171,7 +171,7 @@ public class TrainingCourseApplicationService {
         // 2. 과정 상태 확인 - 진행중이거나 종료된 과정은 신청 불가
         String courseStatus = applicationDao.getCourseStatusById(courseId);
         if (courseStatus == null) {
-            throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
+            throw new CustomException(ErrorCode.COURSE_NOT_FOUND);
         }
         if ("IN_PROGRESS".equals(courseStatus)) {
             throw new CustomException(ErrorCode.COURSE_ALREADY_STARTED);

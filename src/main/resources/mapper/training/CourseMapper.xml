@@ -333,6 +333,7 @@
             SELECT s.course_id
             FROM training_session s
             WHERE s.is_deleted = 0
+              AND s.status IN ('SCHEDULED', 'DONE')
             GROUP BY s.course_id
             HAVING MAX(CONCAT(s.session_date, ' ', s.end_time)) &lt;= NOW()
         ) AS completed_sessions ON c.course_id = completed_sessions.course_id
