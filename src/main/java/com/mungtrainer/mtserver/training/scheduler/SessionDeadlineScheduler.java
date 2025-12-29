@@ -46,10 +46,10 @@ public class SessionDeadlineScheduler {
     /**
      * 10분마다 수업 시작 마감 처리 (스케줄러 진입점)
      *
-     * <p>cron 표현식: "0 * /10 * * * *"
+     * <p>cron 표현식: "0 0/10 * * * *"
      * <ul>
      *   <li>초: 0</li>
-     *   <li>분: * /10 (10분마다)</li>
+     *   <li>분: 0, 10, 20, 30, 40, 50 (10분마다, 정시 시작)</li>
      *   <li>시: * (매시간)</li>
      *   <li>일: * (매일)</li>
      *   <li>월: * (매월)</li>
@@ -59,7 +59,7 @@ public class SessionDeadlineScheduler {
      * <p>주의: 이 메서드는 예외 처리만 담당합니다.
      * 실제 트랜잭션 로직은 {@link SessionDeadlineService#processSessionDeadline(int)}에서 수행됩니다.
      */
-    @Scheduled(cron = "0 */10 * * * *")
+    @Scheduled(cron = "0 0/10 * * * *")
     public void processSessionDeadline() {
         // 기능 비활성화 체크 (긴급 롤백용)
         if (!sessionDeadlineEnabled) {

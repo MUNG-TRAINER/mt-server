@@ -35,6 +35,8 @@ aws:
   s3:
     bucket: ${AWS_BUCKET_NAME}
     region: ${AWS_DEFAULT_REGION}
+    accessKeyId: ${AWS_ACCESS_KEY_ID}
+    secretAccessKey: ${AWS_SECRET_ACCESS_KEY}
     presigned-url:
       expiration-minutes: 10
 # ===== Actuator 설정 추가 =====

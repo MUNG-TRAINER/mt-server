@@ -21,6 +21,8 @@ public interface PaymentDAO {
   */
   int getCostByCourseIds(@Param("courseIds") List<Long> courseIds, @Param("userId") Long userId );
 
+  int getCostByApplicationIds(@Param("applicationIds") List<Long> applicationIds, @Param("userId") Long userId);
+
   /**
    *  orderId로 orderItem 리스트 조회
    */
