@@ -61,7 +61,9 @@
             u.name AS ownerName,
             d.profile_image AS dogImage,
             c.content AS content,
-            c.created_at AS createdAt
+            c.created_at AS createdAt,
+            u.user_id AS userId,
+            u.fcm_token AS fcmToken
         FROM counseling c
         JOIN dog d ON c.dog_id = d.dog_id AND d.is_deleted = 0
         JOIN user u ON d.user_id = u.user_id AND u.is_deleted = 0
