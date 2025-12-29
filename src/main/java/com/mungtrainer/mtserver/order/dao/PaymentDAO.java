@@ -23,6 +23,8 @@ public interface PaymentDAO {
 
   int getCostByApplicationIds(@Param("applicationIds") List<Long> applicationIds, @Param("userId") Long userId);
 
+  int getSizeByApplicationIds(@Param("applicationIds") List<Long> applicationIds, @Param("userId") Long userId);
+
   /**
    *  orderId로 orderItem 리스트 조회
    */
