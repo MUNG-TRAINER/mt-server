@@ -146,10 +146,19 @@ public class TrainingCourseApplicationService {
                             .mapToLong(data -> data.getPrice() != null ? data.getPrice() : 0L)
                             .sum();
 
-                    // 세션 일정 범위 (첫 번째 ~ 마지막)
-                    String sessionSchedule = courseApplications.size() == 1
-                            ? first.getSessionSchedule()
-                            : first.getSessionSchedule() + " 외 " + (courseApplications.size() - 1) + "회";
+                    // 세션 날짜 범위 계산
+                    String sessionSchedule;
+                    if (courseApplications.size() == 1) {
+                        // 1회차: "2025-12-20 ~ 2025-12-20" (시작일 = 종료일)
+                        String dateOnly = first.getSessionSchedule().substring(0, 10); // "2025-12-20"
+                        sessionSchedule = dateOnly + " ~ " + dateOnly;
+                    } else {
+                        // 다회차: "2025-12-20 ~ 2025-12-27" (첫 세션 날짜 ~ 마지막 세션 날짜)
+                        ApplicationRawData last = courseApplications.get(courseApplications.size() - 1);
+                        String firstDate = first.getSessionSchedule().substring(0, 10); // "2025-12-20"
+                        String lastDate = last.getSessionSchedule().substring(0, 10);   // "2025-12-27"
+                        sessionSchedule = firstDate + " ~ " + lastDate;
+                    }
 
                     // 거절 사유 수집 (있는 경우만)
                     String rejectReason = courseApplications.stream()
