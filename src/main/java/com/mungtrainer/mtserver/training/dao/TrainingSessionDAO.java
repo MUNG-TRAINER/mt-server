@@ -137,7 +137,7 @@ public interface TrainingSessionDAO {
     /**
      * 종료 시간이 지난 세션을 DONE 상태로 변경
      *
-     * <p>SCHEDULED 또는 CANCELLED가 아닌 세션 중 종료 시간이 지난 세션을 DONE으로 변경
+     * <p>DONE 또는 CANCELLED가 아닌 세션 중 종료 시간이 지난 세션을 DONE으로 변경
      *
      * @return 변경된 세션 수
      */

@@ -309,6 +309,7 @@
     <!-- ======================================== -->
 
     <!-- 수업 시작 마감 시간이 지난 신청 조회 -->
+    <!-- 성능 최적화: session_date 인덱스 활용 -->
     <select id="findApplicationsPastSessionDeadline" resultType="long">
         <![CDATA[
         SELECT tca.application_id
@@ -318,16 +319,37 @@
         WHERE tca.status IN ('APPLIED', 'COUNSELING_REQUIRED', 'WAITING')
           AND tca.is_deleted = 0
           AND ts.is_deleted = 0
-          AND NOW() > CONCAT(ts.session_date, ' ', ts.start_time) - INTERVAL #{hours} HOUR
+          AND (
+              ts.session_date < CURDATE() - INTERVAL #{hours} HOUR
+              OR (
+                  ts.session_date = CURDATE() - INTERVAL #{hours} HOUR
+                  AND ts.start_time <= CURTIME()
+              )
+              OR (
+                  ts.session_date = CURDATE()
+                  AND ADDTIME(ts.start_time, MAKETIME(-#{hours}, 0, 0)) <= CURTIME()
+              )
+          )
         ORDER BY ts.session_date, ts.start_time
         ]]>
     </select>
 
     <!-- 세션 마감 시간 초과 여부 확인 -->
+    <!-- 성능 최적화: session_date 인덱스 활용 -->
     <select id="isSessionPastDeadline" resultType="boolean">
         <![CDATA[
         SELECT CASE
-            WHEN NOW() > CONCAT(session_date, ' ', start_time) - INTERVAL #{hours} HOUR
+            WHEN (
+                session_date < CURDATE() - INTERVAL #{hours} HOUR
+                OR (
+                    session_date = CURDATE() - INTERVAL #{hours} HOUR
+                    AND start_time <= CURTIME()
+                )
+                OR (
+                    session_date = CURDATE()
+                    AND ADDTIME(start_time, MAKETIME(-#{hours}, 0, 0)) <= CURTIME()
+                )
+            )
             THEN TRUE
             ELSE FALSE
         END
@@ -337,14 +359,23 @@
         ]]>
     </select>
 
-    <!-- SCHEDULED/CANCELLED 이외 → DONE: 종료 시간이 지난 세션 -->
+    <!-- SCHEDULED → DONE: 종료 시간이 지난 세션 -->
+    <!-- 성능 최적화: session_date, status 인덱스 활용 -->
     <update id="updateSessionStatusToDone">
+        <![CDATA[
         UPDATE training_session
         SET status = 'DONE',
             updated_at = NOW()
         WHERE is_deleted = 0
           AND status NOT IN ('DONE', 'CANCELLED')
-          AND CONCAT(session_date, ' ', end_time) &lt;= NOW()
+          AND (
+              session_date < CURDATE()
+              OR (
+                  session_date = CURDATE()
+                  AND end_time <= CURTIME()
+              )
+          )
+        ]]>
     </update>
 
 </mapper>
