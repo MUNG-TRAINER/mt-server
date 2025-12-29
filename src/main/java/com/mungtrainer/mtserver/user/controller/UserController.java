@@ -124,4 +124,13 @@ public class UserController {
 		return ResponseEntity.ok(userFCMToken);
 	}
 
+	// 유저의 FCM Token 조회
+	@GetMapping("/fcm-token/{userName}/byname")
+	public ResponseEntity<UserFCMTokenResponse> findUserFCMToken(
+		@PathVariable
+		String userName) {
+		UserFCMTokenResponse userFCMToken = userService.findUserFCMTokenByUserName(userName);
+		return ResponseEntity.ok(userFCMToken);
+	}
+
 }

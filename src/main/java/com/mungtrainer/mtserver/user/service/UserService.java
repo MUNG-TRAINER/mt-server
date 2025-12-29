@@ -146,6 +146,11 @@ public class UserService {
 		return UserFCMTokenResponse.builder().fcmToken(fcmToken.orElse(null)).build();
 	}
 
+	public UserFCMTokenResponse findUserFCMTokenByUserName(String userName) {
+		Optional<User> user = userMapper.findByUserName(userName);
+		return UserFCMTokenResponse.builder().fcmToken(user.get().getFcmToken()).build();
+	}
+
 	/**
 	 * 사용자 필드 업데이트 (Helper 메서드)
 	 */

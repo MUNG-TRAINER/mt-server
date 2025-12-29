@@ -79,5 +79,12 @@
       FROM user
       WHERE user_id = #{userId}
     </select>
+    
+    <!-- 사용자 FCM TOKEN 조회 -->
+    <select id="findUserFCMTokenByUserName" parameterType="String" resultType="String">
+      SELECT fcm_token
+      FROM user
+      WHERE user_name = #{userName}
+    </select>
 
 </mapper>
