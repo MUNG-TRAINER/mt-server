@@ -19,12 +19,13 @@
         <result property="roadname" column="roadname"/>
         <result property="restAddress" column="rest_address"/>
         <result property="postcode" column="postcode"/>
+        <result property="fcmToken" column="fcm_token"/>
     </resultMap>
 
     <select id="findById" resultMap="userResultMap">
         SELECT user_id, user_name, name, birth, email, phone,
                profile_image, is_public, role, sido, sigungu,
-               roadname, rest_address, postcode
+               roadname, rest_address, postcode, fcm_token
         FROM user
         WHERE user_id = #{userId}
     </select>
@@ -33,7 +34,7 @@
     <select id="findByUserName" resultMap="userResultMap">
         SELECT user_id, user_name, name, birth, email, phone,
                profile_image, is_public, role, sido, sigungu,
-               roadname, rest_address, postcode
+               roadname, rest_address, postcode, fcm_token
         FROM user
         WHERE user_name = #{userName}
     </select>
@@ -71,5 +72,12 @@
         SET is_public = #{isPublic}
         WHERE user_id = #{userId}
     </update>
+    
+    <!-- 사용자 FCM TOKEN 조회 -->
+    <select id="findUserFCMToken" parameterType="long" resultType="String">
+      SELECT fcm_token
+      FROM user
+      WHERE user_id = #{userId}
+    </select>
 
 </mapper>

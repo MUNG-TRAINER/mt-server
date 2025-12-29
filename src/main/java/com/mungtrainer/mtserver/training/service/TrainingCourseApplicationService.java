@@ -168,7 +168,22 @@ public class TrainingCourseApplicationService {
             throw new CustomException(ErrorCode.UNAUTHORIZED_APPLICATION);
         }
 
-        // 2. 코스에 속한 세션 조회
+        // 2. 과정 상태 확인 - 진행중이거나 종료된 과정은 신청 불가
+        String courseStatus = applicationDao.getCourseStatusById(courseId);
+        if (courseStatus == null) {
+            throw new CustomException(ErrorCode.COURSE_NOT_FOUND);
+        }
+        if ("IN_PROGRESS".equals(courseStatus)) {
+            throw new CustomException(ErrorCode.COURSE_ALREADY_STARTED);
+        }
+        if ("DONE".equals(courseStatus)) {
+            throw new CustomException(ErrorCode.COURSE_ALREADY_COMPLETED);
+        }
+        if ("CANCELLED".equals(courseStatus)) {
+            throw new CustomException(ErrorCode.COURSE_CANCELLED);
+        }
+
+        // 3. 코스에 속한 세션 조회
         List<TrainingSession> sessions = applicationDao.findSessionsByCourseId(courseId);
         if (sessions.isEmpty()) {
             throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
@@ -176,7 +191,7 @@ public class TrainingCourseApplicationService {
 
         List<ApplicationResponse> createdApplications = new ArrayList<>();
 
-        // 3. 각 세션별 신청 처리
+        // 4. 각 세션별 신청 처리
         for (TrainingSession session : sessions) {
             Long sessionId = session.getSessionId();
 
