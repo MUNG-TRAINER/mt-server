@@ -17,6 +17,6 @@ public class CounselingDogResponse {
 	private String dogImage; // 반려견 프로필 이미지 URL (Presigned)
 	private String content; // 상담 내용 (상담 완료 시에만 존재)
 	private LocalDateTime createdAt; // 상담 신청일시
-	private Long userId;
-	private String fcmToken;
+	private Long userId; // 사용자 ID
+	private String fcmToken; // FCM 푸시 알림 토큰
 }
