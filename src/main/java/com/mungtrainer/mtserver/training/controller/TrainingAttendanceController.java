@@ -33,18 +33,18 @@ public class TrainingAttendanceController {
     }
 
     /**
-     * 특정 회원의 출석 상태 변경
+     * 특정 반려견의 출석 상태 변경
      *
-     * PATCH /api/trainer/course/{courseId}/session/{sessionId}/attendance/{userName}
+     * PATCH /api/trainer/course/{courseId}/session/{sessionId}/attendance/{attendanceId}
      */
-    @PatchMapping("/{userName}")
+    @PatchMapping("/{attendanceId}")
     public ResponseEntity<Void> updateAttendanceStatus(
             @PathVariable Long courseId,
             @PathVariable Long sessionId,
-            @PathVariable String userName,
+            @PathVariable Long attendanceId,
             @Valid @RequestBody AttendanceUpdateRequest request
     ) {
-        trainingAttendanceService.updateAttendanceStatus(sessionId, userName, request);
+        trainingAttendanceService.updateAttendanceStatus(attendanceId, request);
 
         return ResponseEntity.ok().build();
     }

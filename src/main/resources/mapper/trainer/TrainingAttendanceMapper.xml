@@ -86,6 +86,16 @@
                 AND ta.deleted_at IS NULL
             </update>
 
+            <!-- 출석 상태 업데이트 (attendanceId 기반) -->
+            <update id="updateStatusByAttendanceId">
+                UPDATE training_attendance ta
+                SET ta.status = #{status},
+                    ta.memo = #{memo},
+                    ta.updated_at = NOW()
+                WHERE ta.attendance_id = #{attendanceId}
+                AND ta.deleted_at IS NULL
+            </update>
+
             <!-- 출석 정보 단일 생성 -->
             <insert id="insertAttendance" parameterType="com.mungtrainer.mtserver.training.entity.TrainingAttendance"
                     useGeneratedKeys="true" keyProperty="attendance.attendanceId">

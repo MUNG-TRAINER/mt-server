@@ -57,15 +57,14 @@ package com.mungtrainer.mtserver.training.service;
          }
 
          /**
-          * 특정 세션의 특정 회원 출석 상태 변경
+          * 특정 반려견의 출석 상태 변경
           */
          @Transactional
-         public void updateAttendanceStatus(Long sessionId, String userName, AttendanceUpdateRequest request) {
+         public void updateAttendanceStatus(Long attendanceId, AttendanceUpdateRequest request) {
 
-             // 출석 상태 업데이트
-             int updatedCount = trainingAttendanceMapper.updateStatus(
-                 sessionId,
-                 userName,
+             // 출석 상태 업데이트 (attendanceId로 직접 업데이트)
+             int updatedCount = trainingAttendanceMapper.updateStatusByAttendanceId(
+                 attendanceId,
                  request.getStatus(),
                  request.getMemo()
              );
