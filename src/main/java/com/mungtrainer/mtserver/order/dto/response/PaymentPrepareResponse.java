@@ -11,4 +11,6 @@ public class PaymentPrepareResponse {
     private String merchantUid;
     private Integer amount;
     private boolean isCompleted;
+    private String orderName;
+    private Long trainerId;
 }

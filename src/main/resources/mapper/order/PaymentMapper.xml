@@ -32,7 +32,34 @@
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
-
+    <select id="getSizeByApplicationIds" resultType="int">
+        SELECT
+            COUNT(DISTINCT d.dog_id, tc.course_id)
+        FROM training_course tc
+        JOIN training_session ts
+        ON tc.course_id = ts.course_id
+        JOIN training_course_application tca
+        ON ts.session_id = tca.session_id
+        JOIN dog d
+        ON d.dog_id = tca.dog_id
+        <where>
+            tca.status = 'ACCEPT'
+            AND d.user_id = #{userId}
+            AND ts.is_deleted != 1
+            AND tc.status != 'CANCELED'
+            AND tc.is_deleted != 1
+            <if test="applicationIds != null and applicationIds.size() > 0">
+                AND tca.application_id IN
+                <foreach collection="applicationIds"
+                         item="applicationId"
+                         open="("
+                         separator=","
+                         close=")">
+                    #{applicationId}
+                </foreach>
+            </if>
+        </where>
+    </select>
     <select id="findLogsByUserId" parameterType="Long" resultType="com.mungtrainer.mtserver.order.dto.response.PaymentLogResponse">
         SELECT
             p.payment_id,
@@ -52,6 +79,30 @@
         SELECT *
         FROM order_item
         WHERE order_id = #{orderId}
+    </select>
+
+    <select id="getCostByApplicationIds" resultType="int">
+        SELECT COALESCE(SUM(ts.price), 0)
+        FROM training_session ts
+        JOIN training_course_application tca
+        ON tca.session_id = ts.session_id
+        JOIN dog d
+        ON d.dog_id = tca.dog_id
+        <where>
+            tca.status = 'ACCEPT'
+            AND d.user_id = #{userId}
+            AND ts.is_deleted != 1
+            <if test="applicationIds != null and applicationIds.size() > 0">
+                AND tca.application_id IN
+                <foreach collection="applicationIds"
+                         item="applicationId"
+                         open="("
+                         separator=","
+                         close=")">
+                    #{applicationId}
+                </foreach>
+            </if>
+        </where>
     </select>
 
     <select id="getCostByCourseIds"

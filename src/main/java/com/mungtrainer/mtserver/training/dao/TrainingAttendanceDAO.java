@@ -24,11 +24,20 @@ public interface TrainingAttendanceDAO {
   );
 
   /**
-   * 출석 상태 업데이트
+   * 출석 상태 업데이트 (userName 기반 - Deprecated)
    */
   int updateStatus(
       @Param("sessionId") Long sessionId,
       @Param("userName") String userName,
+      @Param("status") String status,
+      @Param("memo") String memo
+  );
+
+  /**
+   * 출석 상태 업데이트 (attendanceId 기반)
+   */
+  int updateStatusByAttendanceId(
+      @Param("attendanceId") Long attendanceId,
       @Param("status") String status,
       @Param("memo") String memo
   );

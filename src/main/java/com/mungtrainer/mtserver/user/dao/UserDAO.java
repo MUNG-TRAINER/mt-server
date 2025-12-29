@@ -47,4 +47,10 @@ public interface UserDAO {
 	Optional<String> findUserFCMToken(@Param("userId")
 	Long userId);
 
+	/** 
+	 *  사용자의 FCM 토큰 조회
+	 */
+	Optional<String> findUserFCMTokenByUserName(@Param("userName")
+	String userName);
+
 }

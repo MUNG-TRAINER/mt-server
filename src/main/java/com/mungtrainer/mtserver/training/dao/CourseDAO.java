@@ -32,4 +32,7 @@ public interface CourseDAO {
   void deleteWishlistDetailDog(Long courseId);
   void deleteWishlistDetail(Long courseId);
 
+  // 과정 상태 자동 업데이트
+  int updateCourseStatusToInProgress();
+  int updateCourseStatusToCompleted();
 }

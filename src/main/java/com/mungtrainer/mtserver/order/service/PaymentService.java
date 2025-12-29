@@ -16,6 +16,7 @@ import com.mungtrainer.mtserver.order.entity.OrderItem;
 import com.mungtrainer.mtserver.order.entity.OrderMaster;
 import com.mungtrainer.mtserver.order.entity.Payment;
 import com.mungtrainer.mtserver.order.entity.PaymentLog;
+import com.mungtrainer.mtserver.trainer.dao.TrainerDAO;
 import com.mungtrainer.mtserver.training.dao.CourseDAO;
 import com.mungtrainer.mtserver.training.dao.TrainingCourseApplicationDAO;
 import com.mungtrainer.mtserver.training.entity.TrainingCourse;
@@ -47,6 +48,7 @@ public class PaymentService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final CourseDAO courseDAO;
     private final UserDAO userDAO;
+    private final TrainerDAO trainerDAO;
     private final TrainingCourseApplicationDAO trainingCourseApplicationDAO;
 
   @Value("${toss.secret-key}")
@@ -67,20 +69,23 @@ public class PaymentService {
      */
     @Transactional
     public PaymentPrepareResponse preparePayment(PaymentPrepareRequest request, Long userId) {
-        if(request.getCourseIds().isEmpty()){
+        if (request.getPaymentRequestItems().isEmpty()) {
           throw new CustomException(ErrorCode.ORDER_NOT_FOUND);
         }
-        int size = request.getCourseIds().size();
-      // 1. 가맹점 주문번호 생성 (ORD_날짜_UUID)
+        // 1. 가맹점 주문번호 생성 (ORD_날짜_UUID)
         String merchantUid = generateMerchantUid();
-
         boolean isCompleted = false;
 
-        // 2. courseIds로 sessions 합계 금액 확인하기
-        int cost = paymentDAO.getCostByCourseIds(request.getCourseIds(), userId);
-
+        List<Long> applicationIds = request.getPaymentRequestItems()
+                                           .stream()
+                                           .map(PaymentPrepareRequest.PaymentRequestItem::getApplicationId)
+                                           .toList();
+        int size = paymentDAO.getSizeByApplicationIds(applicationIds, userId);
+        Long trainerId = trainerDAO.findTrainerIdByUserId(userId);
+        // 2. applicationIds로 sessions 합계 금액 확인하기
+        int cost = paymentDAO.getCostByApplicationIds(applicationIds, userId);
         // 3-1. orderName 정하기
-        TrainingCourse trainingCourse = courseDAO.getCourseById(request.getCourseIds().get(0));
+        TrainingCourse trainingCourse = courseDAO.getCourseById(request.getPaymentRequestItems().get(0).getCourseId());
         String lotOrderName = String.format("%s 외 %d 건", trainingCourse.getTitle(), size - 1);
         String notLotOrderName = trainingCourse.getTitle();
         String orderName = size > 1 ? lotOrderName : notLotOrderName;
@@ -103,10 +108,9 @@ public class PaymentService {
         if (order.getOrderId() == null) {
             throw new CustomException(ErrorCode.ORDER_CREATION_FAILED);
         }
-        orderDAO.insertOrderItems(request.getCourseIds(),userId,order.getOrderId());
+        orderDAO.insertOrderItems(applicationIds,userId,order.getOrderId());
 
-        if ( cost <= 0){
-          isCompleted = true;
+        if (cost <= 0) {
           PaymentApprovalRequest paymentApprovalRequest = PaymentApprovalRequest.builder()
                                                          .paymentKey(merchantUid)
                                                          .merchantUid(merchantUid)
@@ -119,12 +123,15 @@ public class PaymentService {
           savePayment(order, paymentApprovalRequest, tossResponse);
           updateOrderStatusToPaid(order,cost);
           updateApplicationStatus(order.getOrderId(), ORDER_STATUS_PAID);
+          isCompleted = true;
         }
 
         return PaymentPrepareResponse.builder()
                 .merchantUid(merchantUid)
                 .amount(order.getTotalAmount())
                 .isCompleted(isCompleted)
+                .orderName(orderName)
+                .trainerId(trainerId)
                 .build();
     }
 

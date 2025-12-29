@@ -10,6 +10,9 @@ public interface TrainerDAO {
     // 트레이너 Id로 조회
     TrainerProfile findById(@Param("trainerId") Long trainerId);
 
+    // 유저 Id로 트레이너 Id 조회
+    Long findTrainerIdByUserId(@Param("userId") Long userId);
+
     // 트레이너 프로필 업데이트
     int updateTrainerProfile(TrainerProfile trainer);
 }

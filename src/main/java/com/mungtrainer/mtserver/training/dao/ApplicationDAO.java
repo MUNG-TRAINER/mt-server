@@ -1,6 +1,6 @@
 package com.mungtrainer.mtserver.training.dao;
 
-import com.mungtrainer.mtserver.training.dto.response.ApplicationListViewResponse;
+import com.mungtrainer.mtserver.training.dto.response.ApplicationRawData;
 import com.mungtrainer.mtserver.training.entity.TrainingCourseApplication;
 import com.mungtrainer.mtserver.training.entity.TrainingSession;
 import org.apache.ibatis.annotations.Mapper;
@@ -12,8 +12,8 @@ import java.util.List;
 public interface ApplicationDAO {
     // 유저 Id로 신청 리스트 조회
     List<TrainingCourseApplication> findByUserId(@Param("userId") Long userId);
-    // UI 카드용 리스트 조회용
-    List<ApplicationListViewResponse> findApplicationListViewByUserId(Long userId);
+    // UI 카드용 리스트 조회용 - Raw Data (세션별)
+    List<ApplicationRawData> findApplicationListViewByUserId(Long userId);
     // 훈련신청 상세페이지 조회
     TrainingCourseApplication findById(@Param("applicationId") Long applicationId);
 
@@ -25,6 +25,9 @@ public interface ApplicationDAO {
 
     // 코스에 속한 세션 조회
     List<TrainingSession> findSessionsByCourseId(@Param("courseId") Long courseId);
+
+    // 코스 상태 조회 (신청 가능 여부 확인용)
+    String getCourseStatusById(@Param("courseId") Long courseId);
 
     // 세션 정원 조회
     int getMaxStudentsBySessionId(@Param("sessionId") Long sessionId);

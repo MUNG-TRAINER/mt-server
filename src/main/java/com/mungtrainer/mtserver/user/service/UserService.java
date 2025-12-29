@@ -141,8 +141,19 @@ public class UserService {
 		}
 	}
 
-	public UserFCMTokenResponse findUserFCMToken(Long userId) {
-		Optional<String> fcmToken = userMapper.findUserFCMToken(userId);
+	public UserFCMTokenResponse findUserFCMToken(Long userId, Long targetId) {
+		User user = userMapper.findById(userId)
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+		Optional<String> fcmToken = userMapper.findUserFCMToken(targetId);
+		return UserFCMTokenResponse.builder().fcmToken(fcmToken.orElse(null)).build();
+	}
+
+	public UserFCMTokenResponse findUserFCMTokenByUserName(Long userId, String userName) {
+		User user = userMapper.findById(userId)
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+		Optional<String> fcmToken = userMapper.findUserFCMTokenByUserName(userName);
+		System.out.println(userName);
+		System.out.println(fcmToken);
 		return UserFCMTokenResponse.builder().fcmToken(fcmToken.orElse(null)).build();
 	}
 

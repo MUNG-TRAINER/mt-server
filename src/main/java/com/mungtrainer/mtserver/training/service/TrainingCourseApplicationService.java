@@ -11,6 +11,7 @@ import com.mungtrainer.mtserver.training.dto.request.ApplicationCancelRequest;
 import com.mungtrainer.mtserver.training.dto.request.ApplicationRequest;
 import com.mungtrainer.mtserver.order.dto.request.WishlistApplyRequest;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationListViewResponse;
+import com.mungtrainer.mtserver.training.dto.response.ApplicationRawData;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationResponse;
 import com.mungtrainer.mtserver.training.dto.response.ApplicationStatusResponse;
 import com.mungtrainer.mtserver.training.entity.TrainingCourseApplication;
@@ -25,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.LinkedHashMap;
 
 @Slf4j
 @Service
@@ -92,18 +94,26 @@ public class TrainingCourseApplicationService {
             updateApplicationStatusIfExpired(app);
         }
 
-        // 1. DAO에서 리스트 조회
-        List<ApplicationListViewResponse> list = applicationDao.findApplicationListViewByUserId(userId);
-        if (list == null || list.isEmpty()) return Collections.emptyList();
+        // 1. DAO에서 세션별 Raw Data 조회
+        List<ApplicationRawData> rawDataList = applicationDao.findApplicationListViewByUserId(userId);
+        if (rawDataList == null || rawDataList.isEmpty()) return Collections.emptyList();
 
-        // 2. S3 key 수집
-        List<String> imageKeys = list.stream()
-                .map(ApplicationListViewResponse::getMainImage)
+        // 2. 과정(courseId + dogId) 단위로 그룹핑
+        Map<String, List<ApplicationRawData>> groupedByCourseAndDog = rawDataList.stream()
+                .collect(Collectors.groupingBy(
+                        data -> data.getCourseId() + "_" + data.getDogId(),
+                        LinkedHashMap::new, // 순서 유지
+                        Collectors.toList()
+                ));
+
+        // 3. S3 key 수집
+        List<String> imageKeys = rawDataList.stream()
+                .map(ApplicationRawData::getMainImage)
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
 
-        // 3~4. Presigned URL 발급 + key → URL 매핑 안전하게
+        // 4. Presigned URL 발급 + key → URL 매핑
         Map<String, String> imageUrlMap = new HashMap<>();
         if (!imageKeys.isEmpty()) {
             for (String key : imageKeys) {
@@ -113,19 +123,71 @@ public class TrainingCourseApplicationService {
                 }
             }
         }
-        // 5. toBuilder() 사용해서 새 DTO 생성 + URL 매핑
-        List<ApplicationListViewResponse> mappedList = list.stream()
-                .map(dto -> {
-                    if (dto.getMainImage() != null) {
-                        return dto.toBuilder()
-                                .mainImage(imageUrlMap.get(dto.getMainImage()))
-                                .build();
+
+        // 5. 과정 단위로 ApplicationListViewResponse 생성
+        List<ApplicationListViewResponse> result = groupedByCourseAndDog.values().stream()
+                .map(courseApplications -> {
+                    // 첫 번째 항목에서 과정 정보 추출
+                    ApplicationRawData first = courseApplications.get(0);
+
+                    // ApplicationItem 리스트 생성
+                    List<ApplicationListViewResponse.ApplicationItem> items = courseApplications.stream()
+                            .map(data -> ApplicationListViewResponse.ApplicationItem.builder()
+                                    .applicationId(data.getApplicationId())
+                                    .applicationStatus(data.getApplicationStatus())
+                                    .price(data.getPrice())
+                                    .sessionSchedule(data.getSessionSchedule())
+                                    .rejectReason(data.getRejectReason())
+                                    .build())
+                            .collect(Collectors.toList());
+
+                    // 총 금액 계산
+                    Long totalAmount = courseApplications.stream()
+                            .mapToLong(data -> data.getPrice() != null ? data.getPrice() : 0L)
+                            .sum();
+
+                    // 세션 날짜 범위 계산
+                    String sessionSchedule;
+                    if (courseApplications.size() == 1) {
+                        // 1회차: "2025-12-20 ~ 2025-12-20" (시작일 = 종료일)
+                        String dateOnly = first.getSessionSchedule().substring(0, 10); // "2025-12-20"
+                        sessionSchedule = dateOnly + " ~ " + dateOnly;
+                    } else {
+                        // 다회차: "2025-12-20 ~ 2025-12-27" (첫 세션 날짜 ~ 마지막 세션 날짜)
+                        ApplicationRawData last = courseApplications.get(courseApplications.size() - 1);
+                        String firstDate = first.getSessionSchedule().substring(0, 10); // "2025-12-20"
+                        String lastDate = last.getSessionSchedule().substring(0, 10);   // "2025-12-27"
+                        sessionSchedule = firstDate + " ~ " + lastDate;
                     }
-                    return dto;
+
+                    // 거절 사유 수집 (있는 경우만)
+                    String rejectReason = courseApplications.stream()
+                            .map(ApplicationRawData::getRejectReason)
+                            .filter(Objects::nonNull)
+                            .distinct()
+                            .collect(Collectors.joining(", "));
+
+                    // ApplicationListViewResponse 생성
+                    return ApplicationListViewResponse.builder()
+                            .courseId(first.getCourseId())
+                            .tags(first.getTags())
+                            .title(first.getTitle())
+                            .description(first.getDescription())
+                            .mainImage(first.getMainImage() != null ? imageUrlMap.get(first.getMainImage()) : null)
+                            .location(first.getLocation())
+                            .lessonForm(first.getLessonForm())
+                            .type(first.getType())
+                            .totalAmount(totalAmount)
+                            .sessionSchedule(sessionSchedule)
+                            .rejectReason(rejectReason.isEmpty() ? null : rejectReason)
+                            .dogName(first.getDogName())
+                            .dogId(first.getDogId())
+                            .applicationItems(items)
+                            .build();
                 })
                 .collect(Collectors.toList());
 
-        return mappedList;
+        return result;
     }
 
     // 신청 상세 조회
@@ -168,7 +230,22 @@ public class TrainingCourseApplicationService {
             throw new CustomException(ErrorCode.UNAUTHORIZED_APPLICATION);
         }
 
-        // 2. 코스에 속한 세션 조회
+        // 2. 과정 상태 확인 - 진행중이거나 종료된 과정은 신청 불가
+        String courseStatus = applicationDao.getCourseStatusById(courseId);
+        if (courseStatus == null) {
+            throw new CustomException(ErrorCode.COURSE_NOT_FOUND);
+        }
+        if ("IN_PROGRESS".equals(courseStatus)) {
+            throw new CustomException(ErrorCode.COURSE_ALREADY_STARTED);
+        }
+        if ("DONE".equals(courseStatus)) {
+            throw new CustomException(ErrorCode.COURSE_ALREADY_COMPLETED);
+        }
+        if ("CANCELLED".equals(courseStatus)) {
+            throw new CustomException(ErrorCode.COURSE_CANCELLED);
+        }
+
+        // 3. 코스에 속한 세션 조회
         List<TrainingSession> sessions = applicationDao.findSessionsByCourseId(courseId);
         if (sessions.isEmpty()) {
             throw new CustomException(ErrorCode.APPLICATION_NOT_FOUND);
@@ -176,7 +253,7 @@ public class TrainingCourseApplicationService {
 
         List<ApplicationResponse> createdApplications = new ArrayList<>();
 
-        // 3. 각 세션별 신청 처리
+        // 4. 각 세션별 신청 처리
         for (TrainingSession session : sessions) {
             Long sessionId = session.getSessionId();
 
