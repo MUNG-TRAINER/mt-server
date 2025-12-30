@@ -34,7 +34,7 @@
     </resultMap>
     <select id="getSizeByApplicationIds" resultType="int">
         SELECT
-            COUNT(DISTINCT CONCAT(d.dog_id, '-', tc.course_id))
+            COUNT(DISTINCT d.dog_id, tc.course_id)
         FROM training_course tc
         JOIN training_session ts
         ON tc.course_id = ts.course_id
@@ -46,6 +46,8 @@
             tca.status = 'ACCEPT'
             AND d.user_id = #{userId}
             AND ts.is_deleted != 1
+            AND tc.status != 'CANCELED'
+            AND tc.is_deleted != 1
             <if test="applicationIds != null and applicationIds.size() > 0">
                 AND tca.application_id IN
                 <foreach collection="applicationIds"

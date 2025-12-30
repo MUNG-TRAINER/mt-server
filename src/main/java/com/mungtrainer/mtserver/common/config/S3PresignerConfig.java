@@ -17,19 +17,20 @@ public class S3PresignerConfig {
 		this.awsS3Config = awsS3Config;
 	}
 
-	@Bean
-	public S3Presigner s3Presigner() {
-		return S3Presigner.builder()
-			.credentialsProvider(DefaultCredentialsProvider.create()) // IRSA 자동 인증
-			.region(Region.of(awsS3Config.getRegion()))
-			.build();
-	}
+  @Bean
+  public S3Presigner s3Presigner() {
+    return S3Presigner.builder()
+                      .credentialsProvider(DefaultCredentialsProvider.create()) // IRSA 자동 인증
+                      .region(Region.of(awsS3Config.getRegion()))
+                      .build();
+  }
 
-	@Bean
-	public S3Client s3Client() {
-		return S3Client.builder()
-			.credentialsProvider(DefaultCredentialsProvider.create()) // IRSA 자동 인증
-			.region(Region.of(awsS3Config.getRegion()))
-			.build();
-	}
+  @Bean
+  public S3Client s3Client() {
+    return S3Client.builder()
+                   .credentialsProvider(DefaultCredentialsProvider.create()) // IRSA 자동 인증
+                   .region(Region.of(awsS3Config.getRegion()))
+                   .build();
+  }
+
 }
