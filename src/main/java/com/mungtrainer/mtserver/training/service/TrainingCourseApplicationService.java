@@ -138,6 +138,9 @@ public class TrainingCourseApplicationService {
                                     .price(data.getPrice())
                                     .sessionSchedule(data.getSessionSchedule())
                                     .rejectReason(data.getRejectReason())
+                                    .isWaiting(data.getIsWaiting())
+                                    .waitingOrder(data.getWaitingOrder())
+                                    .isPreApproved(data.getIsPreApproved())
                                     .build())
                             .collect(Collectors.toList());
 
@@ -281,28 +284,24 @@ public class TrainingCourseApplicationService {
                 throw new CustomException(ErrorCode.DUPLICATE_APPLICATION);
             }
 
-            // 세션 정원 및 현재 신청 인원
-//            int maxStudent = applicationDao.getMaxStudentsBySessionId(sessionId);
-//            int currentCount = applicationDao.countApplicationBySessionId(sessionId);
+            // 세션 정원 및 현재 승인된 신청 인원 확인 (ACCEPTED, PAID만 카운트)
+            int maxStudent = session.getMaxStudents(); // 세션 엔티티에서 직접 가져오기
+            int currentAcceptedCount = applicationDao.countAcceptedApplications(sessionId);
 
-            // 상담 완료 여부만 확인 (정원은 트레이너 승인 시점에 확인)
+            // 상담 완료 여부 확인
             boolean hasCounselingCompleted = applicationDao.findCounselingByDogID(request.getDogId());
 
-//            String status;
-//            if (currentCount >= maxStudent) {
-//                status = "WAITING";
-//            } else if (!hasCounselingCompleted) {
-//                status = "COUNSELING_REQUIRED";
-//            } else {
-//                status = "APPLIED";
-//            }
-
-            // 상태 결정: 상담 완료 여부만 확인
+            // 상태 결정 로직
             String status;
-            if (!hasCounselingCompleted) {
-              status = "COUNSELING_REQUIRED";
+            if (currentAcceptedCount >= maxStudent) {
+                // 정원 초과 -> WAITING
+                status = "WAITING";
+            } else if (!hasCounselingCompleted) {
+                // 상담 미완료 -> COUNSELING_REQUIRED
+                status = "COUNSELING_REQUIRED";
             } else {
-              status = "APPLIED";  // 정원 여부와 무관하게 모두 APPLIED
+                // 정원 여유 + 상담 완료 -> APPLIED
+                status = "APPLIED";
             }
 
             // 신청 엔티티 생성
@@ -322,13 +321,12 @@ public class TrainingCourseApplicationService {
                 throw new CustomException(ErrorCode.APPLICATION_CREATION_FAILED);
             }
 
-            // 대기 테이블 추가
-          // 이제 waiting 테이블 등록은 트레이너 승인 시점에 처리
-//            if ("WAITING".equals(status)) {
-//                applicationDao.insertWaiting(created.getApplicationId(), userId);
-//            }
+            // WAITING 상태일 경우 waiting 테이블에 등록
+            if ("WAITING".equals(status)) {
+                applicationDao.insertWaiting(created.getApplicationId(), userId);
+            }
 
-            createdApplications.add(toResponse(created)); // 기존에 쓰던 변환 메서드
+            createdApplications.add(toResponse(created));
         }
 
         return createdApplications;
@@ -351,16 +349,17 @@ public class TrainingCourseApplicationService {
         if (!application.getCreatedBy().equals(userId)) {
             throw new CustomException(ErrorCode.UNAUTHORIZED_APPLICATION);
         }
-        // 현재 해당 신청 status 확인
+        // 신청 취소
+        applicationDao.updateApplicationStatus(applicationId, "CANCELLED");
+
+        // WAITING 상태였다면 waiting 테이블도 업데이트
         String currentStatus = application.getStatus();
-        // 만약 상태가 웨이팅인 경우 웨이팅 신청 취소로 상태 변경
         if ("WAITING".equals(currentStatus)) {
             applicationDao.updateWaitingStatus(applicationId, "CANCELLED");
+            // WAITING 상태 취소는 대기자 승격 없이 종료
             return;
         }
 
-        // 신청 취소
-        applicationDao.updateApplicationStatus(applicationId, "CANCELLED");
 
         // 대기자 목록 조회
         Long sessionId = application.getSessionId();
@@ -380,7 +379,7 @@ public class TrainingCourseApplicationService {
         //          따라서 출석 정보 생성 실패 시 CustomException을 발생시켜
         //          전체 트랜잭션을 롤백합니다 (취소도 함께 취소됨).
         try {
-          int inserted = trainingAttendanceDao.insertAttendanceByApplicationId(nextApplicationId, 0L);
+          int inserted = trainingAttendanceDao.insertAttendanceByApplicationId(nextApplicationId, userId);
 
           if (inserted == 0) {
             log.error("출석 정보 생성 실패 (0건 삽입) - applicationId: {}", nextApplicationId);
@@ -466,30 +465,33 @@ public class TrainingCourseApplicationService {
             // 취소된 인원만큼 대기자 승격
             int promotionCount = Math.min(appIds.size(), waitingList.size());
 
-            for (int i = 0; i < promotionCount; i++) {
-                Long nextApplicationId = waitingList.get(i);
+            if (promotionCount > 0) {
+                // 승격할 대기자 ID 목록
+                List<Long> promotedApplicationIds = waitingList.subList(0, promotionCount);
 
-                // 1. 신청 상태 변경: WAITING → ACCEPT
-                trainerUserDao.updateApplicationStatusSimple(nextApplicationId, "ACCEPT");
-                trainerUserDao.updateWaitingStatus(nextApplicationId, "PROMOTED");
+                // 1. 신청 상태 일괄 변경: WAITING → ACCEPT
+                for (Long nextApplicationId : promotedApplicationIds) {
+                    trainerUserDao.updateApplicationStatusSimple(nextApplicationId, "ACCEPT");
+                    trainerUserDao.updateWaitingStatus(nextApplicationId, "PROMOTED");
+                }
 
-                // 2. 출석 정보 생성 (필수)
+                // 2. 출석 정보 일괄 생성 (필수)
                 // 중요: 출석 정보 생성 실패 시 CustomException을 발생시켜
                 //          전체 트랜잭션을 롤백합니다 (일괄 취소도 함께 취소됨).
                 try {
-                    int inserted = trainingAttendanceDao.insertAttendanceByApplicationId(nextApplicationId, 0L);
+                    int inserted = trainingAttendanceDao.insertAttendanceByApplicationIds(promotedApplicationIds, userId);
 
-                    if (inserted == 0) {
-                        log.error("출석 정보 생성 실패 (0건 삽입) - applicationId: {}", nextApplicationId);
+                    if (inserted != promotionCount) {
+                        log.error("출석 정보 생성 실패 - 예상: {}, 실제: {}", promotionCount, inserted);
                         throw new CustomException(ErrorCode.ATTENDANCE_CREATION_FAILED);
                     }
 
-                    log.info("일괄 취소 후 대기자 승격 완료 - applicationId: {}", nextApplicationId);
+                    log.info("일괄 취소 후 대기자 {}명 승격 완료 - applicationIds: {}", promotionCount, promotedApplicationIds);
 
                 } catch (CustomException e) {
                     throw e;
                 } catch (Exception e) {
-                    log.error("일괄 취소 후 대기자 승격 시 출석 정보 생성 실패 - applicationId: {}", nextApplicationId, e);
+                    log.error("일괄 취소 후 대기자 승격 시 출석 정보 생성 실패", e);
                     throw new CustomException(ErrorCode.ATTENDANCE_CREATION_FAILED);
                 }
             }
