@@ -1,8 +1,9 @@
 package com.mungtrainer.mtserver.common.config;
 
-import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+
+import lombok.Getter;
 
 @Configuration
 @Getter
@@ -16,4 +17,5 @@ public class AwsS3Config {
 
   @Value("${aws.s3.presigned-url.expiration-minutes:10}")
   private int presignedUrlExpirationMinutes;
+
 }
