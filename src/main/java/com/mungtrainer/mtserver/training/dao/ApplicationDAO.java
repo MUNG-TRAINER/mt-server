@@ -35,6 +35,9 @@ public interface ApplicationDAO {
     // 현재 신청 인원수 조회
     int countApplicationBySessionId(@Param("sessionId") Long sessionId);
 
+    // 현재 승인된 신청 인원수 조회 (ACCEPTED, PAID만 카운트)
+    int countAcceptedApplications(@Param("sessionId") Long sessionId);
+
     // 대기 테이블에 추가
     void insertWaiting(@Param("applicationId") Long applicationId, @Param("userId") Long userId);
 

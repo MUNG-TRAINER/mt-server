@@ -16,6 +16,7 @@ public class GroupedApplicationResponse {
 	private Long courseId;
 	private String courseTitle;
 	private String courseType; // SINGLE, MULTI, GROUP
+	private String lessonForm; // WALK, GROUP, PRIVATE
 	private Long dogId;
 	private String dogName;
 	private String ownerName;
@@ -39,5 +40,10 @@ public class GroupedApplicationResponse {
 		private Boolean isWaiting; // WAITING 상태 여부
 		private Boolean isPreApproved; // 미리 승인 여부
 		private Integer waitingOrder; // 대기 순번
+
+		// 정원 정보
+		private Integer maxCapacity; // 세션 최대 정원
+		private Integer currentParticipants; // 현재 승인/결제 완료된 참여 인원 수 (ACCEPT, PAID)
+		private Boolean isFull; // 정원 마감 여부
 	}
 }
