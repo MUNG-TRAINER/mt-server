@@ -269,6 +269,8 @@
             tca.application_id AS applicationId,
             d.name AS dogName,
             u.name AS ownerName,
+            u.user_id AS userId,
+            u.fcm_token AS fcmToken,
             tc.title AS courseTitle,
             ts.session_date AS sessionDate,
             ts.start_time AS startTime,
@@ -310,6 +312,8 @@
         <result property="courseTitle" column="courseTitle"/>
         <result property="courseType" column="courseType"/>
         <result property="dogId" column="dogId"/>
+        <result property="userId" column="userId"/>
+        <result property="fcmToken" column="fcmToken"/>
         <result property="dogName" column="dogName"/>
         <result property="ownerName" column="ownerName"/>
         <result property="totalSessions" column="totalSessions"/>
@@ -332,6 +336,8 @@
             d.dog_id AS dogId,
             d.name AS dogName,
             u.name AS ownerName,
+            u.user_id AS userId,
+            u.fcm_token AS fcmToken,
             (SELECT COUNT(DISTINCT ts2.session_id)
              FROM training_session ts2
              WHERE ts2.course_id = tc.course_id
