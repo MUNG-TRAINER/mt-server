@@ -18,6 +18,11 @@ public class ApplicationRawData {
     private String applicationStatus;
     private String rejectReason;
 
+    // 대기 정보 (WAITING 상태일 때만 사용)
+    private Boolean isWaiting;
+    private Integer waitingOrder; // 대기 순번 (1부터 시작)
+    private Boolean isPreApproved; // 미리 승인 여부
+
     // 코스 정보
     private Long courseId;
     private String tags;

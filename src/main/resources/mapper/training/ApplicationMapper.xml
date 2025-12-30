@@ -24,6 +24,19 @@
             tca.status                        AS applicationStatus,
             tca.reject_reason                 AS rejectReason,
 
+            -- 대기 정보
+            CASE WHEN tca.status = 'WAITING' THEN 1 ELSE 0 END AS isWaiting,
+            COALESCE(w.is_approved, 0) AS isPreApproved,
+            -- 대기 순번: 미리 승인된 사람도 순번은 표시됨 (자신보다 앞선 대기자 수 계산)
+            CASE WHEN tca.status = 'WAITING' THEN
+                (SELECT COUNT(*) + 1
+                 FROM training_course_application tca2
+                 WHERE tca2.session_id = tca.session_id
+                 AND tca2.status = 'WAITING'
+                 AND tca2.created_at &lt; tca.created_at
+                 AND tca2.is_deleted = 0)
+            ELSE NULL END AS waitingOrder,
+
             tc.course_id                      AS courseId,
             tc.tags                           AS tags,
             tc.title                          AS title,
@@ -54,6 +67,7 @@
         JOIN training_course tc
             ON ts.course_id = tc.course_id
             AND tc.is_deleted = 0
+        LEFT JOIN waiting w ON tca.application_id = w.application_id AND w.is_deleted = 0
         WHERE d.user_id = #{userId}
           AND tca.is_deleted = 0
           AND tca.status != 'PAID'
@@ -122,6 +136,15 @@
         FROM training_course_application
         WHERE session_id = #{sessionId}
             AND status IN  ('APPLIED','ACCEPT')
+            AND is_deleted = 0
+    </select>
+
+    <!-- 현재 승인된 신청 인원수 조회 (ACCEPT, PAID만 카운트) -->
+    <select id="countAcceptedApplications" parameterType="long" resultType="int">
+        SELECT COUNT(*)
+        FROM training_course_application
+        WHERE session_id = #{sessionId}
+            AND status IN ('ACCEPT', 'PAID')
             AND is_deleted = 0
     </select>
 
