@@ -36,6 +36,14 @@ public class PaymentDeadlineScheduler {
     private int paymentDeadlineHours;
 
     /**
+     * 기능 활성화 플래그
+     * application.yml의 payment.deadline.enabled 값 사용
+     * 기본값: true (활성화)
+     */
+    @Value("${payment.deadline.enabled:true}")
+    private boolean paymentDeadlineEnabled;
+
+    /**
      * 10분마다 결제 기한 만료 처리
      * cron: 초 분 시 일 월 요일
      * 실행 시간: 3분, 13분, 23분, 33분, 43분, 53분 (SessionDeadlineScheduler와 시간 분산)
@@ -43,6 +51,12 @@ public class PaymentDeadlineScheduler {
     @Scheduled(cron = "0 3/10 * * * *")  // 매 10분마다 (3분부터 시작)
     @Transactional
     public void processExpiredPayments() {
+        // 기능 비활성화 체크 (긴급 롤백용)
+        if (!paymentDeadlineEnabled) {
+            log.debug("결제 기한 만료 기능이 비활성화되어 있습니다.");
+            return;
+        }
+
         log.info("결제 기한 만료 처리 시작");
 
         try {
