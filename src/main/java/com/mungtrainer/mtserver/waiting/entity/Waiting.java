@@ -20,7 +20,13 @@ public class Waiting extends BaseEntity {
     private Long applicationId;
 
     /**
-     * 상태 (WAITING, READY, ENTERED, CANCELLED, EXPIRED)
+     * 대기 상태
+     * - WAITING: 대기중
+     * - PROMOTED: 자동 승격됨 (정원 발생 시)
+     * - CANCELLED: 취소됨
+     * - EXPIRED: 만료됨
+     *
+     * 참고: 승격 시 training_course_application.status도 ACCEPT로 변경됨
      */
     private String status;
 
